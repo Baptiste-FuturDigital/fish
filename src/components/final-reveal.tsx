@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react"
 
 import type { GameView } from "@shared/game"
-import { FinalScoreboard } from "@/components/final-scoreboard"
+import { FinalScoreboard } from "./final-scoreboard.js"
 
 import "./final-reveal.css"
 
 const SUSPENSE_DURATION_MS = 7_000
 const SUSPENSE_VIDEO_ID = "wKw0pvc1HiE"
+const AMBIENT_EVENT = "fish:set-ambient-suspended"
 
 const suspensePlayerSource = (() => {
   const parameters = new URLSearchParams({
@@ -25,36 +26,62 @@ const suspensePlayerSource = (() => {
   return `https://www.youtube-nocookie.com/embed/${SUSPENSE_VIDEO_ID}?${parameters.toString()}`
 })()
 
-function setAmbientSuspended(suspended: boolean) {
-  window.dispatchEvent(
-    new CustomEvent("fish:set-ambient-suspended", {
-      detail: suspended,
-    }),
-  )
+interface FinalRevealTransitionOptions {
+  audioEnabled: boolean
+  onReveal: () => void
+  target?: EventTarget
+}
+
+export function beginFinalRevealTransition({
+  audioEnabled,
+  onReveal,
+  target = window,
+}: FinalRevealTransitionOptions) {
+  let active = true
+  let ambientSuspended = false
+
+  const restoreAmbient = () => {
+    if (!ambientSuspended) return
+    ambientSuspended = false
+    target.dispatchEvent(new CustomEvent<boolean>(AMBIENT_EVENT, { detail: false }))
+  }
+
+  if (audioEnabled) {
+    ambientSuspended = true
+    target.dispatchEvent(new CustomEvent<boolean>(AMBIENT_EVENT, { detail: true }))
+  }
+
+  const revealTimer = setTimeout(() => {
+    if (!active) return
+    active = false
+    restoreAmbient()
+    onReveal()
+  }, SUSPENSE_DURATION_MS)
+
+  return () => {
+    active = false
+    clearTimeout(revealTimer)
+    restoreAmbient()
+  }
 }
 
 export function FinalReveal({
   game,
   onLeave,
+  audioEnabled = false,
 }: {
   game: GameView
   onLeave: () => void
+  audioEnabled?: boolean
 }) {
   const [isRevealed, setIsRevealed] = useState(false)
 
   useEffect(() => {
-    setAmbientSuspended(true)
-
-    const revealTimer = window.setTimeout(() => {
-      setAmbientSuspended(false)
-      setIsRevealed(true)
-    }, SUSPENSE_DURATION_MS)
-
-    return () => {
-      window.clearTimeout(revealTimer)
-      setAmbientSuspended(false)
-    }
-  }, [])
+    return beginFinalRevealTransition({
+      audioEnabled,
+      onReveal: () => setIsRevealed(true),
+    })
+  }, [audioEnabled])
 
   if (isRevealed) {
     return <FinalScoreboard game={game} onLeave={onLeave} />
@@ -67,15 +94,17 @@ export function FinalReveal({
       aria-live="polite"
       aria-label="Le verdict final arrive"
     >
-      <iframe
-        className="final-suspense-player"
-        data-testid="final-suspense-player"
-        src={suspensePlayerSource}
-        title="Musique du suspense final"
-        allow="autoplay; encrypted-media"
-        tabIndex={-1}
-        aria-hidden="true"
-      />
+      {audioEnabled ? (
+        <iframe
+          className="final-suspense-player"
+          data-testid="final-suspense-player"
+          src={suspensePlayerSource}
+          title="Musique du suspense final"
+          allow="autoplay; encrypted-media"
+          tabIndex={-1}
+          aria-hidden="true"
+        />
+      ) : null}
 
       <div className="final-suspense-depth" aria-hidden="true" />
       <div className="final-suspense-sonar" aria-hidden="true">

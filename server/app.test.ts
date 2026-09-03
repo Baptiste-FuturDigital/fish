@@ -24,41 +24,33 @@ describe("game API", () => {
 
     const { code } = created.body.game
     const hostToken = created.body.session.hostToken
+    expect(created.body.game.players).toEqual([])
 
-    const joined = await request(app)
+    const firstJoined = await request(app)
       .post(`/api/games/${code}/join`)
       .send({ name: "Léa" })
       .expect(201)
+    const secondJoined = await request(app)
+      .post(`/api/games/${code}/join`)
+      .send({ name: "Sam" })
+      .expect(201)
 
-    const hostClaim = await request(app)
-      .post(`/api/games/${code}/totem`)
-      .send({
-        playerId: created.body.session.playerId,
-        playerToken: created.body.session.playerToken,
-      })
-      .expect(200)
-    const repeatedHostClaim = await request(app)
-      .post(`/api/games/${code}/totem`)
-      .send({
-        playerId: created.body.session.playerId,
-        playerToken: created.body.session.playerToken,
-      })
-      .expect(200)
     await request(app)
       .post(`/api/games/${code}/totem`)
       .send({
-        playerId: joined.body.session.playerId,
-        playerToken: joined.body.session.playerToken,
+        playerId: created.body.session.playerId,
+        playerToken: created.body.session.playerToken,
       })
-      .expect(200)
-
-    const hostTotem = hostClaim.body.players.find(
-      (player: { id: string }) => player.id === created.body.session.playerId,
-    ).totem
-    const repeatedTotem = repeatedHostClaim.body.players.find(
-      (player: { id: string }) => player.id === created.body.session.playerId,
-    ).totem
-    expect(repeatedTotem).toEqual(hostTotem)
+      .expect(409)
+    for (const joined of [firstJoined, secondJoined]) {
+      await request(app)
+        .post(`/api/games/${code}/totem`)
+        .send({
+          playerId: joined.body.session.playerId,
+          playerToken: joined.body.session.playerToken,
+        })
+        .expect(200)
+    }
 
     const started = await request(app)
       .post(`/api/games/${code}/start`)
@@ -105,32 +97,36 @@ describe("game API", () => {
       .post("/api/games")
       .send({ name: "Le grand aquarium", hostName: "Baptiste" })
       .expect(201)
-    const joined = await request(app)
+    const firstJoined = await request(app)
       .post(`/api/games/${created.body.game.code}/join`)
       .send({ name: "Léa" })
       .expect(201)
+    const secondJoined = await request(app)
+      .post(`/api/games/${created.body.game.code}/join`)
+      .send({ name: "Sam" })
+      .expect(201)
     const code = created.body.game.code
     const hostSession = created.body.session
-    for (const session of [hostSession, joined.body.session]) {
+    for (const session of [firstJoined.body.session, secondJoined.body.session]) {
       await request(app).post(`/api/games/${code}/totem`).send({
         playerId: session.playerId,
         playerToken: session.playerToken,
       }).expect(200)
     }
     const lobby = await request(app).get(`/api/games/${code}`).expect(200)
-    const hostTeamId = lobby.body.players.find(
-      (player: { id: string }) => player.id === hostSession.playerId,
+    const firstTeamId = lobby.body.players.find(
+      (player: { id: string }) => player.id === firstJoined.body.session.playerId,
     ).teamId
 
     const renamed = await request(app)
-      .post(`/api/games/${code}/teams/${hostTeamId}/name`)
+      .post(`/api/games/${code}/teams/${firstTeamId}/name`)
       .send({
         name: "Les Moules Costaudes",
-        playerId: hostSession.playerId,
-        playerToken: hostSession.playerToken,
+        playerId: firstJoined.body.session.playerId,
+        playerToken: firstJoined.body.session.playerToken,
       })
       .expect(200)
-    expect(renamed.body.teams.find((team: { id: string }) => team.id === hostTeamId).name)
+    expect(renamed.body.teams.find((team: { id: string }) => team.id === firstTeamId).name)
       .toBe("Les Moules Costaudes")
 
     await request(app).post(`/api/games/${code}/start`)
@@ -140,13 +136,13 @@ describe("game API", () => {
     expect(answering.body.tournament.phase).toBe("answering")
 
     const answered = await request(app).post(`/api/games/${code}/answer`).send({
-      playerId: hostSession.playerId,
-      playerToken: hostSession.playerToken,
+      playerId: firstJoined.body.session.playerId,
+      playerToken: firstJoined.body.session.playerToken,
       answer: "0.09",
       locked: true,
     }).expect(200)
     expect(answered.body.tournament.answers).toContainEqual({
-      teamId: hostTeamId,
+      teamId: firstTeamId,
       answer: null,
       locked: true,
     })
@@ -165,6 +161,7 @@ describe("game API", () => {
     expect(demo.body.game.status).toBe("running")
     expect(demo.body.game.tournament.phase).toBe("challenge-intro")
     expect(demo.body.game.players).toHaveLength(8)
+    expect(demo.body.game.players.map((player: { name: string }) => player.name)).not.toContain("Poséithon")
     expect(demo.body.game.teams.map((team: { memberIds: string[] }) => team.memberIds.length).sort())
       .toEqual([2, 2, 2, 2])
     expect(demo.body.session.hostToken).toBeTypeOf("string")

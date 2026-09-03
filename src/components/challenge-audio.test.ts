@@ -3,6 +3,14 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 describe("challenge audio", () => {
   afterEach(() => vi.useRealTimers())
 
+  it("autorise le générique uniquement pour une session hôte", async () => {
+    const { isHostAudioEnabled } = await import("./challenge-audio-control.js")
+
+    expect(isHostAudioEnabled({})).toBe(false)
+    expect(isHostAudioEnabled({ hostToken: "" })).toBe(false)
+    expect(isHostAudioEnabled({ hostToken: "host" })).toBe(true)
+  })
+
   it("limite le générique Who's that Salmon aux cinq premières secondes", async () => {
     const { buildChallengeAudioSource } = await import("./challenge-audio-control.js")
     const source = new URL(buildChallengeAudioSource({

@@ -14,14 +14,59 @@ describe("GameService", () => {
 
   afterEach(() => database.close())
 
-  it("creates a lobby with a host and a short join code", () => {
+  function joinCompetitors(code: string, names = ["Léa", "Sam"]) {
+    return names.map((name) => service.joinGame(code, name))
+  }
+
+  function joinAndClaimCompetitors(code: string, names = ["Léa", "Sam"]) {
+    const joined = joinCompetitors(code, names)
+    for (const competitor of joined) {
+      service.claimTotem(code, competitor.session.playerId, competitor.session.playerToken)
+    }
+    return joined
+  }
+
+  it("keeps the host as a technical identity outside the participant projection", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+
+    expect(created.game.players).toEqual([])
+    expect(database.prepare("SELECT name, is_host FROM players WHERE game_id = ?").get(created.game.id))
+      .toEqual({ name: "Baptiste", is_host: 1 })
+    expect(() => service.claimTotem(
+      created.game.code,
+      created.session.playerId,
+      created.session.playerToken,
+    )).toThrowError(new GameError("Le maître du jeu reste hors compétition.", 409))
+  })
+
+  it("requires two real players even when the host is present", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const joined = service.joinGame(created.game.code, "Léa")
+    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+
+    expect(() => service.startGame(created.game.code, created.session.hostToken!)).toThrowError(
+      new GameError("Il faut au moins deux poissons pour démarrer.", 409),
+    )
+  })
+
+  it("allows twenty competitors in addition to the technical host", () => {
+    const created = service.createGame("La marée bizarre", "Poséithon")
+    for (let index = 1; index <= 20; index += 1) {
+      service.joinGame(created.game.code, `Poisson ${index}`)
+    }
+
+    expect(service.getGame(created.game.code).players).toHaveLength(20)
+    expect(() => service.joinGame(created.game.code, "Poisson 21")).toThrowError(
+      new GameError("L'aquarium est complet : vingt poissons maximum.", 409),
+    )
+  })
+
+  it("creates an empty participant lobby with a host capability and a short join code", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
 
     expect(created.game.status).toBe("lobby")
     expect(created.game.code).toMatch(/^[A-Z2-9]{4}$/)
-    expect(created.game.players).toEqual([
-      expect.objectContaining({ name: "Baptiste", isHost: true }),
-    ])
+    expect(created.game.players).toEqual([])
     expect(created.session.hostToken).toHaveLength(48)
   })
 
@@ -29,10 +74,7 @@ describe("GameService", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     const joined = service.joinGame(created.game.code, "Léa")
 
-    expect(joined.game.players.map((player) => player.name)).toEqual([
-      "Baptiste",
-      "Léa",
-    ])
+    expect(joined.game.players.map((player) => player.name)).toEqual(["Léa"])
     expect(joined.session.hostToken).toBeUndefined()
     expect(joined.session.playerToken).toHaveLength(48)
   })
@@ -47,42 +89,36 @@ describe("GameService", () => {
 
   it("assigns distinct and stable totems to players", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const joined = service.joinGame(created.game.code, "Léa")
+    const [first, second] = joinCompetitors(created.game.code)
 
-    const hostClaim = service.claimTotem(
+    const firstClaim = service.claimTotem(
       created.game.code,
-      created.session.playerId,
-      created.session.playerToken,
+      first.session.playerId,
+      first.session.playerToken,
     )
     const repeatedClaim = service.claimTotem(
       created.game.code,
-      created.session.playerId,
-      created.session.playerToken,
+      first.session.playerId,
+      first.session.playerToken,
     )
-    const guestClaim = service.claimTotem(
+    const secondClaim = service.claimTotem(
       created.game.code,
-      joined.session.playerId,
-      joined.session.playerToken,
+      second.session.playerId,
+      second.session.playerToken,
     )
 
-    const hostTotem = hostClaim.players.find((player) => player.id === created.session.playerId)?.totem
-    const repeatedTotem = repeatedClaim.players.find((player) => player.id === created.session.playerId)?.totem
-    const guestTotem = guestClaim.players.find((player) => player.id === joined.session.playerId)?.totem
+    const firstTotem = firstClaim.players.find((player) => player.id === first.session.playerId)?.totem
+    const repeatedTotem = repeatedClaim.players.find((player) => player.id === first.session.playerId)?.totem
+    const secondTotem = secondClaim.players.find((player) => player.id === second.session.playerId)?.totem
 
-    expect(hostTotem).toEqual(repeatedTotem)
-    expect(hostTotem?.imageUrl).not.toBe(guestTotem?.imageUrl)
-    expect(hostTotem).toEqual(expect.objectContaining({ name: expect.any(String), fact: expect.any(String), teamName: expect.any(String) }))
+    expect(firstTotem).toEqual(repeatedTotem)
+    expect(firstTotem?.imageUrl).not.toBe(secondTotem?.imageUrl)
+    expect(firstTotem).toEqual(expect.objectContaining({ name: expect.any(String), fact: expect.any(String), teamName: expect.any(String) }))
   })
 
   it("balances the first four players across four teams", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const sessions = [created.session]
-    for (const name of ["Léa", "Sam", "Jo"]) {
-      sessions.push(service.joinGame(created.game.code, name).session)
-    }
-    for (const session of sessions) {
-      service.claimTotem(created.game.code, session.playerId, session.playerToken)
-    }
+    joinAndClaimCompetitors(created.game.code, ["Léa", "Sam", "Jo", "Mia"])
 
     const game = service.getGame(created.game.code)
     expect(game.teams).toHaveLength(4)
@@ -91,12 +127,12 @@ describe("GameService", () => {
 
   it("balances twenty players into four teams of five", () => {
     const created = service.createGame("La marée bizarre", "Capitaine")
-    const sessions = [created.session]
-    for (let index = 1; index < 20; index += 1) {
-      sessions.push(service.joinGame(created.game.code, `Poisson ${index}`).session)
-    }
-    for (const session of sessions) {
-      service.claimTotem(created.game.code, session.playerId, session.playerToken)
+    const competitors = joinCompetitors(
+      created.game.code,
+      Array.from({ length: 20 }, (_, index) => `Poisson ${index + 1}`),
+    )
+    for (const competitor of competitors) {
+      service.claimTotem(created.game.code, competitor.session.playerId, competitor.session.playerToken)
     }
 
     const game = service.getGame(created.game.code)
@@ -106,44 +142,43 @@ describe("GameService", () => {
 
   it("lets a player rename only their own team", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const joined = service.joinGame(created.game.code, "Léa")
-    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
-    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
-    const hostTeamId = service.getGame(created.game.code).players[0].teamId!
+    const [first, second] = joinAndClaimCompetitors(created.game.code)
+    const firstTeamId = service.getGame(created.game.code).players
+      .find((player) => player.id === first.session.playerId)?.teamId!
 
     const renamed = service.renameTeam(
       created.game.code,
-      hostTeamId,
+      firstTeamId,
       "Les Moules Costaudes",
-      created.session.playerId,
-      created.session.playerToken,
+      first.session.playerId,
+      first.session.playerToken,
     )
-    expect(renamed.teams.find((team) => team.id === hostTeamId)?.name).toBe("Les Moules Costaudes")
+    expect(renamed.teams.find((team) => team.id === firstTeamId)?.name).toBe("Les Moules Costaudes")
 
-    const guestTeamId = renamed.players.find((player) => player.id === joined.session.playerId)?.teamId
+    const secondTeamId = renamed.players.find((player) => player.id === second.session.playerId)?.teamId
     expect(() => service.renameTeam(
       created.game.code,
-      guestTeamId!,
+      secondTeamId!,
       "Intrusion",
-      created.session.playerId,
-      created.session.playerToken,
+      first.session.playerId,
+      first.session.playerToken,
     )).toThrowError(new GameError("Tu ne peux renommer que ton propre banc.", 403))
   })
 
   it("limits a lobby to the twenty available totems", () => {
     const created = service.createGame("La marée bizarre", "Capitaine")
-    for (let index = 1; index < 20; index += 1) {
+    for (let index = 1; index <= 20; index += 1) {
       service.joinGame(created.game.code, `Poisson ${index}`)
     }
 
-    expect(() => service.joinGame(created.game.code, "Poisson 20")).toThrowError(
+    expect(() => service.joinGame(created.game.code, "Poisson 21")).toThrowError(
       new GameError("L'aquarium est complet : vingt poissons maximum.", 409),
     )
   })
 
   it("requires every player to claim a totem before starting", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    service.joinGame(created.game.code, "Léa")
+    joinCompetitors(created.game.code)
 
     expect(() => service.startGame(created.game.code, created.session.hostToken!)).toThrowError(
       new GameError("Tous les poissons doivent révéler leur animal totem.", 409),
@@ -152,9 +187,7 @@ describe("GameService", () => {
 
   it("runs multiple seeded rounds and finishes the game", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const joined = service.joinGame(created.game.code, "Léa")
-    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
-    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+    joinAndClaimCompetitors(created.game.code)
 
     const started = service.startGame(
       created.game.code,
@@ -182,9 +215,7 @@ describe("GameService", () => {
 
   it("normalizes the canonical challenge order when an existing lobby starts", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const joined = service.joinGame(created.game.code, "Léa")
-    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
-    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+    joinAndClaimCompetitors(created.game.code)
     database.prepare("UPDATE games SET challenge_order = ? WHERE code = ?").run(
       JSON.stringify([
         "le-juste-poisson",
@@ -205,9 +236,7 @@ describe("GameService", () => {
 
   it("runs an intro, timed answer, reveal and next round with team scoring", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const joined = service.joinGame(created.game.code, "Léa")
-    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
-    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+    const [first, second] = joinAndClaimCompetitors(created.game.code)
 
     const intro = service.startGame(created.game.code, created.session.hostToken!)
     expect(intro.tournament).toEqual(expect.objectContaining({
@@ -221,15 +250,15 @@ describe("GameService", () => {
     expect(answering.tournament?.round.correctAnswer).toBeUndefined()
     service.submitTeamAnswer(
       created.game.code,
-      created.session.playerId,
-      created.session.playerToken,
+      first.session.playerId,
+      first.session.playerToken,
       "0.09",
       true,
     )
     service.submitTeamAnswer(
       created.game.code,
-      joined.session.playerId,
-      joined.session.playerToken,
+      second.session.playerId,
+      second.session.playerToken,
       "1",
       true,
     )
@@ -249,9 +278,7 @@ describe("GameService", () => {
 
   it("chains all four challenges and twenty-three rounds into the final scoreboard", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const joined = service.joinGame(created.game.code, "Léa")
-    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
-    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+    joinAndClaimCompetitors(created.game.code)
 
     let game = service.startGame(created.game.code, created.session.hostToken!)
     const challengeIntros: string[] = []
@@ -281,9 +308,7 @@ describe("GameService", () => {
 
   it("shows the leaderboard after an intermediate challenge before the next intro", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const joined = service.joinGame(created.game.code, "Léa")
-    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
-    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+    joinAndClaimCompetitors(created.game.code)
 
     let game = service.startGame(created.game.code, created.session.hostToken!)
     for (let step = 0; step < 12; step += 1) {
@@ -314,9 +339,7 @@ describe("GameService", () => {
 
   it("finishes directly after the fourth challenge final reveal", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const joined = service.joinGame(created.game.code, "Léa")
-    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
-    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+    joinAndClaimCompetitors(created.game.code)
 
     let game = service.startGame(created.game.code, created.session.hostToken!)
     for (let step = 0; step < 80; step += 1) {
@@ -338,25 +361,23 @@ describe("GameService", () => {
 
   it("reveals and scores an expired round only once", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const joined = service.joinGame(created.game.code, "Léa")
-    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
-    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+    const [first] = joinAndClaimCompetitors(created.game.code)
     service.startGame(created.game.code, created.session.hostToken!)
     service.advanceTournament(created.game.code, created.session.hostToken!)
     service.submitTeamAnswer(
       created.game.code,
-      created.session.playerId,
-      created.session.playerToken,
+      first.session.playerId,
+      first.session.playerToken,
       "0.09",
       true,
     )
     database.prepare("UPDATE games SET phase_ends_at = ? WHERE code = ?")
       .run("2000-01-01T00:00:00.000Z", created.game.code)
 
-    const first = service.getGame(created.game.code)
-    const second = service.getGame(created.game.code)
-    expect(first.tournament?.phase).toBe("reveal")
-    expect(second.teams.map((team) => team.score)).toEqual(first.teams.map((team) => team.score))
+    const firstSnapshot = service.getGame(created.game.code)
+    const secondSnapshot = service.getGame(created.game.code)
+    expect(firstSnapshot.tournament?.phase).toBe("reveal")
+    expect(secondSnapshot.teams.map((team) => team.score)).toEqual(firstSnapshot.teams.map((team) => team.score))
   })
 
   it("rejects host actions with an invalid capability token", () => {

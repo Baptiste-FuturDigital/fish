@@ -8,6 +8,14 @@ interface ChallengeAudioSourceOptions {
   origin: string
 }
 
+interface HostAudioSession {
+  hostToken?: string
+}
+
+export function isHostAudioEnabled(session: HostAudioSession) {
+  return Boolean(session.hostToken)
+}
+
 export function buildChallengeAudioSource({
   videoId,
   startSeconds,

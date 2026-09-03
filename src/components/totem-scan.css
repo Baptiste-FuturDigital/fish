@@ -1,0 +1,226 @@
+.totem-materializing-card {
+  border-color: oklch(0.8 0.12 195 / 48%);
+  background: oklch(0.12 0.055 220);
+  box-shadow:
+    0 0 0 1px oklch(0.86 0.17 110 / 8%),
+    0 1.5rem 3rem oklch(0.06 0.04 230 / 45%);
+}
+
+.totem-materializer {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at center, oklch(0.52 0.12 190 / 42%), transparent 58%),
+    oklch(0.12 0.055 220);
+}
+
+.totem-materializing-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(28px) brightness(0.34) saturate(0.25);
+  transform: scale(1.13);
+  animation: totem-image-materialize 5s cubic-bezier(0.22, 0.75, 0.22, 1) forwards;
+}
+
+.totem-analysis-overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(oklch(0.87 0.18 113 / 10%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.87 0.18 113 / 10%) 1px, transparent 1px),
+    radial-gradient(circle at center, transparent 0 17%, oklch(0.12 0.055 220 / 20%) 52%, oklch(0.08 0.045 225 / 76%) 100%);
+  background-size: 1.6rem 1.6rem, 1.6rem 1.6rem, auto;
+  color: oklch(0.91 0.18 110);
+  animation: totem-analysis-depart 5s linear forwards;
+}
+
+.totem-analysis-overlay::before,
+.totem-analysis-overlay::after {
+  content: "";
+  position: absolute;
+  width: 4.6rem;
+  aspect-ratio: 1;
+  border-color: currentColor;
+  opacity: 0.62;
+}
+
+.totem-analysis-overlay::before {
+  top: 0.75rem;
+  left: 0.75rem;
+  border-top: 2px solid;
+  border-left: 2px solid;
+  border-radius: 0.75rem 0 0;
+}
+
+.totem-analysis-overlay::after {
+  right: 0.75rem;
+  bottom: 0.75rem;
+  border-right: 2px solid;
+  border-bottom: 2px solid;
+  border-radius: 0 0 0.75rem;
+}
+
+.totem-materializing-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: clamp(6.5rem, 34vw, 9rem);
+  aspect-ratio: 1;
+  place-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.totem-materializing-core strong {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 3.9rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 2px solid oklch(0.98 0.02 95 / 82%);
+  border-radius: 50%;
+  background: oklch(0.87 0.18 113);
+  color: oklch(0.16 0.055 220);
+  font-family: "Fraunces Variable", serif;
+  font-size: 3rem;
+  line-height: 1;
+  box-shadow:
+    0 0 0 0.45rem oklch(0.87 0.18 113 / 12%),
+    0 0 2.2rem oklch(0.87 0.18 113 / 62%);
+  animation: totem-question-pulse 900ms ease-in-out infinite alternate;
+}
+
+.totem-materializing-ring {
+  position: absolute;
+  inset: 18%;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0;
+  animation: totem-sonar-ring 1.8s ease-out infinite;
+}
+
+.totem-materializing-ring:nth-child(2) { animation-delay: 600ms; }
+.totem-materializing-ring:nth-child(3) { animation-delay: 1.2s; }
+
+.totem-materializing-scanline {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: oklch(0.87 0.18 113 / 90%);
+  box-shadow:
+    0 0 0.7rem oklch(0.87 0.18 113),
+    0 -0.45rem 1rem oklch(0.87 0.18 113 / 18%);
+  animation: totem-materializing-scan 1.45s ease-in-out infinite alternate;
+}
+
+.totem-analysis-data {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.56rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+  text-shadow: 0 1px 0.5rem oklch(0.06 0.04 230);
+}
+
+.totem-analysis-data span,
+.totem-analysis-data code {
+  color: oklch(0.9 0.03 195 / 82%);
+}
+
+.totem-analysis-data strong {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+
+.totem-analysis-data code {
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 0.5rem;
+}
+
+.totem-analysis-data-top {
+  top: 1rem;
+  left: 1rem;
+}
+
+.totem-analysis-data-bottom {
+  right: 1rem;
+  bottom: 1.25rem;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.totem-materializing-progress {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.7rem;
+  left: 1rem;
+  height: 0.22rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: oklch(0.98 0.02 95 / 16%);
+}
+
+.totem-materializing-progress span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: oklch(0.87 0.18 113);
+  box-shadow: 0 0 0.8rem currentColor;
+  transform-origin: left;
+  animation: totem-materializing-progress 5s linear forwards;
+}
+
+@keyframes totem-image-materialize {
+  0% { filter: blur(28px) brightness(0.34) saturate(0.25); transform: scale(1.13); }
+  35% { filter: blur(20px) brightness(0.45) saturate(0.45); }
+  72% { filter: blur(8px) brightness(0.75) saturate(0.78); }
+  100% { filter: blur(0) brightness(1) saturate(1); transform: scale(1); }
+}
+
+@keyframes totem-analysis-depart {
+  0%, 62% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes totem-question-pulse {
+  from { transform: scale(0.96) rotate(-3deg); }
+  to { transform: scale(1.05) rotate(3deg); }
+}
+
+@keyframes totem-sonar-ring {
+  0% { opacity: 0.75; transform: scale(0.55); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+
+@keyframes totem-materializing-scan {
+  from { top: 12%; }
+  to { top: 88%; }
+}
+
+@keyframes totem-materializing-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .totem-materializing-image,
+  .totem-analysis-overlay,
+  .totem-materializing-core strong,
+  .totem-materializing-ring,
+  .totem-materializing-progress span {
+    animation: none !important;
+  }
+
+  .totem-materializing-scanline {
+    display: none;
+  }
+}

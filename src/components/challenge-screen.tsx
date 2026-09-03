@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
 import { ChallengeAudio } from "@/components/challenge-audio"
+import { isHostAudioEnabled } from "@/components/challenge-audio-control"
 import { WhosThatSalmonStage } from "@/components/whos-that-salmon-stage"
 
 interface ChallengeScreenProps {
@@ -75,7 +76,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
   const [answer, setAnswer] = useState("")
   const [busy, setBusy] = useState<"advance" | "answer" | "finish" | null>(null)
   if (!tournament) return null
-  const isHost = Boolean(session.hostToken)
+  const isHost = isHostAudioEnabled(session)
   const currentPlayer = game.players.find((player) => player.id === session.playerId)
   const teamId = currentPlayer?.teamId
   const teamAnswer = tournament.answers.find((entry) => entry.teamId === teamId)
@@ -126,12 +127,14 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
             <ul className="rules-list">
               {tournament.challenge.rules.map((rule) => <li key={rule}>{rule}</li>)}
             </ul>
-            <ChallengeAudio
-              videoId={tournament.challenge.introMusicYoutubeId}
-              title={tournament.challenge.title}
-              startSeconds={tournament.challenge.introMusicStartSeconds}
-              endSeconds={tournament.challenge.introMusicEndSeconds}
-            />
+            {isHost ? (
+              <ChallengeAudio
+                videoId={tournament.challenge.introMusicYoutubeId}
+                title={tournament.challenge.title}
+                startSeconds={tournament.challenge.introMusicStartSeconds}
+                endSeconds={tournament.challenge.introMusicEndSeconds}
+              />
+            ) : null}
           </CardContent>
           <CardFooter className="justify-center">
             {isHost ? (
@@ -178,7 +181,13 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
               <CardTitle className="font-heading text-3xl font-black">{tournament.round.question}</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLocked ? (
+              {!teamId ? (
+                <Alert>
+                  <Trophy />
+                  <AlertTitle>Maître du jeu · hors compétition</AlertTitle>
+                  <AlertDescription>Cadre les réponses des bancs puis révèle la solution au bon moment.</AlertDescription>
+                </Alert>
+              ) : isLocked ? (
                 <Alert>
                   <LockKeyhole />
                   <AlertTitle>Réponse verrouillée</AlertTitle>

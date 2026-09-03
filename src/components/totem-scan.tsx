@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-type ScanPhase = "idle" | "revealed" | "scanning"
+import "./totem-scan.css"
+
+type ScanPhase = "idle" | "revealed" | "scanning" | "materializing"
 
 interface TotemScanProps {
   totem: TotemView | null
@@ -15,9 +17,10 @@ interface TotemScanProps {
 }
 
 const SCAN_DURATION_MS = 5_000
+const MATERIALIZATION_DURATION_MS = 5_000
 
-function waitForReveal() {
-  return new Promise<void>((resolve) => window.setTimeout(resolve, SCAN_DURATION_MS))
+function wait(durationMs: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, durationMs))
 }
 
 export function TotemScan({ totem, onClaim }: TotemScanProps) {
@@ -68,13 +71,14 @@ export function TotemScan({ totem, onClaim }: TotemScanProps) {
     setError(null)
     setPhase("scanning")
     void requestCamera()
-    const revealDelay = waitForReveal()
 
     try {
-      await revealDelay
+      await wait(SCAN_DURATION_MS)
       const assignedTotem = await onClaim()
       stopCamera()
       setRevealedTotem(assignedTotem)
+      setPhase("materializing")
+      await wait(MATERIALIZATION_DURATION_MS)
       setPhase("revealed")
     } catch (caught) {
       stopCamera()
@@ -102,6 +106,54 @@ export function TotemScan({ totem, onClaim }: TotemScanProps) {
         <CardContent>
           <p className="text-center text-sm leading-relaxed text-muted-foreground">{revealedTotem.fact}</p>
         </CardContent>
+      </Card>
+    )
+  }
+
+  if (phase === "materializing" && revealedTotem) {
+    return (
+      <Card className="totem-materializing-card mb-4 overflow-hidden">
+        <div className="totem-materializer" data-testid="totem-materializer">
+          <img
+            data-testid="totem-materializing-image"
+            src={revealedTotem.imageUrl}
+            alt=""
+            aria-hidden="true"
+            className="totem-materializing-image"
+          />
+
+          <div
+            className="totem-analysis-overlay"
+            data-testid="totem-analysis-overlay"
+            aria-hidden="true"
+          >
+            <div className="totem-analysis-data totem-analysis-data-top">
+              <span>SONAR BIOMARIN</span>
+              <strong>SIGNAL ACQUIS</strong>
+              <code>Δ 08.47 · Ω 73%</code>
+            </div>
+
+            <div className="totem-materializing-core">
+              <span className="totem-materializing-ring" />
+              <span className="totem-materializing-ring" />
+              <span className="totem-materializing-ring" />
+              <strong>?</strong>
+            </div>
+
+            <div className="totem-materializing-scanline" />
+
+            <div className="totem-analysis-data totem-analysis-data-bottom">
+              <span>MATRICE TOTÉMIQUE</span>
+              <strong>MATÉRIALISATION…</strong>
+              <code>ADN · ÉCAILLES · BRANCHIES</code>
+            </div>
+
+            <div className="totem-materializing-progress"><span /></div>
+          </div>
+        </div>
+        <p className="sr-only" role="status" aria-live="polite">
+          Totem détecté. Matérialisation en cours.
+        </p>
       </Card>
     )
   }

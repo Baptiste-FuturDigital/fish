@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BackgroundMusic } from "@/components/background-music"
+import { isHostAudioEnabled } from "@/components/challenge-audio-control"
 import { ChallengeScreen } from "@/components/challenge-screen"
 import { FinalReveal } from "@/components/final-reveal"
 import { LeaderboardScreen } from "@/components/leaderboard-screen"
@@ -324,7 +325,15 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam }: { g
   return (
     <>
       <GameHeader game={game} />
-      <TotemScan totem={currentPlayer?.totem ?? null} onClaim={claimCurrentTotem} />
+      {isHost ? (
+        <Alert className="mb-4">
+          <Anchor />
+          <AlertTitle>Maître du jeu · hors compétition</AlertTitle>
+          <AlertDescription>Tu gardes le rythme et les commandes ; seuls les invités rejoignent les bancs.</AlertDescription>
+        </Alert>
+      ) : (
+        <TotemScan totem={currentPlayer?.totem ?? null} onClaim={claimCurrentTotem} />
+      )}
       <TeamBoard game={game} session={session} onRename={onRenameTeam} />
       <Card className="mb-4">
         <CardHeader>
@@ -396,8 +405,8 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit }: { game: Ga
   )
 }
 
-function EndScreen({ game, onLeave }: { game: GameView; onLeave: () => void }) {
-  return <FinalReveal game={game} onLeave={onLeave} />
+function EndScreen({ game, session, onLeave }: { game: GameView; session: PlayerSession; onLeave: () => void }) {
+  return <FinalReveal game={game} onLeave={onLeave} audioEnabled={isHostAudioEnabled(session)} />
 }
 
 function LoadingScreen() {
@@ -415,18 +424,19 @@ function LoadingScreen() {
 export default function App() {
   const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, submitAnswer } = useGame()
   const isSalmonDemo = new URLSearchParams(window.location.search).get("salmon-demo") === "1"
+  const audioEnabled = isSalmonDemo || (session ? isHostAudioEnabled(session) : false)
   const screen = useMemo(() => {
     if (isSalmonDemo) return <SalmonDemoScreen />
     if (!session) return <HomeScreen onEnter={enter} />
     if (loading || !game) return <LoadingScreen />
     if (game.status === "lobby") return <LobbyScreen game={game} session={session} onStart={() => hostAction("start").then(() => undefined)} onClaimTotem={claimTotem} onRenameTeam={renameTeam} />
     if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} />
-    return <EndScreen game={game} onLeave={leave} />
+    return <EndScreen game={game} session={session} onLeave={leave} />
   }, [claimTotem, enter, game, hostAction, isSalmonDemo, leave, loading, renameTeam, session, submitAnswer])
 
   return (
     <OceanShell>
-      <BackgroundMusic />
+      {audioEnabled ? <BackgroundMusic /> : null}
       {error && session && (
         <Alert variant="destructive" className="mb-4">
           <AlertTitle>Connexion perdue</AlertTitle>

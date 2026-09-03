@@ -47,6 +47,7 @@ interface PlayerAuthRow {
   id: string
   token_hash: string
   totem_id: number | null
+  is_host: number
 }
 
 interface TeamRow {
@@ -162,10 +163,8 @@ export class GameService {
 
   createDemoGame(): SessionResponse {
     const created = this.createGame("Démo de Poséithon", "Poséithon")
-    const sessions = [created.session]
-    for (const name of ["Ariel", "Nemo", "Dory", "Sebastien", "Marin", "Poulpy", "Moby"]) {
-      sessions.push(this.joinGame(created.game.code, name).session)
-    }
+    const sessions = ["Ariel", "Nemo", "Dory", "Sebastien", "Marin", "Poulpy", "Moby", "Corail"]
+      .map((name) => this.joinGame(created.game.code, name).session)
     for (const session of sessions) {
       this.claimTotem(created.game.code, session.playerId, session.playerToken)
     }
@@ -189,7 +188,7 @@ export class GameService {
       throw new GameError("Cette partie a déjà quitté le port.", 409)
     }
     const playerCount = this.database
-      .prepare("SELECT COUNT(*) AS count FROM players WHERE game_id = ?")
+      .prepare("SELECT COUNT(*) AS count FROM players WHERE game_id = ? AND is_host = 0")
       .get(game.id) as { count: number }
     if (playerCount.count >= totems.length) {
       throw new GameError("L'aquarium est complet : vingt poissons maximum.", 409)
@@ -232,7 +231,7 @@ export class GameService {
     const players = this.database
       .prepare(
         `SELECT id, name, is_host, score, totem_id
-         FROM players WHERE game_id = ? ORDER BY created_at, rowid`,
+         FROM players WHERE game_id = ? AND is_host = 0 ORDER BY created_at, rowid`,
       )
       .all(game.id) as PlayerRow[]
     const playerViews: PlayerView[] = players.map((player) => ({
@@ -288,15 +287,18 @@ export class GameService {
 
     this.database.transaction(() => {
       const player = this.database
-        .prepare("SELECT id, token_hash, totem_id FROM players WHERE game_id = ? AND id = ?")
+        .prepare("SELECT id, token_hash, totem_id, is_host FROM players WHERE game_id = ? AND id = ?")
         .get(game.id, playerId) as PlayerAuthRow | undefined
       if (!player || !playerToken || hashToken(playerToken) !== player.token_hash) {
         throw new GameError("Session de poisson invalide.", 403)
       }
+      if (player.is_host) {
+        throw new GameError("Le maître du jeu reste hors compétition.", 409)
+      }
       if (player.totem_id !== null) return
 
       const usedRows = this.database
-        .prepare("SELECT totem_id FROM players WHERE game_id = ? AND totem_id IS NOT NULL")
+        .prepare("SELECT totem_id FROM players WHERE game_id = ? AND is_host = 0 AND totem_id IS NOT NULL")
         .all(game.id) as Array<{ totem_id: number }>
       const usedIds = new Set(usedRows.map((row) => row.totem_id))
       const available = totems.filter((candidate) => !usedIds.has(candidate.id))
@@ -322,12 +324,7 @@ export class GameService {
   ): GameView {
     const game = this.getGameRow(codeInput.trim().toUpperCase())
     if (game.status !== "lobby") throw new GameError("Les noms de banc sont verrouillés.", 409)
-    const player = this.database
-      .prepare("SELECT id, token_hash, totem_id FROM players WHERE game_id = ? AND id = ?")
-      .get(game.id, playerId) as PlayerAuthRow | undefined
-    if (!player || !playerToken || hashToken(playerToken) !== player.token_hash) {
-      throw new GameError("Session de poisson invalide.", 403)
-    }
+    const player = this.assertPlayer(game.id, playerId, playerToken)
     const totem = findTotem(player.totem_id)
     if (!totem || teamIds[totem.category] !== teamId) {
       throw new GameError("Tu ne peux renommer que ton propre banc.", 403)
@@ -344,13 +341,13 @@ export class GameService {
       throw new GameError("La partie ne peut plus être démarrée.", 409)
     }
     const count = this.database
-      .prepare("SELECT COUNT(*) AS count FROM players WHERE game_id = ?")
+      .prepare("SELECT COUNT(*) AS count FROM players WHERE game_id = ? AND is_host = 0")
       .get(game.id) as { count: number }
     if (count.count < 2) {
       throw new GameError("Il faut au moins deux poissons pour démarrer.", 409)
     }
     const unassigned = this.database
-      .prepare("SELECT COUNT(*) AS count FROM players WHERE game_id = ? AND totem_id IS NULL")
+      .prepare("SELECT COUNT(*) AS count FROM players WHERE game_id = ? AND is_host = 0 AND totem_id IS NULL")
       .get(game.id) as { count: number }
     if (unassigned.count > 0) {
       throw new GameError("Tous les poissons doivent révéler leur animal totem.", 409)
@@ -643,10 +640,13 @@ export class GameService {
 
   private assertPlayer(gameId: string, playerId: string, playerToken: string): PlayerAuthRow {
     const player = this.database
-      .prepare("SELECT id, token_hash, totem_id FROM players WHERE game_id = ? AND id = ?")
+      .prepare("SELECT id, token_hash, totem_id, is_host FROM players WHERE game_id = ? AND id = ?")
       .get(gameId, playerId) as PlayerAuthRow | undefined
     if (!player || !playerToken || hashToken(playerToken) !== player.token_hash) {
       throw new GameError("Session de poisson invalide.", 403)
+    }
+    if (player.is_host) {
+      throw new GameError("Le maître du jeu reste hors compétition.", 409)
     }
     return player
   }
