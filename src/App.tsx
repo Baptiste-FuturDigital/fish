@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BackgroundMusic } from "@/components/background-music"
 import { ChallengeScreen } from "@/components/challenge-screen"
-import { FinalScoreboard } from "@/components/final-scoreboard"
+import { FinalReveal } from "@/components/final-reveal"
 import { LeaderboardScreen } from "@/components/leaderboard-screen"
 import { TeamBoard } from "@/components/team-board"
 import { TotemScan } from "@/components/totem-scan"
@@ -176,7 +176,7 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
               <LogIn data-icon="inline-start" />
               Rejoindre une partie
             </Button>
-            <Button size="lg" variant="outline" className="w-full" onClick={() => void launchDemo()} disabled={busy}>
+            <Button size="lg" variant="outline" className="w-full text-white hover:text-white [&_svg]:text-white hover:[&_svg]:text-white" onClick={() => void launchDemo()} disabled={busy}>
               {busy ? <LoaderCircle data-icon="inline-start" className="animate-spin" /> : <Sparkles data-icon="inline-start" />}
               Lancer la démo
             </Button>
@@ -396,7 +396,7 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit }: { game: Ga
 }
 
 function EndScreen({ game, onLeave }: { game: GameView; onLeave: () => void }) {
-  return <FinalScoreboard game={game} onLeave={onLeave} />
+  return <FinalReveal game={game} onLeave={onLeave} />
 }
 
 function LoadingScreen() {

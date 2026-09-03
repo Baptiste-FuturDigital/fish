@@ -11,6 +11,9 @@ type YouTubeCommand = "mute" | "playVideo" | "unMute"
 export function BackgroundMusic() {
   const playerRef = useRef<HTMLIFrameElement>(null)
   const [isMuted, setIsMuted] = useState(true)
+  const [isSuspended, setIsSuspended] = useState(false)
+  const isMutedRef = useRef(true)
+  const isSuspendedRef = useRef(false)
 
   const playerSource = useMemo(() => {
     const parameters = new URLSearchParams({
@@ -36,9 +39,32 @@ export function BackgroundMusic() {
   }, [])
 
   const enableMusic = useCallback(() => {
+    isMutedRef.current = false
+    setIsMuted(false)
+    if (isSuspendedRef.current) {
+      sendCommand("mute")
+      return
+    }
     sendCommand("playVideo")
     sendCommand("unMute")
-    setIsMuted(false)
+  }, [sendCommand])
+
+  useEffect(() => {
+    function handleAmbientSuspension(event: Event) {
+      if (!(event instanceof CustomEvent) || typeof event.detail !== "boolean") return
+
+      isSuspendedRef.current = event.detail
+      setIsSuspended(event.detail)
+      if (event.detail || isMutedRef.current) {
+        sendCommand("mute")
+        return
+      }
+      sendCommand("playVideo")
+      sendCommand("unMute")
+    }
+
+    window.addEventListener("fish:set-ambient-suspended", handleAmbientSuspension)
+    return () => window.removeEventListener("fish:set-ambient-suspended", handleAmbientSuspension)
   }, [sendCommand])
 
   useEffect(() => {
@@ -63,6 +89,7 @@ export function BackgroundMusic() {
       return
     }
 
+    isMutedRef.current = true
     sendCommand("mute")
     setIsMuted(true)
   }
@@ -75,14 +102,19 @@ export function BackgroundMusic() {
         ref={playerRef}
         className="background-music-player"
         data-testid="background-music-player"
+        data-suspended={String(isSuspended)}
         src={playerSource}
         title="Whale EDM — lecteur d'ambiance YouTube"
         allow="autoplay; encrypted-media"
         aria-hidden="true"
         tabIndex={-1}
         onLoad={() => {
+          if (isSuspendedRef.current || isMutedRef.current) {
+            sendCommand("mute")
+            return
+          }
           sendCommand("playVideo")
-          sendCommand(isMuted ? "mute" : "unMute")
+          sendCommand("unMute")
         }}
       />
       <Button
