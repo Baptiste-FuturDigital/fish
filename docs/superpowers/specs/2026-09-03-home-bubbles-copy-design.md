@@ -12,8 +12,8 @@ Rendre l'accueil de Fish Party plus vivant sans modifier son parcours, ses formu
 - Respecter `prefers-reduced-motion` pour supprimer le mouvement si l'utilisateur le demande.
 - Remplacer le texte du hero par :
   - badge : « C'EST L'HEURE DU DUEL » ;
-  - titre : « Quels poissons seront dignes de Poséidon ? 🔱 » ;
-  - description : « Merci de vous donner à fond, marins, les champions seront dignement récompensés. »
+  - titre : « Quels poissons seront dignes de Poséithon ? 🔱 » ;
+  - description : « Merci de vous donner à fond marin et de ne pas crevette durant les épreuves. Les champions seront honorés d'une faveur divine. »
 
 ## Idées de jeux conservées pour la suite
 
