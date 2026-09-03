@@ -1,0 +1,201 @@
+.millionaire-answer-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.millionaire-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.millionaire-options .millionaire-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr);
+  width: 100%;
+  min-height: 3.75rem;
+  height: auto;
+  justify-content: stretch;
+  padding: 0.65rem 0.8rem;
+  overflow: hidden;
+  border-color: oklch(0.56 0.085 224 / 48%);
+  border-radius: 0.85rem;
+  background:
+    linear-gradient(105deg, oklch(0.2 0.06 225), oklch(0.14 0.05 217));
+  color: oklch(0.94 0.025 195);
+  text-align: left;
+  white-space: normal;
+  box-shadow: inset 0 1px 0 oklch(0.9 0.08 205 / 8%);
+}
+
+.millionaire-options .millionaire-option::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, oklch(0.86 0.14 91 / 9%), transparent);
+  opacity: 0;
+  transform: translateX(-80%);
+  transition: opacity 180ms ease, transform 280ms ease;
+}
+
+.millionaire-options .millionaire-option strong {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  align-self: center;
+  border: 1px solid oklch(0.84 0.14 91 / 38%);
+  border-radius: 50%;
+  color: oklch(0.87 0.15 91);
+  font-family: "Fraunces Variable", serif;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.millionaire-options .millionaire-option span {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.millionaire-options .millionaire-option[data-pressed] {
+  border-color: oklch(0.86 0.16 91);
+  background:
+    linear-gradient(105deg, oklch(0.72 0.17 73), oklch(0.59 0.18 48));
+  color: oklch(0.99 0.02 94);
+  box-shadow:
+    0 0 0 2px oklch(0.9 0.13 91 / 20%),
+    0 0.65rem 1.4rem oklch(0.45 0.15 54 / 24%);
+}
+
+.millionaire-options .millionaire-option[data-pressed]::after {
+  opacity: 1;
+  transform: translateX(80%);
+}
+
+.millionaire-options .millionaire-option[data-pressed] strong {
+  border-color: oklch(1 0 0 / 45%);
+  background: oklch(1 0 0 / 13%);
+  color: white;
+}
+
+.millionaire-confirmation {
+  display: grid;
+  justify-items: center;
+  gap: 0.65rem;
+  padding: 1.25rem 1rem;
+  border: 1px solid oklch(0.81 0.15 91 / 52%);
+  border-radius: 1.15rem;
+  background:
+    radial-gradient(circle at 50% 0, oklch(0.72 0.16 79 / 17%), transparent 13rem),
+    linear-gradient(155deg, oklch(0.18 0.06 225), oklch(0.1 0.04 218));
+  color: oklch(0.95 0.025 193);
+  text-align: center;
+  box-shadow: 0 1rem 2.5rem oklch(0.08 0.04 220 / 30%);
+  animation: millionaire-confirmation-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.millionaire-lock {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 1px solid oklch(0.9 0.14 91 / 56%);
+  border-radius: 50%;
+  background: oklch(0.81 0.16 82 / 16%);
+  color: oklch(0.9 0.16 91);
+  box-shadow: 0 0 1.5rem oklch(0.84 0.14 91 / 20%);
+}
+
+.millionaire-lock svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.millionaire-confirmation > p {
+  margin: 0;
+  color: oklch(0.69 0.045 198);
+  font-size: 0.65rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.millionaire-confirmation h3 {
+  margin: 0;
+  color: oklch(0.97 0.03 96);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1.75rem, 8vw, 2.5rem);
+  font-weight: 900;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.millionaire-final-choice {
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  margin-block: 0.55rem;
+  padding: 0.75rem;
+  border: 1px solid oklch(0.85 0.15 89 / 58%);
+  border-radius: 0.9rem;
+  background: linear-gradient(100deg, oklch(0.7 0.18 69), oklch(0.56 0.18 45));
+  text-align: left;
+}
+
+.millionaire-final-choice strong {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border: 1px solid oklch(1 0 0 / 48%);
+  border-radius: 50%;
+  font-family: "Fraunces Variable", serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.millionaire-final-choice span {
+  font-weight: 850;
+  line-height: 1.25;
+}
+
+.millionaire-confirmation-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.millionaire-confirmation-actions > :last-child {
+  min-height: 2.75rem;
+}
+
+@keyframes millionaire-confirmation-in {
+  from { opacity: 0; transform: translate3d(0, 0.8rem, 0) scale(0.97); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@media (min-width: 440px) {
+  .millionaire-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .millionaire-confirmation,
+  .millionaire-options .millionaire-option::after {
+    animation: none;
+    transition: none;
+  }
+}
