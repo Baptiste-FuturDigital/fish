@@ -9,7 +9,7 @@ import "./salmon-demo-screen.css"
 
 type DemoPhase = "idle" | "playing" | "revealed"
 
-const REVEAL_DELAY_MS = 5_000
+const REVEAL_DELAY_MS = 6_000
 
 export function SalmonDemoScreen() {
   const [phase, setPhase] = useState<DemoPhase>("idle")
@@ -51,7 +51,7 @@ export function SalmonDemoScreen() {
               <span className="salmon-demo-pulse" aria-hidden="true" />
               <div>
                 <strong>Générique en cours…</strong>
-                <p>Révélation automatique dans 5 secondes.</p>
+                <p>Une seconde de silence, puis révélation après le générique.</p>
               </div>
             </>
           ) : (

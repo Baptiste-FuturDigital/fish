@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import type { GameView } from "@shared/game"
 import { FinalScoreboard } from "./final-scoreboard.js"
@@ -6,35 +6,69 @@ import { FinalScoreboard } from "./final-scoreboard.js"
 import "./final-reveal.css"
 
 const SUSPENSE_DURATION_MS = 7_000
+const SUSPENSE_SILENCE_MS = 1_000
 const SUSPENSE_VIDEO_ID = "wKw0pvc1HiE"
 const AMBIENT_EVENT = "fish:set-ambient-suspended"
+const YOUTUBE_ORIGIN = "https://www.youtube-nocookie.com"
 
-const suspensePlayerSource = (() => {
+export function buildFinalRevealPlayerSource(origin: string) {
   const parameters = new URLSearchParams({
-    autoplay: "1",
+    autoplay: "0",
     controls: "0",
     disablekb: "1",
+    enablejsapi: "1",
     end: "7",
     fs: "0",
     modestbranding: "1",
     mute: "0",
+    origin,
     playsinline: "1",
     rel: "0",
     start: "0",
   })
 
-  return `https://www.youtube-nocookie.com/embed/${SUSPENSE_VIDEO_ID}?${parameters.toString()}`
-})()
+  return `${YOUTUBE_ORIGIN}/embed/${SUSPENSE_VIDEO_ID}?${parameters.toString()}`
+}
+
+type SuspensePlayerCommand = "playVideo" | "unMute"
+
+export function createSuspensePlayerController(
+  sendCommand: (command: SuspensePlayerCommand) => void,
+) {
+  let loaded = false
+  let playRequested = false
+  let started = false
+
+  const startWhenReady = () => {
+    if (!loaded || !playRequested || started) return
+    started = true
+    sendCommand("playVideo")
+    sendCommand("unMute")
+  }
+
+  return {
+    markLoaded() {
+      loaded = true
+      startWhenReady()
+    },
+    requestPlay() {
+      playRequested = true
+      startWhenReady()
+    },
+  }
+}
 
 interface FinalRevealTransitionOptions {
   audioEnabled: boolean
   onReveal: () => void
+  onPlayAudio?: () => void
   target?: EventTarget
 }
 
 export function beginFinalRevealTransition({
   audioEnabled,
   onReveal,
+  onPlayAudio,
   target = window,
 }: FinalRevealTransitionOptions) {
   let active = true
@@ -51,6 +85,12 @@ export function beginFinalRevealTransition({
     target.dispatchEvent(new CustomEvent<boolean>(AMBIENT_EVENT, { detail: true }))
   }
 
+  const playTimer = audioEnabled
+    ? setTimeout(() => {
+        if (active) onPlayAudio?.()
+      }, SUSPENSE_SILENCE_MS)
+    : null
+
   const revealTimer = setTimeout(() => {
     if (!active) return
     active = false
@@ -60,6 +100,7 @@ export function beginFinalRevealTransition({
 
   return () => {
     active = false
+    if (playTimer !== null) clearTimeout(playTimer)
     clearTimeout(revealTimer)
     restoreAmbient()
   }
@@ -75,10 +116,22 @@ export function FinalReveal({
   audioEnabled?: boolean
 }) {
   const [isRevealed, setIsRevealed] = useState(false)
+  const playerRef = useRef<HTMLIFrameElement>(null)
+  const playerControllerRef = useRef<ReturnType<typeof createSuspensePlayerController> | null>(null)
+
+  if (!playerControllerRef.current) {
+    playerControllerRef.current = createSuspensePlayerController((command) => {
+      playerRef.current?.contentWindow?.postMessage(
+        JSON.stringify({ event: "command", func: command, args: [] }),
+        YOUTUBE_ORIGIN,
+      )
+    })
+  }
 
   useEffect(() => {
     return beginFinalRevealTransition({
       audioEnabled,
+      onPlayAudio: () => playerControllerRef.current?.requestPlay(),
       onReveal: () => setIsRevealed(true),
     })
   }, [audioEnabled])
@@ -96,13 +149,17 @@ export function FinalReveal({
     >
       {audioEnabled ? (
         <iframe
+          ref={playerRef}
           className="final-suspense-player"
           data-testid="final-suspense-player"
-          src={suspensePlayerSource}
+          src={buildFinalRevealPlayerSource(
+            typeof window === "undefined" ? "http://localhost" : window.location.origin,
+          )}
           title="Musique du suspense final"
           allow="autoplay; encrypted-media"
           tabIndex={-1}
           aria-hidden="true"
+          onLoad={() => playerControllerRef.current?.markLoaded()}
         />
       ) : null}
 

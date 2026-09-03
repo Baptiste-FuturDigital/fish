@@ -1,5 +1,29 @@
 const YOUTUBE_ORIGIN = "https://www.youtube-nocookie.com"
 const AMBIENT_EVENT = "fish:set-ambient-suspended"
+const INTRO_PAUSE_MS = 1_000
+
+export type ChallengePlayerCommand = "mute" | "playVideo" | "unMute"
+
+export function createChallengePlayerController(
+  sendCommand: (command: ChallengePlayerCommand) => void,
+) {
+  let loaded = false
+  const pendingCommands: ChallengePlayerCommand[] = []
+
+  return {
+    markLoaded() {
+      loaded = true
+      pendingCommands.splice(0).forEach(sendCommand)
+    },
+    send(command: ChallengePlayerCommand) {
+      if (loaded) {
+        sendCommand(command)
+        return
+      }
+      pendingCommands.push(command)
+    },
+  }
+}
 
 interface ChallengeAudioSourceOptions {
   videoId: string
@@ -23,7 +47,7 @@ export function buildChallengeAudioSource({
   origin,
 }: ChallengeAudioSourceOptions) {
   const parameters = new URLSearchParams({
-    autoplay: "1",
+    autoplay: "0",
     controls: "0",
     disablekb: "1",
     enablejsapi: "1",
@@ -43,7 +67,19 @@ function setAmbientSuspended(target: EventTarget, suspended: boolean) {
   target.dispatchEvent(new CustomEvent<boolean>(AMBIENT_EVENT, { detail: suspended }))
 }
 
-export function beginAmbientSuspension(durationMs: number, target: EventTarget = window) {
+interface ChallengeAudioSequenceOptions {
+  clipDurationMs?: number
+  sendCommand: (command: ChallengePlayerCommand) => void
+  target?: EventTarget
+  onPlaybackStarted?: () => void
+}
+
+export function beginChallengeAudioSequence({
+  clipDurationMs,
+  sendCommand,
+  target = window,
+  onPlaybackStarted,
+}: ChallengeAudioSequenceOptions) {
   let restored = false
   const restore = () => {
     if (restored) return
@@ -52,10 +88,19 @@ export function beginAmbientSuspension(durationMs: number, target: EventTarget =
   }
 
   setAmbientSuspended(target, true)
-  const timer = setTimeout(restore, durationMs)
+  const playTimer = setTimeout(() => {
+    sendCommand("playVideo")
+    sendCommand("unMute")
+    onPlaybackStarted?.()
+  }, INTRO_PAUSE_MS)
+
+  const restoreTimer = clipDurationMs === undefined
+    ? undefined
+    : setTimeout(restore, INTRO_PAUSE_MS + clipDurationMs)
 
   return () => {
-    clearTimeout(timer)
+    clearTimeout(playTimer)
+    if (restoreTimer !== undefined) clearTimeout(restoreTimer)
     restore()
   }
 }

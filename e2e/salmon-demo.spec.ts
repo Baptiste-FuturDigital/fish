@@ -22,6 +22,8 @@ test("salmon demo plays its five-second reveal sequence without the backend", as
   await expect(ambient).toHaveAttribute("data-suspended", "true")
   await expect(page.getByRole("heading", { name: "C’est l’hippocampe !" })).not.toBeVisible()
 
+  await page.waitForTimeout(5_250)
+  await expect(page.getByRole("heading", { name: "C’est l’hippocampe !" })).not.toBeVisible()
   await expect(page.getByRole("heading", { name: "C’est l’hippocampe !" })).toBeVisible({ timeout: 7_000 })
   await expect(creature).not.toHaveClass(/is-masked/)
   await expect(ambient).toHaveAttribute("data-suspended", "false")

@@ -121,7 +121,7 @@ export function BackgroundMusic() {
         type="button"
         variant="secondary"
         size="icon-lg"
-        className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 rounded-full shadow-2xl"
+        className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[70] rounded-full shadow-2xl"
         data-music-control
         aria-label={controlLabel}
         aria-pressed={!isMuted}

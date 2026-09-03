@@ -21,20 +21,52 @@ describe("challenge audio", () => {
     }))
 
     expect(source.pathname).toBe("/embed/FsvGm4pqlW8")
+    expect(source.searchParams.get("autoplay")).toBe("0")
+    expect(source.searchParams.get("enablejsapi")).toBe("1")
     expect(source.searchParams.get("start")).toBe("0")
     expect(source.searchParams.get("end")).toBe("5")
   })
 
-  it("suspend l’ambiance pendant le générique puis la restaure", async () => {
-    const { beginAmbientSuspension } = await import("./challenge-audio-control.js")
+  it("attend le chargement du player avant d'envoyer les commandes", async () => {
+    const { createChallengePlayerController } = await import("./challenge-audio-control.js")
+    const commands: string[] = []
+    const player = createChallengePlayerController((command) => commands.push(command))
+
+    player.send("playVideo")
+    player.send("unMute")
+    expect(commands).toEqual([])
+
+    player.markLoaded()
+    expect(commands).toEqual(["playVideo", "unMute"])
+
+    player.send("mute")
+    expect(commands).toEqual(["playVideo", "unMute", "mute"])
+  })
+
+  it("suspend immédiatement, attend une seconde, joue puis restaure après un clip borné", async () => {
+    const { beginChallengeAudioSequence } = await import("./challenge-audio-control.js")
     vi.useFakeTimers()
     const target = new EventTarget()
     const states: boolean[] = []
+    const commands: string[] = []
     target.addEventListener("fish:set-ambient-suspended", (event) => {
       states.push((event as CustomEvent<boolean>).detail)
     })
 
-    const cleanup = beginAmbientSuspension(5_000, target)
+    const cleanup = beginChallengeAudioSequence({
+      clipDurationMs: 5_000,
+      sendCommand: (command) => commands.push(command),
+      target,
+    })
+    expect(states).toEqual([true])
+    expect(commands).toEqual([])
+
+    vi.advanceTimersByTime(999)
+    expect(states).toEqual([true])
+    expect(commands).toEqual([])
+
+    vi.advanceTimersByTime(1)
+    expect(commands).toEqual(["playVideo", "unMute"])
     expect(states).toEqual([true])
 
     vi.advanceTimersByTime(4_999)
@@ -43,5 +75,34 @@ describe("challenge audio", () => {
     vi.advanceTimersByTime(1)
     expect(states).toEqual([true, false])
     cleanup()
+    expect(states).toEqual([true, false])
+  })
+
+  it("garde l’ambiance suspendue pour un générique libre jusqu’à sa coupure", async () => {
+    const { beginChallengeAudioSequence } = await import("./challenge-audio-control.js")
+    vi.useFakeTimers()
+    const target = new EventTarget()
+    const states: boolean[] = []
+    const commands: string[] = []
+    target.addEventListener("fish:set-ambient-suspended", (event) => {
+      states.push((event as CustomEvent<boolean>).detail)
+    })
+
+    const stop = beginChallengeAudioSequence({
+      sendCommand: (command) => commands.push(command),
+      target,
+    })
+
+    expect(states).toEqual([true])
+    vi.advanceTimersByTime(1_000)
+    expect(commands).toEqual(["playVideo", "unMute"])
+
+    vi.advanceTimersByTime(60_000)
+    expect(states).toEqual([true])
+
+    stop()
+    expect(states).toEqual([true, false])
+    stop()
+    expect(states).toEqual([true, false])
   })
 })
