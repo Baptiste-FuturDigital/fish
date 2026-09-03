@@ -276,6 +276,65 @@ describe("GameService", () => {
     }))
   })
 
+  it("runs Question pour un poisson with readable answers from submission to reveal", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const [first, second] = joinAndClaimCompetitors(created.game.code)
+    service.startGame(created.game.code, created.session.hostToken!)
+    database.prepare(
+      `UPDATE games
+       SET challenge_index = 1, challenge_round = 0, current_round = 0,
+           phase = 'challenge-intro', phase_ends_at = NULL
+       WHERE code = ?`,
+    ).run(created.game.code)
+
+    const answering = service.advanceTournament(created.game.code, created.session.hostToken!)
+    expect(answering.tournament).toEqual(expect.objectContaining({
+      phase: "answering",
+      challenge: expect.objectContaining({ title: "Question pour un poisson" }),
+      round: expect.objectContaining({
+        question: "Combien de cœurs font circuler le sang d’un poulpe ?",
+      }),
+    }))
+    expect(answering.tournament?.round).not.toHaveProperty("correctAnswer")
+
+    service.submitTeamAnswer(
+      created.game.code,
+      first.session.playerId,
+      first.session.playerToken,
+      "trois",
+      true,
+    )
+    service.submitTeamAnswer(
+      created.game.code,
+      second.session.playerId,
+      second.session.playerToken,
+      "neuf",
+      true,
+    )
+
+    const revealed = service.advanceTournament(created.game.code, created.session.hostToken!)
+    const firstTeamId = revealed.players.find((player) => player.id === first.session.playerId)?.teamId
+    const secondTeamId = revealed.players.find((player) => player.id === second.session.playerId)?.teamId
+
+    expect(revealed.tournament?.phase).toBe("reveal")
+    expect(revealed.tournament?.round.answerLabel).toBe("Trois cœurs")
+    expect(revealed.tournament?.results.find((result) => result.teamId === firstTeamId)).toEqual(
+      expect.objectContaining({ answer: "Trois", isCorrect: true, points: 2 }),
+    )
+    expect(revealed.tournament?.results.find((result) => result.teamId === secondTeamId)).toEqual(
+      expect.objectContaining({ answer: "Neuf, un par cerveau", isCorrect: false, points: 0 }),
+    )
+
+    const nextQuestion = service.advanceTournament(created.game.code, created.session.hostToken!)
+    expect(nextQuestion.tournament).toEqual(expect.objectContaining({
+      phase: "answering",
+      challengeIndex: 1,
+      roundIndex: 1,
+      results: [],
+    }))
+    expect(nextQuestion.tournament?.round.correctAnswer).toBeUndefined()
+  })
+
   it("chains all four challenges and twenty-three rounds into the final scoreboard", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     joinAndClaimCompetitors(created.game.code)

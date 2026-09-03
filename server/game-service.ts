@@ -496,7 +496,9 @@ export class GameService {
       : []
     const results: RoundScoreResult[] = resultRows.map((entry) => ({
       teamId: entry.team_id,
-      answer: entry.answer,
+      answer: round.kind === "choice" && entry.answer !== null
+        ? round.choices.find((choice) => choice.id === entry.answer)?.label ?? entry.answer
+        : entry.answer,
       points: entry.points,
       isCorrect: Boolean(entry.is_correct),
       distance: entry.distance,
