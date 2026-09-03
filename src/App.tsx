@@ -67,7 +67,7 @@ function Brand() {
     <header className="mb-6 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3">
         <div className="brand-mark" aria-hidden="true">
-          🐟
+          🐡
         </div>
         <div>
           <p className="brand-kicker">L'AQUARIUM EN FOLIE</p>
