@@ -16,6 +16,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
 import { ChallengeAudio } from "@/components/challenge-audio"
 import { isHostAudioEnabled } from "@/components/challenge-audio-control"
+import { SalmonAnswerProgress } from "@/components/salmon-answer-progress"
 import { WhosThatSalmonStage } from "@/components/whos-that-salmon-stage"
 import { formatWeightEstimate } from "@/components/weight-estimate"
 
@@ -199,6 +200,9 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
       {tournament.phase === "answering" ? (
         <>
           <Countdown endsAt={tournament.endsAt} durationSeconds={tournament.round.durationSeconds} />
+          {tournament.challenge.id === "whos-dat-salmon" ? (
+            <SalmonAnswerProgress teams={game.teams} answers={tournament.answers} />
+          ) : null}
           <Card className="my-4">
             {tournament.round.imageUrl ? (
               tournament.round.id === "salmon-1-hippocampe" ? (
