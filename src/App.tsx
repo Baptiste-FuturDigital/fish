@@ -64,17 +64,20 @@ function OceanShell({ children }: { children: React.ReactNode }) {
 
 function Brand() {
   return (
-    <header className="mb-6 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
+    <header className="mb-6 flex items-start justify-between gap-3">
+      <div className="flex min-w-0 items-start gap-3">
         <div className="brand-mark" aria-hidden="true">
           🐡
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="brand-kicker">L'AQUARIUM EN FOLIE</p>
-          <p className="font-heading text-xl leading-none font-black">Fish Tournament</p>
+          <p className="font-heading text-2xl leading-none font-black">Fish Tournament</p>
+          <p className="mt-1 max-w-xs text-[0.68rem] leading-snug text-muted-foreground">
+            4 bancs de poissons vont s'affronter à travers quatre manches consécutives.
+          </p>
         </div>
       </div>
-          <Badge variant="secondary">Fish Party</Badge>
+      <Badge variant="secondary">Fish Party</Badge>
     </header>
   )
 }
@@ -120,7 +123,7 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
       <Brand />
       <section className="mb-7 pt-5">
         <Badge variant="outline">C'EST L'HEURE DU DUEL</Badge>
-        <h1 className="mt-4 max-w-md font-heading text-5xl leading-[0.92] font-black tracking-[-0.045em] text-balance sm:text-6xl">
+        <h1 className="mt-4 max-w-md font-heading text-4xl leading-[0.95] font-black tracking-[-0.04em] text-balance sm:text-5xl">
           Quels poissons seront dignes de Poséithon ? 🔱
         </h1>
         <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
