@@ -1,8 +1,10 @@
 import type {
   ChallengeDefinition,
   ChallengeRoundDefinition,
+  PlayerRoundScoreResult,
   PublicRoundView,
   RoundScoreResult,
+  SubmittedPlayerAnswer,
   SubmittedTeamAnswer,
 } from "../shared/challenges/types.js"
 
@@ -80,6 +82,79 @@ export function scoreRound(
       ...entry,
       points: isCorrect ? availablePoints : 0,
       isCorrect,
+      distance: null,
+    }
+  })
+}
+
+export function scorePlayerRound(
+  challenge: ChallengeDefinition,
+  roundIndex: number,
+  answers: readonly SubmittedPlayerAnswer[],
+): PlayerRoundScoreResult[] {
+  const scored = scoreRound(
+    challenge,
+    roundIndex,
+    answers.map((entry) => ({ teamId: entry.playerId, answer: entry.answer })),
+  )
+  const answersByPlayer = new Map(answers.map((entry) => [entry.playerId, entry]))
+  return scored.map((result) => {
+    const submitted = answersByPlayer.get(result.teamId)
+    if (!submitted) throw new Error("Réponse joueur introuvable.")
+    return {
+      playerId: submitted.playerId,
+      playerName: submitted.playerName,
+      teamId: submitted.teamId,
+      answer: result.answer,
+      points: result.points,
+      isCorrect: result.isCorrect,
+      distance: result.distance,
+    }
+  })
+}
+
+export function aggregateTeamResults(
+  challenge: ChallengeDefinition,
+  roundIndex: number,
+  playerResults: readonly PlayerRoundScoreResult[],
+  participatingTeamIds: readonly string[],
+): RoundScoreResult[] {
+  const round = challenge.rounds[roundIndex]
+  if (!round) throw new Error("Manche introuvable.")
+
+  if (round.kind === "number") {
+    const closestByTeam = new Map<string, PlayerRoundScoreResult>()
+    for (const result of playerResults) {
+      if (result.distance === null) continue
+      const current = closestByTeam.get(result.teamId)
+      if (
+        !current ||
+        current.distance === null ||
+        result.distance < current.distance ||
+        (result.distance === current.distance && result.playerId.localeCompare(current.playerId) < 0)
+      ) {
+        closestByTeam.set(result.teamId, result)
+      }
+    }
+    return scoreRound(
+      challenge,
+      roundIndex,
+      participatingTeamIds.map((teamId) => ({
+        teamId,
+        answer: closestByTeam.get(teamId)?.answer ?? null,
+      })),
+    )
+  }
+
+  return participatingTeamIds.map((teamId) => {
+    const best = playerResults
+      .filter((result) => result.teamId === teamId)
+      .sort((left, right) => right.points - left.points || left.playerId.localeCompare(right.playerId))[0]
+    return {
+      teamId,
+      answer: best?.answer ?? null,
+      points: best?.points ?? 0,
+      isCorrect: best?.isCorrect ?? false,
       distance: null,
     }
   })

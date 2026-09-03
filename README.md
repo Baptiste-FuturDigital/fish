@@ -1,6 +1,8 @@
 # Fish Tournament
 
-Jeu de soirée multijoueur mobile-first : un hôte crée un aquarium, les joueurs rejoignent avec un code à quatre caractères, puis le groupe enchaîne huit défis absurdes sur le thème de l'océan.
+Jeu de soirée multijoueur mobile-first : un maître du jeu crée un aquarium hors compétition, les joueurs rejoignent avec un code à quatre caractères, reçoivent un totem et enchaînent quatre épreuves océaniques.
+
+Chaque joueur répond sur son téléphone et cumule un score personnel. Pour les estimations numériques, le meilleur joueur de chaque banc porte le score collectif ; pour les QCM, le banc marque une seule fois si au moins un membre répond juste. Le classement individuel apparaît entre les épreuves et le classement final sacre le banc vainqueur. L'hôte peut déclencher une « Marée de Poséithon » par intermission pour donner 20 points au banc dernier.
 
 ## Lancer en développement
 
@@ -45,4 +47,4 @@ npm test
 npm run test:e2e
 ```
 
-Le test navigateur ouvre deux sessions mobiles isolées et vérifie le parcours complet : création, arrivée d'un invité, démarrage, deux manches et fin de partie.
+Le parcours navigateur ouvre un hôte et quatre téléphones isolés : création, totems, réponses individuelles, score, classement joueurs, bonus et classement final des bancs.

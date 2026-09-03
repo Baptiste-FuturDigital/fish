@@ -62,4 +62,10 @@ export const gameApi = {
       body: JSON.stringify({ hostToken }),
     })
   },
+  applyBonus(code: string, hostToken: string) {
+    return request<GameView>(`/api/games/${code}/bonus`, {
+      method: "POST",
+      body: JSON.stringify({ hostToken }),
+    })
+  },
 }

@@ -78,7 +78,7 @@ export function MillionaireAnswerPanel({
   return (
     <div className="millionaire-answer-panel" data-testid="millionaire-answer-panel">
       <Field>
-        <FieldLabel>La réponse de votre banc</FieldLabel>
+        <FieldLabel>Ta réponse</FieldLabel>
         <ToggleGroup
           className="millionaire-options"
           variant="outline"

@@ -7,9 +7,9 @@ export const questionPourUnPoisson = {
   emoji: "🐠",
   description: "Dix plongées dans la culture marine, sans bouée ni question facile.",
   rules: [
-    "Chaque banc choisit une réponse parmi quatre.",
+    "Chaque poisson choisit sa propre réponse parmi quatre.",
     "Vous avez 20 secondes par question.",
-    "Une bonne réponse rapporte 20 points.",
+    "Une bonne réponse rapporte 20 points au joueur ; son banc marque une seule fois si au moins un membre trouve.",
   ],
   introMusicYoutubeId: "Zcl98Bguq7k",
   scoring: { kind: "exact", points: 2 },

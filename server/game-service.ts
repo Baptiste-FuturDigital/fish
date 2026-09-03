@@ -2,20 +2,26 @@ import { createHash, randomBytes, randomInt, randomUUID } from "node:crypto"
 
 import type { GameDatabase } from "./db.js"
 import { prompts, type PromptDefinition } from "./content.js"
-import { projectRound, scoreRound } from "./tournament-engine.js"
+import { aggregateTeamResults, projectRound, scorePlayerRound } from "./tournament-engine.js"
 import { selectBalancedTotem } from "./totem-assignment.js"
 import { findTotem, teamDefinitions, teamIds, totems, type TotemCategory } from "./totems.js"
 import { challenges, findChallenge } from "../shared/challenges/catalog.js"
-import type { ChallengeId, RoundScoreResult } from "../shared/challenges/types.js"
+import type {
+  ChallengeId,
+  PlayerRoundScoreResult,
+  RoundScoreResult,
+  SubmittedPlayerAnswer,
+} from "../shared/challenges/types.js"
 import type {
   GameStatus,
   GameView,
   PlayerSession,
   PlayerView,
   SessionResponse,
-  TeamAnswerView,
+  PlayerAnswerView,
   TeamView,
   TournamentView,
+  PoseithonBonusView,
 } from "../shared/game.js"
 
 interface GameRow {
@@ -57,10 +63,17 @@ interface TeamRow {
   score: number
 }
 
-interface TeamAnswerRow {
+interface PlayerAnswerRow {
+  player_id: string
+  player_name: string
   team_id: string
   answer: string
   locked: number
+}
+
+interface PlayerRoundResultRow extends RoundResultRow {
+  player_id: string
+  player_name: string
 }
 
 interface RoundResultRow {
@@ -71,8 +84,18 @@ interface RoundResultRow {
   distance: number | null
 }
 
+interface BonusRow {
+  challenge_index: number
+  challenge_id: ChallengeId
+  target_team_id: string
+  team_name: string
+  points: number
+  created_at: string
+}
+
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 const ROUND_COUNT = 8
+const POSEITHON_BONUS_POINTS = 2
 
 export class GameError extends Error {
   constructor(
@@ -407,7 +430,7 @@ export class GameService {
     return this.getGame(game.code)
   }
 
-  submitTeamAnswer(
+  submitPlayerAnswer(
     codeInput: string,
     playerId: string,
     playerToken: string,
@@ -436,28 +459,30 @@ export class GameService {
     }
 
     const existing = this.database.prepare(
-      `SELECT team_id, answer, locked FROM team_answers
-       WHERE game_id = ? AND challenge_id = ? AND round_index = ? AND team_id = ?`,
-    ).get(game.id, challenge.id, game.challenge_round, teamId) as TeamAnswerRow | undefined
+      `SELECT p.name AS player_name, pa.player_id, pa.team_id, pa.answer, pa.locked
+       FROM player_answers pa
+       JOIN players p ON p.id = pa.player_id
+       WHERE pa.game_id = ? AND pa.challenge_id = ? AND pa.round_index = ? AND pa.player_id = ?`,
+    ).get(game.id, challenge.id, game.challenge_round, player.id) as PlayerAnswerRow | undefined
     if (existing?.locked) {
       if (existing.answer === answer) return this.getGame(game.code)
-      throw new GameError("Votre banc a déjà validé son dernier mot.", 409)
+      throw new GameError("Tu as déjà validé ton dernier mot.", 409)
     }
     this.database.prepare(
-      `INSERT INTO team_answers
-        (game_id, challenge_id, round_index, team_id, answer, locked, updated_by, updated_at)
+      `INSERT INTO player_answers
+        (game_id, challenge_id, round_index, player_id, team_id, answer, locked, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(game_id, challenge_id, round_index, team_id)
+       ON CONFLICT(game_id, challenge_id, round_index, player_id)
        DO UPDATE SET answer = excluded.answer, locked = excluded.locked,
-                     updated_by = excluded.updated_by, updated_at = excluded.updated_at`,
+                     team_id = excluded.team_id, updated_at = excluded.updated_at`,
     ).run(
       game.id,
       challenge.id,
       game.challenge_round,
+      player.id,
       teamId,
       round.kind === "number" ? String(Number(answer.replace(",", "."))) : answer,
       locked ? 1 : 0,
-      player.id,
       new Date().toISOString(),
     )
     return this.getGame(game.code)
@@ -472,6 +497,64 @@ export class GameService {
     return this.getGame(game.code)
   }
 
+  applyPoseithonBonus(codeInput: string, hostToken: string): GameView {
+    const code = codeInput.trim().toUpperCase()
+    this.database.transaction(() => {
+      const game = this.assertHost(code, hostToken)
+      if (game.status !== "running" || game.phase !== "leaderboard") {
+        throw new GameError("La Marée de Poséithon ne peut surgir qu'entre deux épreuves.", 409)
+      }
+      const existing = this.database.prepare(
+        `SELECT 1 FROM intermission_bonuses
+         WHERE game_id = ? AND challenge_index = ?`,
+      ).get(game.id, game.challenge_index)
+      if (existing) {
+        throw new GameError("La Marée de Poséithon a déjà frappé pendant cette escale.", 409)
+      }
+
+      const teams = this.database.prepare(
+        "SELECT team_id, category, name, score FROM game_teams WHERE game_id = ?",
+      ).all(game.id) as TeamRow[]
+      const participantRows = this.database.prepare(
+        `SELECT totem_id FROM players
+         WHERE game_id = ? AND is_host = 0 AND totem_id IS NOT NULL`,
+      ).all(game.id) as Array<{ totem_id: number }>
+      const occupiedTeamIds = new Set(
+        participantRows.flatMap((player) => {
+          const totem = findTotem(player.totem_id)
+          return totem ? [teamIds[totem.category]] : []
+        }),
+      )
+      const target = teams
+        .filter((team) => occupiedTeamIds.has(team.team_id))
+        .sort((left, right) =>
+          left.score - right.score ||
+          left.name.localeCompare(right.name, "fr", { sensitivity: "base" }) ||
+          left.team_id.localeCompare(right.team_id),
+        )[0]
+      if (!target) throw new GameError("Aucun banc ne peut recevoir la faveur divine.", 409)
+
+      const awardedAt = new Date().toISOString()
+      const challenge = this.currentChallenge(game)
+      this.database.prepare(
+        `INSERT INTO intermission_bonuses
+          (game_id, challenge_index, challenge_id, target_team_id, points, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      ).run(
+        game.id,
+        game.challenge_index,
+        challenge.id,
+        target.team_id,
+        POSEITHON_BONUS_POINTS,
+        awardedAt,
+      )
+      this.database.prepare(
+        "UPDATE game_teams SET score = score + ? WHERE game_id = ? AND team_id = ?",
+      ).run(POSEITHON_BONUS_POINTS, game.id, target.team_id)
+    })()
+    return this.getGame(code)
+  }
+
   private buildTournamentView(game: GameRow): TournamentView | null {
     if (game.status !== "running") return null
     const challenge = this.currentChallenge(game)
@@ -479,30 +562,72 @@ export class GameService {
     if (!round) throw new GameError("Manche introuvable.", 500)
     const hasRevealedRound = game.phase === "reveal" || game.phase === "leaderboard"
     const answerRows = this.database.prepare(
-      `SELECT team_id, answer, locked FROM team_answers
-       WHERE game_id = ? AND challenge_id = ? AND round_index = ? ORDER BY team_id`,
-    ).all(game.id, challenge.id, game.challenge_round) as TeamAnswerRow[]
-    const answers: TeamAnswerView[] = answerRows.map((entry) => ({
+      `SELECT pa.player_id, p.name AS player_name, pa.team_id, pa.answer, pa.locked
+       FROM player_answers pa
+       JOIN players p ON p.id = pa.player_id
+       WHERE pa.game_id = ? AND pa.challenge_id = ? AND pa.round_index = ?
+       ORDER BY p.created_at, p.rowid`,
+    ).all(game.id, challenge.id, game.challenge_round) as PlayerAnswerRow[]
+    const answers: PlayerAnswerView[] = answerRows.map((entry) => ({
+      playerId: entry.player_id,
+      playerName: entry.player_name,
       teamId: entry.team_id,
       answer: hasRevealedRound ? entry.answer : null,
       locked: Boolean(entry.locked),
     }))
-    const resultRows = hasRevealedRound
+    const playerResultRows = hasRevealedRound
+      ? this.database.prepare(
+          `SELECT pr.player_id, p.name AS player_name, pr.team_id, pr.answer,
+                  pr.points, pr.is_correct, pr.distance
+           FROM player_round_results pr
+           JOIN players p ON p.id = pr.player_id
+           WHERE pr.game_id = ? AND pr.challenge_id = ? AND pr.round_index = ?
+           ORDER BY pr.points DESC, p.name COLLATE NOCASE, pr.player_id`,
+        ).all(game.id, challenge.id, game.challenge_round) as PlayerRoundResultRow[]
+      : []
+    const teamResultRows = hasRevealedRound
       ? this.database.prepare(
           `SELECT team_id, answer, points, is_correct, distance FROM round_results
            WHERE game_id = ? AND challenge_id = ? AND round_index = ?
            ORDER BY points DESC, team_id`,
         ).all(game.id, challenge.id, game.challenge_round) as RoundResultRow[]
       : []
-    const results: RoundScoreResult[] = resultRows.map((entry) => ({
+    const displayAnswer = (answer: string | null) => round.kind === "choice" && answer !== null
+      ? round.choices.find((choice) => choice.id === answer)?.label ?? answer
+      : answer
+    const results: PlayerRoundScoreResult[] = playerResultRows.map((entry) => ({
+      playerId: entry.player_id,
+      playerName: entry.player_name,
       teamId: entry.team_id,
-      answer: round.kind === "choice" && entry.answer !== null
-        ? round.choices.find((choice) => choice.id === entry.answer)?.label ?? entry.answer
-        : entry.answer,
+      answer: displayAnswer(entry.answer),
       points: entry.points,
       isCorrect: Boolean(entry.is_correct),
       distance: entry.distance,
     }))
+    const teamResults: RoundScoreResult[] = teamResultRows.map((entry) => ({
+      teamId: entry.team_id,
+      answer: displayAnswer(entry.answer),
+      points: entry.points,
+      isCorrect: Boolean(entry.is_correct),
+      distance: entry.distance,
+    }))
+    const bonusRow = this.database.prepare(
+      `SELECT b.challenge_index, b.challenge_id, b.target_team_id,
+              gt.name AS team_name, b.points, b.created_at
+       FROM intermission_bonuses b
+       JOIN game_teams gt ON gt.game_id = b.game_id AND gt.team_id = b.target_team_id
+       WHERE b.game_id = ? AND b.challenge_index = ?`,
+    ).get(game.id, game.challenge_index) as BonusRow | undefined
+    const bonus: PoseithonBonusView | null = bonusRow
+      ? {
+          challengeIndex: bonusRow.challenge_index,
+          challengeId: bonusRow.challenge_id,
+          teamId: bonusRow.target_team_id,
+          teamName: bonusRow.team_name,
+          points: bonusRow.points,
+          awardedAt: bonusRow.created_at,
+        }
+      : null
 
     return {
       challengeIndex: game.challenge_index,
@@ -527,6 +652,9 @@ export class GameService {
       round: projectRound(round, hasRevealedRound),
       answers,
       results,
+      teamResults,
+      bonus,
+      bonusAvailable: game.phase === "leaderboard" && bonus === null,
     }
   }
 
@@ -551,20 +679,69 @@ export class GameService {
       const teamRows = this.database
         .prepare("SELECT team_id, category, name, score FROM game_teams WHERE game_id = ? ORDER BY rowid")
         .all(fresh.id) as TeamRow[]
+      const playerRows = this.database
+        .prepare(
+          `SELECT id, name, is_host, score, totem_id
+           FROM players WHERE game_id = ? AND is_host = 0 ORDER BY created_at, rowid`,
+        )
+        .all(fresh.id) as PlayerRow[]
+      const scoringPlayers = playerRows.map((player) => {
+        const totem = findTotem(player.totem_id)
+        if (!totem) throw new GameError("Un joueur n'a pas d'animal totem.", 500)
+        return { id: player.id, name: player.name, teamId: teamIds[totem.category] }
+      })
       if (fresh.is_demo) {
-        this.seedDemoAnswers(fresh, teamRows)
+        this.seedDemoAnswers(fresh, scoringPlayers)
       }
       const answerRows = this.database.prepare(
-        `SELECT team_id, answer, locked FROM team_answers
-         WHERE game_id = ? AND challenge_id = ? AND round_index = ?`,
-      ).all(fresh.id, challenge.id, fresh.challenge_round) as TeamAnswerRow[]
-      const answersByTeam = new Map(answerRows.map((entry) => [entry.team_id, entry.answer]))
-      const results = scoreRound(
+        `SELECT pa.player_id, p.name AS player_name, pa.team_id, pa.answer, pa.locked
+         FROM player_answers pa
+         JOIN players p ON p.id = pa.player_id
+         WHERE pa.game_id = ? AND pa.challenge_id = ? AND pa.round_index = ?`,
+      ).all(fresh.id, challenge.id, fresh.challenge_round) as PlayerAnswerRow[]
+      const answersByPlayer = new Map(answerRows.map((entry) => [entry.player_id, entry.answer]))
+      const submittedAnswers: SubmittedPlayerAnswer[] = scoringPlayers.map((player) => ({
+        playerId: player.id,
+        playerName: player.name,
+        teamId: player.teamId,
+        answer: answersByPlayer.get(player.id) ?? null,
+      }))
+      const playerResults = scorePlayerRound(
         challenge,
         fresh.challenge_round,
-        teamRows.map((team) => ({ teamId: team.team_id, answer: answersByTeam.get(team.team_id) ?? null })),
+        submittedAnswers,
       )
-      const insertResult = this.database.prepare(
+      const teamResults = aggregateTeamResults(
+        challenge,
+        fresh.challenge_round,
+        playerResults,
+        teamRows.map((team) => team.team_id),
+      )
+      const insertPlayerResult = this.database.prepare(
+        `INSERT OR IGNORE INTO player_round_results
+          (game_id, challenge_id, round_index, player_id, team_id, answer, points, is_correct, distance)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      const addPlayerScore = this.database.prepare(
+        "UPDATE players SET score = score + ? WHERE game_id = ? AND id = ?",
+      )
+      for (const result of playerResults) {
+        const inserted = insertPlayerResult.run(
+          fresh.id,
+          challenge.id,
+          fresh.challenge_round,
+          result.playerId,
+          result.teamId,
+          result.answer,
+          result.points,
+          result.isCorrect ? 1 : 0,
+          result.distance,
+        )
+        if (inserted.changes === 1 && result.points > 0) {
+          addPlayerScore.run(result.points, fresh.id, result.playerId)
+        }
+      }
+      const insertTeamResult = this.database.prepare(
         `INSERT OR IGNORE INTO round_results
           (game_id, challenge_id, round_index, team_id, answer, points, is_correct, distance)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -572,8 +749,8 @@ export class GameService {
       const addScore = this.database.prepare(
         "UPDATE game_teams SET score = score + ? WHERE game_id = ? AND team_id = ?",
       )
-      for (const result of results) {
-        const inserted = insertResult.run(
+      for (const result of teamResults) {
+        const inserted = insertTeamResult.run(
           fresh.id,
           challenge.id,
           fresh.challenge_round,
@@ -593,22 +770,25 @@ export class GameService {
     })()
   }
 
-  private seedDemoAnswers(game: GameRow, teamRows: TeamRow[]): void {
+  private seedDemoAnswers(
+    game: GameRow,
+    players: Array<{ id: string; name: string; teamId: string }>,
+  ): void {
     const challenge = this.currentChallenge(game)
     const round = challenge.rounds[game.challenge_round]
     const insert = this.database.prepare(
-      `INSERT OR IGNORE INTO team_answers
-        (game_id, challenge_id, round_index, team_id, answer, locked, updated_by, updated_at)
-       VALUES (?, ?, ?, ?, ?, 1, 'demo-simulator', ?)`,
+      `INSERT OR IGNORE INTO player_answers
+        (game_id, challenge_id, round_index, player_id, team_id, answer, locked, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
     )
-    teamRows.forEach((team, index) => {
+    players.forEach((player, index) => {
       let answer: string
       if (round.kind === "number") {
         const multipliers = [1, 0.88, 1.22, 1.65]
         answer = String(Number((round.correctAnswer * multipliers[(index + game.challenge_round) % multipliers.length]).toFixed(3)))
       } else {
         const wrongChoices = round.choices.filter((choice) => choice.id !== round.correctAnswer)
-        answer = index === game.challenge_round % teamRows.length || index === 0
+        answer = index === game.challenge_round % players.length || index % 4 === 0
           ? round.correctAnswer
           : wrongChoices[(index + game.challenge_round) % wrongChoices.length].id
       }
@@ -616,7 +796,8 @@ export class GameService {
         game.id,
         challenge.id,
         game.challenge_round,
-        team.team_id,
+        player.id,
+        player.teamId,
         answer,
         new Date().toISOString(),
       )

@@ -8,13 +8,13 @@ export const quiVeutGagnerDesPoissons = {
   description:
     "Cinq questions, quatre réponses et un présentateur beaucoup trop sûr de ses branchies.",
   rules: [
-    "Chaque banc choisit A, B, C ou D avant la fin des 30 secondes.",
-    "Validez avec « C’est notre dernier mot » : les poissons ne font pas marche arrière.",
-    "Les gains montent à chaque bonne réponse, de 10 à 100 points.",
+    "Chaque poisson choisit A, B, C ou D avant la fin des 30 secondes.",
+    "Validez avec « C’est mon dernier mot » : les poissons ne font pas marche arrière.",
+    "Les gains individuels montent à chaque bonne réponse, de 10 à 100 points ; un banc n'est crédité qu'une fois.",
   ],
   presenterImageUrl: "/goerge-clownez-fun.png",
   introMusicYoutubeId: "doSjY-DGmjY",
-  confirmationLabel: "C’est notre dernier mot",
+  confirmationLabel: "C’est mon dernier mot",
   scoring: {
     kind: "escalating",
     points: [1, 2, 3, 5, 10],

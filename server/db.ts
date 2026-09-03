@@ -76,6 +76,44 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       distance REAL,
       PRIMARY KEY(game_id, challenge_id, round_index, team_id)
     );
+
+    CREATE TABLE IF NOT EXISTS player_answers (
+      game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+      challenge_id TEXT NOT NULL,
+      round_index INTEGER NOT NULL,
+      player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      team_id TEXT NOT NULL,
+      answer TEXT NOT NULL,
+      locked INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY(game_id, challenge_id, round_index, player_id),
+      FOREIGN KEY(game_id, team_id) REFERENCES game_teams(game_id, team_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS player_round_results (
+      game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+      challenge_id TEXT NOT NULL,
+      round_index INTEGER NOT NULL,
+      player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      team_id TEXT NOT NULL,
+      answer TEXT,
+      points INTEGER NOT NULL,
+      is_correct INTEGER NOT NULL,
+      distance REAL,
+      PRIMARY KEY(game_id, challenge_id, round_index, player_id),
+      FOREIGN KEY(game_id, team_id) REFERENCES game_teams(game_id, team_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS intermission_bonuses (
+      game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+      challenge_index INTEGER NOT NULL,
+      challenge_id TEXT NOT NULL,
+      target_team_id TEXT NOT NULL,
+      points INTEGER NOT NULL CHECK (points > 0),
+      created_at TEXT NOT NULL,
+      PRIMARY KEY(game_id, challenge_index),
+      FOREIGN KEY(game_id, target_team_id) REFERENCES game_teams(game_id, team_id)
+    );
   `)
 
   const gameColumns = database.prepare("PRAGMA table_info(games)").all() as Array<{ name: string }>
@@ -105,6 +143,14 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       SELECT id, 'electriques', 'cool', 'Les Électriques', 0 FROM games;
     INSERT OR IGNORE INTO game_teams (game_id, team_id, category, name, score)
       SELECT id, 'colosses', 'big', 'Les Colosses', 0 FROM games;
+
+    INSERT OR IGNORE INTO player_answers
+      (game_id, challenge_id, round_index, player_id, team_id, answer, locked, updated_at)
+      SELECT ta.game_id, ta.challenge_id, ta.round_index, ta.updated_by,
+             ta.team_id, ta.answer, ta.locked, ta.updated_at
+      FROM team_answers ta
+      JOIN players p ON p.id = ta.updated_by AND p.game_id = ta.game_id
+      WHERE p.is_host = 0;
   `)
 
   return database

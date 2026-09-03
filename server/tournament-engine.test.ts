@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest"
 
 import type { ChallengeDefinition } from "../shared/challenges/types.js"
-import { projectRound, scoreRound } from "./tournament-engine.js"
+import {
+  aggregateTeamResults,
+  projectRound,
+  scorePlayerRound,
+  scoreRound,
+} from "./tournament-engine.js"
 
 const numericChallenge: ChallengeDefinition = {
   id: "le-juste-poisson",
@@ -47,6 +52,46 @@ const choiceChallenge: ChallengeDefinition = {
 }
 
 describe("tournament engine", () => {
+  it("scores every numeric player while only each team's closest answer competes for team points", () => {
+    const playerResults = scorePlayerRound(numericChallenge, 0, [
+      { playerId: "a-near", playerName: "A Near", teamId: "team-a", answer: "101" },
+      { playerId: "a-far", playerName: "A Far", teamId: "team-a", answer: "180" },
+      { playerId: "b-near", playerName: "B Near", teamId: "team-b", answer: "110" },
+      { playerId: "b-far", playerName: "B Far", teamId: "team-b", answer: "200" },
+    ])
+
+    expect(playerResults).toEqual([
+      expect.objectContaining({ playerId: "a-near", points: 4, distance: 0.01 }),
+      expect.objectContaining({ playerId: "b-near", points: 3, distance: 0.1 }),
+      expect.objectContaining({ playerId: "a-far", points: 2, distance: 0.8 }),
+      expect.objectContaining({ playerId: "b-far", points: 1, distance: 1 }),
+    ])
+    expect(aggregateTeamResults(numericChallenge, 0, playerResults, ["team-a", "team-b"]))
+      .toEqual([
+        expect.objectContaining({ teamId: "team-a", answer: "101", points: 4, distance: 0.01 }),
+        expect.objectContaining({ teamId: "team-b", answer: "110", points: 3, distance: 0.1 }),
+      ])
+  })
+
+  it("scores every correct choice personally but awards a team only once per round", () => {
+    const playerResults = scorePlayerRound(choiceChallenge, 0, [
+      { playerId: "a-1", playerName: "A One", teamId: "team-a", answer: "b" },
+      { playerId: "a-2", playerName: "A Two", teamId: "team-a", answer: "b" },
+      { playerId: "b-1", playerName: "B One", teamId: "team-b", answer: "a" },
+    ])
+
+    expect(playerResults.map(({ playerId, points }) => ({ playerId, points }))).toEqual([
+      { playerId: "a-1", points: 2 },
+      { playerId: "a-2", points: 2 },
+      { playerId: "b-1", points: 0 },
+    ])
+    expect(aggregateTeamResults(choiceChallenge, 0, playerResults, ["team-a", "team-b"]))
+      .toEqual([
+        expect.objectContaining({ teamId: "team-a", points: 2, isCorrect: true }),
+        expect.objectContaining({ teamId: "team-b", points: 0, isCorrect: false }),
+      ])
+  })
+
   it("ranks numeric answers by relative error and gives no points to missing teams", () => {
     expect(scoreRound(numericChallenge, 0, [
       { teamId: "team-a", answer: "90" },

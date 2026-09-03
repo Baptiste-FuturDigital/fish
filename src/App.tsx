@@ -258,13 +258,16 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
 }
 
 function GameHeader({ game }: { game: GameView }) {
+  const title = game.status === "running" && game.tournament
+    ? game.tournament.challenge.title
+    : game.name
   return (
     <>
       <Brand />
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-bold tracking-[0.16em] text-muted-foreground uppercase">Aquarium actif</p>
-          <h1 className="truncate font-heading text-2xl font-black">{game.name}</h1>
+          <h1 className="truncate font-heading text-2xl font-black" data-testid="game-context-title">{title}</h1>
         </div>
         <Badge variant="outline">#{game.code}</Badge>
       </div>
@@ -382,12 +385,12 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam }: { g
   )
 }
 
-function GameScreen({ game, session, onAdvance, onFinish, onSubmit }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView> }) {
+function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onBonus }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView>; onBonus: () => Promise<GameView> }) {
   if (game.tournament?.phase === "leaderboard") {
     return (
       <>
         <GameHeader game={game} />
-        <LeaderboardScreen game={game} session={session} onAdvance={onAdvance} onFinish={onFinish} />
+        <LeaderboardScreen game={game} session={session} onAdvance={onAdvance} onFinish={onFinish} onBonus={onBonus} />
       </>
     )
   }
@@ -423,7 +426,7 @@ function LoadingScreen() {
 }
 
 export default function App() {
-  const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, submitAnswer } = useGame()
+  const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, submitAnswer, applyBonus } = useGame()
   const isSalmonDemo = new URLSearchParams(window.location.search).get("salmon-demo") === "1"
   const audioEnabled = isSalmonDemo || (session ? isHostAudioEnabled(session) : false)
   const screen = useMemo(() => {
@@ -431,9 +434,9 @@ export default function App() {
     if (!session) return <HomeScreen onEnter={enter} />
     if (loading || !game) return <LoadingScreen />
     if (game.status === "lobby") return <LobbyScreen game={game} session={session} onStart={() => hostAction("start").then(() => undefined)} onClaimTotem={claimTotem} onRenameTeam={renameTeam} />
-    if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} />
+    if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} onBonus={applyBonus} />
     return <EndScreen game={game} session={session} onLeave={leave} />
-  }, [claimTotem, enter, game, hostAction, isSalmonDemo, leave, loading, renameTeam, session, submitAnswer])
+  }, [applyBonus, claimTotem, enter, game, hostAction, isSalmonDemo, leave, loading, renameTeam, session, submitAnswer])
 
   return (
     <OceanShell>

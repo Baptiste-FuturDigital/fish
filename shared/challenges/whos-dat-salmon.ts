@@ -9,8 +9,8 @@ export const whosDatSalmon = {
     "Reconnaissez cinq créatures marines cachées derrière leur silhouette.",
   rules: [
     "Une silhouette apparaît pendant 20 secondes.",
-    "Chaque équipe choisit une réponse parmi quatre.",
-    "Chaque bonne réponse rapporte 20 points.",
+    "Chaque poisson choisit sa propre réponse parmi quatre.",
+    "Chaque bonne réponse rapporte 20 points au joueur ; son banc marque une seule fois si au moins un membre trouve.",
   ],
   introMusicYoutubeId: "FsvGm4pqlW8",
   introMusicStartSeconds: 0,

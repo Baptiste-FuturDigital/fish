@@ -117,5 +117,12 @@ export function useGame() {
     return nextGame
   }, [session])
 
-  return { session, game, loading, error, enter, leave, refresh, hostAction, claimTotem, renameTeam, submitAnswer }
+  const applyBonus = useCallback(async () => {
+    if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
+    const nextGame = await gameApi.applyBonus(session.gameCode, session.hostToken)
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
+  return { session, game, loading, error, enter, leave, refresh, hostAction, claimTotem, renameTeam, submitAnswer, applyBonus }
 }

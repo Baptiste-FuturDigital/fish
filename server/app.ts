@@ -63,7 +63,7 @@ export function createApp(service: GameService, staticDir?: string) {
 
   app.post("/api/games/:code/answer", (request, response) => {
     const body = answerSchema.parse(request.body)
-    response.json(service.submitTeamAnswer(
+    response.json(service.submitPlayerAnswer(
       request.params.code,
       body.playerId,
       body.playerToken,
@@ -85,6 +85,11 @@ export function createApp(service: GameService, staticDir?: string) {
   app.post("/api/games/:code/advance", (request, response) => {
     const body = hostSchema.parse(request.body)
     response.json(service.advanceTournament(request.params.code, body.hostToken))
+  })
+
+  app.post("/api/games/:code/bonus", (request, response) => {
+    const body = hostSchema.parse(request.body)
+    response.json(service.applyPoseithonBonus(request.params.code, body.hostToken))
   })
 
   app.post("/api/games/:code/finish", (request, response) => {

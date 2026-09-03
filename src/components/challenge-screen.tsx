@@ -15,6 +15,7 @@ import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
 import { AnimatedScore } from "@/components/animated-score"
+import { AnswerValidationSound, requestAnswerValidationSound } from "@/components/answer-validation-sound"
 import { ChallengeAudio } from "@/components/challenge-audio"
 import { isHostAudioEnabled } from "@/components/challenge-audio-control"
 import { MillionaireAnswerPanel } from "@/components/millionaire-answer-panel"
@@ -125,8 +126,8 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
   const isHost = isHostAudioEnabled(session)
   const currentPlayer = game.players.find((player) => player.id === session.playerId)
   const teamId = currentPlayer?.teamId
-  const teamAnswer = tournament.answers.find((entry) => entry.teamId === teamId)
-  const isLocked = Boolean(teamAnswer?.locked)
+  const playerAnswer = tournament.answers.find((entry) => entry.playerId === session.playerId)
+  const isLocked = Boolean(playerAnswer?.locked)
   const highestAward = Math.max(0, ...tournament.results.map((result) => result.points))
 
   async function act(action: "advance" | "finish") {
@@ -144,6 +145,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (!answer || isLocked) return
+    requestAnswerValidationSound()
     setBusy("answer")
     try {
       await onSubmit(answer, true)
@@ -199,6 +201,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
 
   return (
     <>
+      <AnswerValidationSound enabled={!isHost && Boolean(teamId)} />
       <ScoreRevealSound
         enabled={isHost && tournament.phase === "reveal"}
         points={highestAward}
@@ -210,7 +213,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
         <>
           <Countdown endsAt={tournament.endsAt} durationSeconds={tournament.round.durationSeconds} />
           {tournament.challenge.id === "whos-dat-salmon" ? (
-            <SalmonAnswerProgress teams={game.teams} answers={tournament.answers} />
+            <SalmonAnswerProgress players={game.players} answers={tournament.answers} />
           ) : null}
           <Card className="my-4">
             {tournament.round.imageUrl ? (
@@ -240,13 +243,13 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
                 <Alert>
                   <Trophy />
                   <AlertTitle>Maître du jeu · hors compétition</AlertTitle>
-                  <AlertDescription>Cadre les réponses des bancs puis révèle la solution au bon moment.</AlertDescription>
+                  <AlertDescription>Cadre les réponses des poissons puis révèle la solution au bon moment.</AlertDescription>
                 </Alert>
               ) : isLocked ? (
                 <Alert>
                   <LockKeyhole />
                   <AlertTitle>Réponse verrouillée</AlertTitle>
-                  <AlertDescription>Votre banc a donné son dernier mot.</AlertDescription>
+                  <AlertDescription>Ton dernier mot est enregistré. Tes coéquipiers jouent encore.</AlertDescription>
                 </Alert>
               ) : (
                 <form onSubmit={submit}>
@@ -261,13 +264,13 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
                       <MillionaireAnswerPanel
                         choices={tournament.round.choices ?? []}
                         value={answer}
-                        confirmationLabel={tournament.challenge.confirmationLabel ?? "C’est notre dernier mot"}
+                        confirmationLabel={tournament.challenge.confirmationLabel ?? "C’est mon dernier mot"}
                         busy={busy === "answer"}
                         onValueChange={setAnswer}
                       />
                     ) : (
                       <Field>
-                        <FieldLabel>Réponse de votre banc</FieldLabel>
+                        <FieldLabel>Ta réponse</FieldLabel>
                         <ToggleGroup
                           className="grid w-full grid-cols-1"
                           variant="outline"
@@ -316,14 +319,16 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
             <Separator />
             <div className="flex flex-col gap-2">
               {tournament.results.map((result) => {
+                const player = game.players.find((candidate) => candidate.id === result.playerId)
                 const team = game.teams.find((candidate) => candidate.id === result.teamId)
                 return (
-                  <div className="result-row" key={result.teamId}>
-                    <span className="truncate font-bold">{team?.name}</span>
+                  <div className="result-row" key={result.playerId}>
+                    <span className="truncate font-bold">{player?.name ?? result.playerName}</span>
                     <span className="text-xs text-muted-foreground">{result.answer ?? "Pas de réponse"}</span>
                     <Badge variant={result.points > 0 ? "default" : "secondary"}>
                       <AnimatedScore points={result.points} prefix="+" />
                     </Badge>
+                    <span className="sr-only">{team?.name}</span>
                   </div>
                 )
               })}

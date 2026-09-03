@@ -234,9 +234,17 @@ describe("GameService", () => {
     expect(game.tournament?.challenge.id).toBe("question-pour-un-poisson")
   })
 
-  it("runs an intro, timed answer, reveal and next round with team scoring", () => {
+  it("stores one locked answer per player and scores every player independently", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
-    const [first, second] = joinAndClaimCompetitors(created.game.code)
+    const competitors = joinAndClaimCompetitors(
+      created.game.code,
+      ["Léa", "Sam", "Jo", "Mia", "Noé", "Lou", "Max", "Zoé"],
+    )
+    const lobby = service.getGame(created.game.code)
+    const sharedTeam = lobby.teams.find((team) => team.memberIds.length === 2)!
+    const [firstId, secondId] = sharedTeam.memberIds
+    const first = competitors.find((entry) => entry.session.playerId === firstId)!
+    const second = competitors.find((entry) => entry.session.playerId === secondId)!
 
     const intro = service.startGame(created.game.code, created.session.hostToken!)
     expect(intro.tournament).toEqual(expect.objectContaining({
@@ -248,25 +256,37 @@ describe("GameService", () => {
     const answering = service.advanceTournament(created.game.code, created.session.hostToken!)
     expect(answering.tournament?.phase).toBe("answering")
     expect(answering.tournament?.round.correctAnswer).toBeUndefined()
-    service.submitTeamAnswer(
+    service.submitPlayerAnswer(
       created.game.code,
       first.session.playerId,
       first.session.playerToken,
       "0.09",
       true,
     )
-    service.submitTeamAnswer(
+    service.submitPlayerAnswer(
       created.game.code,
       second.session.playerId,
       second.session.playerToken,
-      "1",
+      "0.1",
       true,
     )
+
+    const submitted = service.getGame(created.game.code).tournament?.answers
+      .filter((answer) => answer.teamId === sharedTeam.id)
+    expect(submitted).toHaveLength(2)
+    expect(submitted?.map((answer) => answer.playerId).sort()).toEqual([firstId, secondId].sort())
 
     const revealed = service.advanceTournament(created.game.code, created.session.hostToken!)
     expect(revealed.tournament?.phase).toBe("reveal")
     expect(revealed.tournament?.round.correctAnswer).toBe(0.09)
     expect(revealed.teams.some((team) => team.score > 0)).toBe(true)
+    expect(revealed.players.find((player) => player.id === first.session.playerId)?.score).toBeGreaterThan(0)
+    expect(revealed.players.find((player) => player.id === second.session.playerId)?.score).toBeGreaterThan(0)
+    expect(revealed.tournament?.results).toEqual(expect.arrayContaining([
+      expect.objectContaining({ playerId: first.session.playerId }),
+      expect.objectContaining({ playerId: second.session.playerId }),
+    ]))
+    expect(revealed.tournament?.teamResults.length).toBe(4)
 
     const nextRound = service.advanceTournament(created.game.code, created.session.hostToken!)
     expect(nextRound.tournament).toEqual(expect.objectContaining({
@@ -297,14 +317,14 @@ describe("GameService", () => {
     }))
     expect(answering.tournament?.round).not.toHaveProperty("correctAnswer")
 
-    service.submitTeamAnswer(
+    service.submitPlayerAnswer(
       created.game.code,
       first.session.playerId,
       first.session.playerToken,
       "trois",
       true,
     )
-    service.submitTeamAnswer(
+    service.submitPlayerAnswer(
       created.game.code,
       second.session.playerId,
       second.session.playerToken,
@@ -313,16 +333,14 @@ describe("GameService", () => {
     )
 
     const revealed = service.advanceTournament(created.game.code, created.session.hostToken!)
-    const firstTeamId = revealed.players.find((player) => player.id === first.session.playerId)?.teamId
-    const secondTeamId = revealed.players.find((player) => player.id === second.session.playerId)?.teamId
 
     expect(revealed.tournament?.phase).toBe("reveal")
     expect(revealed.tournament?.round.answerLabel).toBe("Trois cœurs")
-    expect(revealed.tournament?.results.find((result) => result.teamId === firstTeamId)).toEqual(
-      expect.objectContaining({ answer: "Trois", isCorrect: true, points: 2 }),
+    expect(revealed.tournament?.results.find((result) => result.playerId === first.session.playerId)).toEqual(
+      expect.objectContaining({ answer: "Trois", isCorrect: true, points: 2, playerName: "Léa" }),
     )
-    expect(revealed.tournament?.results.find((result) => result.teamId === secondTeamId)).toEqual(
-      expect.objectContaining({ answer: "Neuf, un par cerveau", isCorrect: false, points: 0 }),
+    expect(revealed.tournament?.results.find((result) => result.playerId === second.session.playerId)).toEqual(
+      expect.objectContaining({ answer: "Neuf, un par cerveau", isCorrect: false, points: 0, playerName: "Sam" }),
     )
 
     const nextQuestion = service.advanceTournament(created.game.code, created.session.hostToken!)
@@ -396,6 +414,91 @@ describe("GameService", () => {
     }))
   })
 
+  it("lets only the host grant one comeback bonus to the deterministic last-place team", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    joinAndClaimCompetitors(created.game.code, ["Léa", "Sam", "Jo", "Mia"])
+    database.prepare(
+      `UPDATE game_teams
+       SET score = CASE team_id
+         WHEN 'abyssaux' THEN 5
+         WHEN 'coralliens' THEN 1
+         WHEN 'electriques' THEN 1
+         ELSE 8
+       END,
+       name = CASE team_id
+         WHEN 'coralliens' THEN 'Les Zèbres'
+         WHEN 'electriques' THEN 'Les Anchois'
+         ELSE name
+       END
+       WHERE game_id = ?`,
+    ).run(created.game.id)
+
+    let game = service.startGame(created.game.code, created.session.hostToken!)
+    for (let step = 0; step < 20 && game.tournament?.phase !== "leaderboard"; step += 1) {
+      game = service.advanceTournament(created.game.code, created.session.hostToken!)
+    }
+
+    expect(game.tournament).toEqual(expect.objectContaining({
+      phase: "leaderboard",
+      bonus: null,
+      bonusAvailable: true,
+    }))
+    const originalPlayerScores = game.players.map((player) => player.score)
+
+    const rewarded = service.applyPoseithonBonus(created.game.code, created.session.hostToken!)
+
+    expect(rewarded.tournament).toEqual(expect.objectContaining({
+      bonusAvailable: false,
+      bonus: expect.objectContaining({
+        challengeIndex: 0,
+        teamId: "electriques",
+        points: 2,
+      }),
+    }))
+    expect(rewarded.teams.find((team) => team.id === "electriques")?.score).toBe(3)
+    expect(rewarded.players.map((player) => player.score)).toEqual(originalPlayerScores)
+    expect(() => service.applyPoseithonBonus(created.game.code, created.session.hostToken!))
+      .toThrowError(new GameError("La Marée de Poséithon a déjà frappé pendant cette escale.", 409))
+    expect(service.getGame(created.game.code).teams.find((team) => team.id === "electriques")?.score).toBe(3)
+  })
+
+  it("rejects the comeback bonus outside an intermission and from invalid hosts", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    joinAndClaimCompetitors(created.game.code)
+    service.startGame(created.game.code, created.session.hostToken!)
+
+    expect(() => service.applyPoseithonBonus(created.game.code, "intrus"))
+      .toThrowError(new GameError("Seul le capitaine peut toucher à ça.", 403))
+    expect(() => service.applyPoseithonBonus(created.game.code, created.session.hostToken!))
+      .toThrowError(new GameError("La Marée de Poséithon ne peut surgir qu'entre deux épreuves.", 409))
+  })
+
+  it("never grants the comeback bonus to an empty team", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    joinAndClaimCompetitors(created.game.code, ["Léa", "Sam"])
+    const lobby = service.getGame(created.game.code)
+    const occupiedTeams = lobby.teams.filter((team) => team.memberIds.length > 0)
+    const emptyTeamIds = lobby.teams
+      .filter((team) => team.memberIds.length === 0)
+      .map((team) => team.id)
+    expect(occupiedTeams).toHaveLength(2)
+    expect(emptyTeamIds).toHaveLength(2)
+    database.prepare("UPDATE game_teams SET score = 0 WHERE game_id = ?").run(created.game.id)
+    database.prepare("UPDATE game_teams SET score = 5 WHERE game_id = ? AND team_id = ?")
+      .run(created.game.id, occupiedTeams[0].id)
+    database.prepare("UPDATE game_teams SET score = 3 WHERE game_id = ? AND team_id = ?")
+      .run(created.game.id, occupiedTeams[1].id)
+
+    let game = service.startGame(created.game.code, created.session.hostToken!)
+    for (let step = 0; step < 20 && game.tournament?.phase !== "leaderboard"; step += 1) {
+      game = service.advanceTournament(created.game.code, created.session.hostToken!)
+    }
+    const rewarded = service.applyPoseithonBonus(created.game.code, created.session.hostToken!)
+
+    expect(rewarded.tournament?.bonus?.teamId).toBe(occupiedTeams[1].id)
+    expect(emptyTeamIds).not.toContain(rewarded.tournament?.bonus?.teamId)
+  })
+
   it("finishes directly after the fourth challenge final reveal", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     joinAndClaimCompetitors(created.game.code)
@@ -423,7 +526,7 @@ describe("GameService", () => {
     const [first] = joinAndClaimCompetitors(created.game.code)
     service.startGame(created.game.code, created.session.hostToken!)
     service.advanceTournament(created.game.code, created.session.hostToken!)
-    service.submitTeamAnswer(
+    service.submitPlayerAnswer(
       created.game.code,
       first.session.playerId,
       first.session.playerToken,
@@ -437,6 +540,9 @@ describe("GameService", () => {
     const secondSnapshot = service.getGame(created.game.code)
     expect(firstSnapshot.tournament?.phase).toBe("reveal")
     expect(secondSnapshot.teams.map((team) => team.score)).toEqual(firstSnapshot.teams.map((team) => team.score))
+    expect(secondSnapshot.players.map((player) => player.score)).toEqual(
+      firstSnapshot.players.map((player) => player.score),
+    )
   })
 
   it("rejects host actions with an invalid capability token", () => {

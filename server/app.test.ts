@@ -7,11 +7,13 @@ import { GameService } from "./game-service.js"
 
 describe("game API", () => {
   let database: GameDatabase
+  let service: GameService
   let app: ReturnType<typeof createApp>
 
   beforeEach(() => {
     database = createDatabase(":memory:")
-    app = createApp(new GameService(database))
+    service = new GameService(database)
+    app = createApp(service)
   })
 
   afterEach(() => database.close())
@@ -142,6 +144,8 @@ describe("game API", () => {
       locked: true,
     }).expect(200)
     expect(answered.body.tournament.answers).toContainEqual({
+      playerId: firstJoined.body.session.playerId,
+      playerName: "Léa",
       teamId: firstTeamId,
       answer: null,
       locked: true,
@@ -172,8 +176,38 @@ describe("game API", () => {
     const reveal = await request(app).post(`/api/games/${code}/advance`).send({ hostToken }).expect(200)
 
     expect(reveal.body.tournament.phase).toBe("reveal")
-    expect(reveal.body.tournament.answers).toHaveLength(4)
+    expect(reveal.body.tournament.answers).toHaveLength(8)
     expect(reveal.body.tournament.answers.every((answer: { locked: boolean }) => answer.locked)).toBe(true)
-    expect(reveal.body.tournament.results).toHaveLength(4)
+    expect(reveal.body.tournament.results).toHaveLength(8)
+    expect(reveal.body.tournament.teamResults).toHaveLength(4)
+  })
+
+  it("exposes the host-only intermission bonus endpoint", async () => {
+    const demo = await request(app).post("/api/demo").expect(201)
+    const { code } = demo.body.game
+    const hostToken = demo.body.session.hostToken as string
+    let game = demo.body.game
+    for (let step = 0; step < 20 && game.tournament.phase !== "leaderboard"; step += 1) {
+      game = service.advanceTournament(code, hostToken)
+    }
+
+    await request(app)
+      .post(`/api/games/${code}/bonus`)
+      .send({ hostToken: "intrus" })
+      .expect(403)
+
+    const rewarded = await request(app)
+      .post(`/api/games/${code}/bonus`)
+      .send({ hostToken })
+      .expect(200)
+
+    expect(rewarded.body.tournament.bonusAvailable).toBe(false)
+    expect(rewarded.body.tournament.bonus).toEqual(expect.objectContaining({ points: 2 }))
+
+    const duplicate = await request(app)
+      .post(`/api/games/${code}/bonus`)
+      .send({ hostToken })
+      .expect(409)
+    expect(duplicate.body.error).toBe("La Marée de Poséithon a déjà frappé pendant cette escale.")
   })
 })

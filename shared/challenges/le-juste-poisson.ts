@@ -7,9 +7,9 @@ export const leJustePoisson = {
   emoji: "⚖️",
   description: "Estimez le poids de trois créatures marines sans couler sous la pression.",
   rules: [
-    "Chaque banc saisit une estimation en kilogrammes avant la fin des 20 secondes.",
-    "Plus votre estimation est proche du poids correct, plus votre banc marque de points.",
-    "À chaque manche, les quatre bancs peuvent gagner de 10 à 40 points selon leur classement.",
+    "Chaque poisson saisit sa propre estimation avant la fin des 20 secondes.",
+    "Chaque joueur marque selon sa précision ; le meilleur de chaque banc porte le score de son équipe.",
+    "À chaque manche, les poissons et les quatre bancs peuvent gagner de 10 à 40 points selon leur classement.",
   ],
   introMusicYoutubeId: "UaRrDZWhtWA",
   scoring: {

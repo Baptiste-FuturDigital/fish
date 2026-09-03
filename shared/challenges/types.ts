@@ -89,10 +89,20 @@ export interface SubmittedTeamAnswer {
   answer: string | null
 }
 
+export interface SubmittedPlayerAnswer extends SubmittedTeamAnswer {
+  playerId: string
+  playerName: string
+}
+
 export interface RoundScoreResult {
   teamId: string
   answer: string | null
   points: number
   isCorrect: boolean
   distance: number | null
+}
+
+export interface PlayerRoundScoreResult extends RoundScoreResult {
+  playerId: string
+  playerName: string
 }

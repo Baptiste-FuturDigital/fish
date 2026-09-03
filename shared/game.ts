@@ -1,4 +1,9 @@
-import type { ChallengeId, PublicRoundView, RoundScoreResult } from "./challenges/types.js"
+import type {
+  ChallengeId,
+  PlayerRoundScoreResult,
+  PublicRoundView,
+  RoundScoreResult,
+} from "./challenges/types.js"
 
 export type GameStatus = "lobby" | "running" | "finished"
 
@@ -26,6 +31,20 @@ export interface TeamAnswerView {
   locked: boolean
 }
 
+export interface PlayerAnswerView extends TeamAnswerView {
+  playerId: string
+  playerName: string
+}
+
+export interface PoseithonBonusView {
+  challengeIndex: number
+  challengeId: ChallengeId
+  teamId: string
+  teamName: string
+  points: number
+  awardedAt: string
+}
+
 export interface TournamentChallengeView {
   id: ChallengeId
   title: string
@@ -49,8 +68,11 @@ export interface TournamentView {
   endsAt: string | null
   challenge: TournamentChallengeView
   round: PublicRoundView
-  answers: TeamAnswerView[]
-  results: RoundScoreResult[]
+  answers: PlayerAnswerView[]
+  results: PlayerRoundScoreResult[]
+  teamResults: RoundScoreResult[]
+  bonus: PoseithonBonusView | null
+  bonusAvailable: boolean
 }
 
 export interface PlayerView {

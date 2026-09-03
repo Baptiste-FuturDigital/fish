@@ -18,7 +18,7 @@ describe("quiVeutGagnerDesPoissons", () => {
     )
     expect(quiVeutGagnerDesPoissons.introMusicYoutubeId).toBe("doSjY-DGmjY")
     expect(quiVeutGagnerDesPoissons.confirmationLabel).toBe(
-      "C’est notre dernier mot",
+      "C’est mon dernier mot",
     )
   })
 
