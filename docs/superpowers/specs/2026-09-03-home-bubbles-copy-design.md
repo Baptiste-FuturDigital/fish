@@ -24,9 +24,11 @@ Rendre l'accueil de Fish Party plus vivant sans modifier son parcours, ses formu
 
 ## Génériques d'introduction conservés
 
+- Générique Game Show par défaut : `https://www.youtube.com/watch?v=UaRrDZWhtWA&list=RDUaRrDZWhtWA&start_radio=1`
 - « Qui veut gagner des poissons ? » : `https://www.youtube.com/watch?v=doSjY-DGmjY&list=PL7BUuXWlhkL7vcHkVAXgqX0pvyTk1Hd8V&index=18`
 - « Question pour un poisson » : `https://www.youtube.com/watch?v=Zcl98Bguq7k&list=PL7BUuXWlhkL7vcHkVAXgqX0pvyTk1Hd8V&index=17`
 - Chaque musique démarre comme générique d'introduction au lancement du jeu correspondant.
+- La musique déjà intégrée à l'accueil (`8g8Utx0gvv8`) reste la musique d'ambiance par défaut.
 
 ## Validation
 
