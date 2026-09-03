@@ -618,6 +618,20 @@
   background: linear-gradient(transparent, var(--background) 24%);
 }
 
+.host-session-controls {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: flex-end;
+  margin: -0.25rem -0.25rem 0.75rem;
+  padding: 0.5rem 0.25rem;
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--background) 88%, transparent);
+  box-shadow: 0 0.75rem 2rem color-mix(in oklch, var(--background) 60%, transparent);
+  backdrop-filter: blur(0.8rem);
+}
+
 .final-hero {
   position: relative;
   max-height: 18rem;

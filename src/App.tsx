@@ -22,6 +22,7 @@ import { BackgroundMusic } from "@/components/background-music"
 import { isHostAudioEnabled } from "@/components/challenge-audio-control"
 import { ChallengeScreen } from "@/components/challenge-screen"
 import { FinalReveal } from "@/components/final-reveal"
+import { HostSessionControls } from "@/components/host-session-controls"
 import { LeaderboardScreen } from "@/components/leaderboard-screen"
 import { SalmonDemoScreen } from "@/components/salmon-demo-screen"
 import { TeamBoard } from "@/components/team-board"
@@ -443,6 +444,13 @@ export default function App() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+      {session?.hostToken && game && game.status !== "finished" ? (
+        <HostSessionControls
+          status={game.status}
+          onFinish={() => hostAction("finish")}
+          onLeave={leave}
+        />
+      ) : null}
       {screen}
       <Toaster position="top-center" richColors />
     </OceanShell>

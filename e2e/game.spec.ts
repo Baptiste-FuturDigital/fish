@@ -140,4 +140,18 @@ test("demo launches a populated tournament directly", async ({ page }) => {
   await expect(page.getByText("Aquarium actif")).toBeVisible()
   await expect(page.getByRole("heading", { name: "Le juste poisson" })).toBeVisible()
   await expect(page.getByText("Démo de Poséithon")).toBeVisible()
+
+  const gameCode = await page.evaluate(() => {
+    const session = JSON.parse(localStorage.getItem("fish-tournament-session") ?? "null") as { gameCode?: string } | null
+    return session?.gameCode
+  })
+  expect(gameCode).toMatch(/^[A-Z2-9]{4}$/)
+
+  await expect(page.getByRole("button", { name: "Terminer le tournoi", exact: true }).first()).toBeVisible()
+  await page.getByRole("button", { name: "Accueil · nouvelle partie", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Quels poissons seront dignes de Poséithon ? 🔱" })).toBeVisible()
+
+  const response = await page.request.get(`/api/games/${gameCode}`)
+  expect(response.ok()).toBe(true)
+  expect((await response.json()).status).toBe("finished")
 })
