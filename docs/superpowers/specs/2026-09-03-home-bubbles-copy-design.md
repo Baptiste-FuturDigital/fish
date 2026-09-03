@@ -20,7 +20,13 @@ Rendre l'accueil de Fish Party plus vivant sans modifier son parcours, ses formu
 - « Question pour un poisson »
 - « Le juste poisson »
 - « Le poisson faible »
-- « Qui veut gagner les poissons ? »
+- « Qui veut gagner des poissons ? »
+
+## Génériques d'introduction conservés
+
+- « Qui veut gagner des poissons ? » : `https://www.youtube.com/watch?v=doSjY-DGmjY&list=PL7BUuXWlhkL7vcHkVAXgqX0pvyTk1Hd8V&index=18`
+- « Question pour un poisson » : `https://www.youtube.com/watch?v=Zcl98Bguq7k&list=PL7BUuXWlhkL7vcHkVAXgqX0pvyTk1Hd8V&index=17`
+- Chaque musique démarre comme générique d'introduction au lancement du jeu correspondant.
 
 ## Validation
 
