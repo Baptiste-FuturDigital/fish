@@ -14,31 +14,31 @@
 
 **Files:** `shared/game.ts`, `server/game-service.ts`, `server/game-service.test.ts`, `src/components/leaderboard-screen.tsx`.
 
-- [ ] Add a failing service test for `reveal → leaderboard → next challenge intro`.
-- [ ] Add `leaderboard` to the tournament phase contract.
-- [ ] Persist the leaderboard phase between the first three challenges.
-- [ ] Render ranked teams and give the host one next-challenge action.
+- [x] Add a failing service test for `reveal → leaderboard → next challenge intro`.
+- [x] Add `leaderboard` to the tournament phase contract.
+- [x] Persist the leaderboard phase between the first three challenges.
+- [x] Render ranked teams and give the host one next-challenge action.
 
 ### Task 2: Server-backed demo
 
 **Files:** `server/db.ts`, `server/game-service.ts`, `server/app.ts`, `src/api.ts`, tests.
 
-- [ ] Add failing service and API tests for a ready-to-play eight-player demo.
-- [ ] Persist an `is_demo` flag and create four balanced two-player teams.
-- [ ] Fill missing demo-team answers deterministically before reveal.
-- [ ] Expose `POST /api/demo` and the `/?demo=1` launcher.
+- [x] Add failing service and API tests for a ready-to-play eight-player demo.
+- [x] Persist an `is_demo` flag and create four balanced two-player teams.
+- [x] Fill missing demo-team answers deterministically before reveal.
+- [x] Expose `POST /api/demo` and the `/?demo=1` launcher.
 
 ### Task 3: Easter egg and finale
 
 **Files:** `src/App.tsx`, `src/components/final-scoreboard.tsx`, component CSS, Playwright test.
 
-- [ ] Add failing browser assertions for the Fish Party link and finale decorations.
-- [ ] Open the YouTube Short in a safe new tab.
-- [ ] Add Poséithon, winner treatment, confetti, bubbles and fish motion.
-- [ ] Respect reduced-motion preferences.
+- [x] Add failing browser assertions for the Fish Party link and finale decorations.
+- [x] Open the YouTube Short in a safe new tab.
+- [x] Add Poséithon, winner treatment, confetti, bubbles and fish motion.
+- [x] Respect reduced-motion preferences.
 
 ### Task 4: Delivery
 
-- [ ] Run unit tests, build and the mobile Playwright journey.
-- [ ] Rebuild Docker and verify `/api/health`.
-- [ ] Commit project-owned changes and push `main`.
+- [x] Run unit tests, build and the mobile Playwright journey.
+- [x] Rebuild Docker and verify `/api/health`.
+- [x] Commit project-owned changes and push `main`.

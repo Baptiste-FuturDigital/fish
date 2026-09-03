@@ -2,7 +2,7 @@ import type { ChallengeId, PublicRoundView, RoundScoreResult } from "./challenge
 
 export type GameStatus = "lobby" | "running" | "finished"
 
-export type TournamentPhase = "challenge-intro" | "answering" | "reveal"
+export type TournamentPhase = "challenge-intro" | "answering" | "reveal" | "leaderboard"
 
 export type PromptKind = "question" | "duel" | "vote" | "mime" | "action"
 

@@ -248,7 +248,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
               : tournament.roundIndex < tournament.roundCount - 1
                 ? "Manche suivante"
                 : tournament.challengeIndex < tournament.challengeCount - 1
-                  ? "Épreuve suivante"
+                  ? "Voir le classement"
                   : "Voir les résultats"}
           </Button>
           <Button size="lg" variant="outline" onClick={() => void act("finish")} disabled={Boolean(busy)}>

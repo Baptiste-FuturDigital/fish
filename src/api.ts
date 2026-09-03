@@ -20,6 +20,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const gameApi = {
+  demo() {
+    return request<SessionResponse>("/api/demo", { method: "POST" })
+  },
   create(name: string, hostName: string) {
     return request<SessionResponse>("/api/games", {
       method: "POST",

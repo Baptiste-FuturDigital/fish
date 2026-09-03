@@ -26,6 +26,7 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       challenge_round INTEGER NOT NULL DEFAULT -1,
       phase TEXT NOT NULL DEFAULT 'lobby',
       phase_ends_at TEXT,
+      is_demo INTEGER NOT NULL DEFAULT 0,
       host_token_hash TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
@@ -88,6 +89,7 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
   addGameColumn("challenge_round", "INTEGER NOT NULL DEFAULT -1")
   addGameColumn("phase", "TEXT NOT NULL DEFAULT 'lobby'")
   addGameColumn("phase_ends_at", "TEXT")
+  addGameColumn("is_demo", "INTEGER NOT NULL DEFAULT 0")
 
   const playerColumns = database.prepare("PRAGMA table_info(players)").all() as Array<{ name: string }>
   if (!playerColumns.some((column) => column.name === "totem_id")) {

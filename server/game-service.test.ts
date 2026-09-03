@@ -279,6 +279,63 @@ describe("GameService", () => {
     expect(game.tournament).toBeNull()
   })
 
+  it("shows the leaderboard after an intermediate challenge before the next intro", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const joined = service.joinGame(created.game.code, "Léa")
+    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
+    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+
+    let game = service.startGame(created.game.code, created.session.hostToken!)
+    for (let step = 0; step < 12; step += 1) {
+      const tournament = game.tournament!
+      if (
+        tournament.challengeIndex === 0 &&
+        tournament.phase === "reveal" &&
+        tournament.roundIndex === tournament.roundCount - 1
+      ) {
+        break
+      }
+      game = service.advanceTournament(created.game.code, created.session.hostToken!)
+    }
+
+    const leaderboard = service.advanceTournament(created.game.code, created.session.hostToken!)
+    expect(leaderboard.tournament).toEqual(expect.objectContaining({
+      phase: "leaderboard",
+      challengeIndex: 0,
+    }))
+    expect(leaderboard.tournament?.round.correctAnswer).toBeDefined()
+
+    const nextIntro = service.advanceTournament(created.game.code, created.session.hostToken!)
+    expect(nextIntro.tournament).toEqual(expect.objectContaining({
+      phase: "challenge-intro",
+      challengeIndex: 1,
+    }))
+  })
+
+  it("finishes directly after the fourth challenge final reveal", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const joined = service.joinGame(created.game.code, "Léa")
+    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
+    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+
+    let game = service.startGame(created.game.code, created.session.hostToken!)
+    for (let step = 0; step < 80; step += 1) {
+      const tournament = game.tournament!
+      if (
+        tournament.challengeIndex === tournament.challengeCount - 1 &&
+        tournament.phase === "reveal" &&
+        tournament.roundIndex === tournament.roundCount - 1
+      ) {
+        break
+      }
+      game = service.advanceTournament(created.game.code, created.session.hostToken!)
+    }
+
+    const finished = service.advanceTournament(created.game.code, created.session.hostToken!)
+    expect(finished.status).toBe("finished")
+    expect(finished.tournament).toBeNull()
+  })
+
   it("reveals and scores an expired round only once", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     const joined = service.joinGame(created.game.code, "Léa")

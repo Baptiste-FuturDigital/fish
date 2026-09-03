@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import {
   Anchor,
   ArrowRight,
@@ -6,6 +6,7 @@ import {
   LoaderCircle,
   LogIn,
   Plus,
+  Sparkles,
   Users,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button"
 import { BackgroundMusic } from "@/components/background-music"
 import { ChallengeScreen } from "@/components/challenge-screen"
 import { FinalScoreboard } from "@/components/final-scoreboard"
+import { LeaderboardScreen } from "@/components/leaderboard-screen"
 import { TeamBoard } from "@/components/team-board"
 import { TotemScan } from "@/components/totem-scan"
 import {
@@ -76,7 +78,12 @@ function Brand() {
           </p>
         </div>
       </div>
-      <Badge variant="secondary">Fish Party</Badge>
+      <Badge
+        variant="secondary"
+        render={<a href="https://www.youtube.com/shorts/F3Rl8RRDq90" target="_blank" rel="noopener noreferrer" />}
+      >
+        Fish Party
+      </Badge>
     </header>
   )
 }
@@ -90,6 +97,30 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
   const [playerName, setPlayerName] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const autoDemo = useRef(new URLSearchParams(window.location.search).get("demo") === "1")
+
+  useEffect(() => {
+    if (!autoDemo.current) return
+    autoDemo.current = false
+    window.history.replaceState({}, "", window.location.pathname)
+    setBusy(true)
+    gameApi.demo()
+      .then(onEnter)
+      .catch((caught: unknown) => setError(caught instanceof Error ? caught.message : "Démo impossible."))
+      .finally(() => setBusy(false))
+  }, [onEnter])
+
+  async function launchDemo() {
+    setBusy(true)
+    setError(null)
+    try {
+      onEnter(await gameApi.demo())
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Démo impossible.")
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function submitCreate(event: FormEvent) {
     event.preventDefault()
@@ -144,6 +175,10 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
             <Button size="lg" variant="secondary" className="w-full" onClick={() => setMode("join")}>
               <LogIn data-icon="inline-start" />
               Rejoindre une partie
+            </Button>
+            <Button size="lg" variant="outline" className="w-full" onClick={() => void launchDemo()} disabled={busy}>
+              {busy ? <LoaderCircle data-icon="inline-start" className="animate-spin" /> : <Sparkles data-icon="inline-start" />}
+              Lancer la démo
             </Button>
           </CardContent>
           <CardFooter className="justify-center">
@@ -338,6 +373,14 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam }: { g
 }
 
 function GameScreen({ game, session, onAdvance, onFinish, onSubmit }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView> }) {
+  if (game.tournament?.phase === "leaderboard") {
+    return (
+      <>
+        <GameHeader game={game} />
+        <LeaderboardScreen game={game} session={session} onAdvance={onAdvance} onFinish={onFinish} />
+      </>
+    )
+  }
   return (
     <>
       <GameHeader game={game} />
@@ -353,13 +396,8 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit }: { game: Ga
   )
 }
 
-function EndScreen({ game, session, onLeave }: { game: GameView; session: PlayerSession; onLeave: () => void }) {
-  return (
-    <>
-      <GameHeader game={game} />
-      <FinalScoreboard game={game} onLeave={onLeave} />
-    </>
-  )
+function EndScreen({ game, onLeave }: { game: GameView; onLeave: () => void }) {
+  return <FinalScoreboard game={game} onLeave={onLeave} />
 }
 
 function LoadingScreen() {
@@ -381,7 +419,7 @@ export default function App() {
     if (loading || !game) return <LoadingScreen />
     if (game.status === "lobby") return <LobbyScreen game={game} session={session} onStart={() => hostAction("start").then(() => undefined)} onClaimTotem={claimTotem} onRenameTeam={renameTeam} />
     if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} />
-    return <EndScreen game={game} session={session} onLeave={leave} />
+    return <EndScreen game={game} onLeave={leave} />
   }, [claimTotem, enter, game, hostAction, leave, loading, renameTeam, session, submitAnswer])
 
   return (

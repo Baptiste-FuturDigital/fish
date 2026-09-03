@@ -1,0 +1,449 @@
+.final-scoreboard {
+  position: relative;
+  isolation: isolate;
+  gap: 0;
+  padding-block: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--secondary) 42%, var(--border));
+  background:
+    radial-gradient(circle at 50% 48%, oklch(0.92 0.12 97 / 26%), transparent 32%),
+    var(--card);
+  box-shadow:
+    0 1.75rem 5rem oklch(0.08 0.05 220 / 55%),
+    0 0 0 1px oklch(0.93 0.12 95 / 12%);
+}
+
+.final-celebration,
+.final-confetti-field,
+.final-bubble-field,
+.final-fish-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.final-celebration {
+  z-index: 4;
+  contain: paint;
+}
+
+.final-confetti-piece {
+  position: absolute;
+  top: -1.25rem;
+  left: var(--confetti-left);
+  width: 0.45rem;
+  height: 0.8rem;
+  border-radius: 0.12rem;
+  background: var(--confetti-color);
+  box-shadow: 0 0 0.45rem color-mix(in oklab, var(--confetti-color) 35%, transparent);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: final-confetti-fall var(--confetti-duration) linear var(--confetti-delay) infinite;
+}
+
+.final-confetti-piece--1 {
+  width: 0.65rem;
+  height: 0.28rem;
+  border-radius: 999px;
+}
+
+.final-confetti-piece--2 {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50% 8% 50% 8%;
+}
+
+.final-bubble {
+  position: absolute;
+  bottom: -2rem;
+  left: var(--final-bubble-left);
+  width: var(--final-bubble-size);
+  height: var(--final-bubble-size);
+  border: 1px solid oklch(0.92 0.06 205 / 48%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, oklch(1 0 0 / 55%), transparent 28%);
+  box-shadow: inset 0 0 0.55rem oklch(0.85 0.08 203 / 15%);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: final-bubble-rise var(--final-bubble-duration) ease-in var(--final-bubble-delay) infinite;
+}
+
+.final-swimming-fish {
+  position: absolute;
+  top: var(--final-fish-top);
+  left: -4rem;
+  font-size: 1.65rem;
+  opacity: 0;
+  filter: drop-shadow(0 0.3rem 0.4rem oklch(0.05 0.04 220 / 32%));
+  will-change: transform, opacity;
+  animation: final-fish-swim var(--final-fish-duration) ease-in-out var(--final-fish-delay) infinite;
+}
+
+.final-poseithon {
+  position: relative;
+  z-index: 1;
+  height: clamp(20rem, 61svh, 28rem);
+  min-height: 20rem;
+  overflow: hidden;
+  background: oklch(0.13 0.05 222);
+}
+
+.final-poseithon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  transform: scale(1.015);
+  animation: final-poseithon-arrival 1.4s cubic-bezier(0.18, 0.85, 0.22, 1) both;
+}
+
+.final-poseithon-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, transparent 48%, oklch(0.12 0.05 222 / 34%) 72%, oklch(0.12 0.05 222 / 92%)),
+    radial-gradient(circle at 50% 38%, transparent 34%, oklch(0.08 0.03 220 / 28%) 100%);
+}
+
+.final-poseithon::after {
+  content: "";
+  position: absolute;
+  right: -20%;
+  bottom: -4rem;
+  left: -20%;
+  height: 7rem;
+  border-radius: 50%;
+  background: oklch(0.81 0.14 195 / 17%);
+  filter: blur(1.5rem);
+}
+
+.final-divine-seal {
+  position: absolute;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 2;
+  display: grid;
+  width: 4.25rem;
+  height: 4.25rem;
+  place-items: center;
+  border: 1px solid oklch(0.95 0.13 96 / 62%);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, oklch(0.97 0.12 96), oklch(0.77 0.16 75) 68%);
+  color: oklch(0.24 0.06 70);
+  box-shadow:
+    0 0.75rem 2rem oklch(0.06 0.04 220 / 55%),
+    0 0 2rem oklch(0.9 0.15 95 / 32%);
+  animation: final-seal-pop 700ms 950ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.final-divine-seal svg {
+  width: 2.15rem;
+  height: 2.15rem;
+}
+
+.final-poseithon-kicker {
+  position: absolute;
+  bottom: 1.55rem;
+  left: 1rem;
+  z-index: 2;
+  max-width: calc(100% - 6.5rem);
+  margin: 0;
+  color: oklch(0.97 0.08 95);
+  font-size: clamp(0.72rem, 3vw, 0.92rem);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  line-height: 1.2;
+  text-shadow: 0 0.2rem 0.85rem oklch(0.04 0.02 220 / 95%);
+}
+
+.final-winner {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  margin: -0.55rem 0.75rem 0;
+  padding: 1.65rem 1rem 1.45rem;
+  border: 1px solid oklch(0.82 0.15 93 / 48%);
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(145deg, oklch(0.99 0.035 93), oklch(0.92 0.095 94));
+  box-shadow:
+    0 1rem 2.4rem oklch(0.16 0.05 210 / 24%),
+    inset 0 1px 0 oklch(1 0 0 / 72%);
+  text-align: center;
+  animation: final-winner-rise 850ms 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.final-winner-icon {
+  display: grid;
+  width: 3.3rem;
+  height: 3.3rem;
+  margin-top: -3.2rem;
+  margin-bottom: 0.7rem;
+  place-items: center;
+  border: 0.24rem solid var(--card);
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 0.6rem 1.25rem oklch(0.18 0.06 32 / 32%);
+}
+
+.final-winner-icon svg {
+  width: 1.65rem;
+  height: 1.65rem;
+}
+
+.final-winner > p:first-of-type {
+  margin: 0;
+  color: oklch(0.48 0.09 72);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.final-winner h1 {
+  max-width: 100%;
+  margin: 0.35rem 0 0.55rem;
+  color: oklch(0.21 0.055 205);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(2.4rem, 12vw, 4.5rem);
+  font-variation-settings: "opsz" 72, "SOFT" 35;
+  font-weight: 900;
+  line-height: 0.92;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  text-shadow: 0 2px 0 oklch(1 0 0 / 72%);
+}
+
+.final-winner-score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid oklch(0.76 0.14 87 / 55%);
+  border-radius: 999px;
+  background: oklch(0.96 0.1 95 / 64%);
+  color: oklch(0.39 0.09 69);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.final-winner-score span {
+  color: var(--primary);
+  font-family: "Fraunces Variable", serif;
+  font-size: 1.55rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.final-winner-message {
+  max-width: 25rem;
+  margin: 0.75rem 0 0;
+  color: oklch(0.42 0.04 205);
+  font-size: 0.79rem;
+  line-height: 1.45;
+}
+
+.final-ranking {
+  position: relative;
+  z-index: 3;
+  padding-block: 1.25rem 0.5rem;
+}
+
+.final-ranking-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.65rem;
+  padding-inline: 0.1rem;
+  color: oklch(0.28 0.05 205);
+  font-family: "Fraunces Variable", serif;
+  font-size: 1.15rem;
+  font-weight: 850;
+}
+
+.final-ranking-heading h2 {
+  margin: 0;
+  font: inherit;
+}
+
+.final-ranking-heading span:last-child {
+  color: var(--muted-foreground);
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.final-ranking ol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.final-ranking .final-ranking-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem auto minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  min-height: 3.4rem;
+  padding: 0.58rem 0.7rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--border) 74%, transparent);
+  background: color-mix(in oklab, var(--muted) 88%, white);
+  animation: final-row-arrival 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.final-ranking-row:nth-child(1) { animation-delay: 0.75s; }
+.final-ranking-row:nth-child(2) { animation-delay: 0.87s; }
+.final-ranking-row:nth-child(3) { animation-delay: 0.99s; }
+.final-ranking-row:nth-child(4) { animation-delay: 1.11s; }
+
+.final-ranking .final-ranking-row[data-rank="1"] {
+  border-color: oklch(0.77 0.14 87 / 66%);
+  background:
+    linear-gradient(100deg, oklch(0.96 0.105 95), oklch(0.99 0.035 93));
+  box-shadow: inset 0.22rem 0 0 oklch(0.77 0.16 76);
+}
+
+.final-rank-number {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--card) 72%, transparent);
+  color: oklch(0.37 0.06 205);
+  font-family: "Fraunces Variable", serif;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.final-rank-number svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: oklch(0.63 0.15 76);
+}
+
+.final-team-avatars {
+  display: flex;
+  align-items: center;
+  padding-left: 0.3rem;
+}
+
+.final-team-avatars [data-slot="avatar"] {
+  margin-left: -0.3rem;
+  border: 2px solid var(--card);
+}
+
+.final-team-name {
+  min-width: 0;
+  overflow: hidden;
+  color: oklch(0.24 0.05 205);
+  font-weight: 850;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.final-footer {
+  position: relative;
+  z-index: 5;
+  justify-content: center;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  border-top-color: color-mix(in oklab, var(--border) 60%, transparent);
+  background: color-mix(in oklab, var(--muted) 84%, transparent);
+  backdrop-filter: blur(0.75rem);
+}
+
+@keyframes final-poseithon-arrival {
+  from { opacity: 0; transform: scale(1.12); filter: saturate(0.55) brightness(0.55); }
+  to { opacity: 1; transform: scale(1.015); filter: saturate(1) brightness(1); }
+}
+
+@keyframes final-winner-rise {
+  from { opacity: 0; transform: translate3d(0, 2.5rem, 0) scale(0.94); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes final-seal-pop {
+  from { opacity: 0; transform: scale(0.25) rotate(-32deg); }
+  to { opacity: 1; transform: scale(1) rotate(7deg); }
+}
+
+@keyframes final-row-arrival {
+  from { opacity: 0; transform: translate3d(1.5rem, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes final-confetti-fall {
+  0% { opacity: 0; transform: translate3d(0, -2rem, 0) rotate(0deg); }
+  8% { opacity: 0.95; }
+  88% { opacity: 0.85; }
+  100% { opacity: 0; transform: translate3d(var(--confetti-drift), 54rem, 0) rotate(680deg); }
+}
+
+@keyframes final-bubble-rise {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.6); }
+  14% { opacity: 0.62; }
+  82% { opacity: 0.5; }
+  100% { opacity: 0; transform: translate3d(1.4rem, -52rem, 0) scale(1.12); }
+}
+
+@keyframes final-fish-swim {
+  0% { opacity: 0; transform: translate3d(-4rem, 0, 0) scaleX(1); }
+  12% { opacity: 0.7; }
+  48% { transform: translate3d(22rem, -1rem, 0) scaleX(1) rotate(-4deg); }
+  52% { transform: translate3d(22rem, -1rem, 0) scaleX(-1) rotate(4deg); }
+  88% { opacity: 0.5; }
+  100% { opacity: 0; transform: translate3d(-4rem, 1rem, 0) scaleX(-1); }
+}
+
+@media (max-width: 420px) {
+  .final-poseithon {
+    height: 21rem;
+  }
+
+  .final-winner {
+    margin-inline: 0.55rem;
+  }
+
+  .final-ranking .final-ranking-row {
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+  }
+
+  .final-team-avatars {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .final-confetti-piece,
+  .final-bubble,
+  .final-swimming-fish,
+  .final-poseithon img,
+  .final-divine-seal,
+  .final-winner,
+  .final-ranking-row {
+    animation: none;
+  }
+
+  .final-confetti-piece,
+  .final-bubble,
+  .final-swimming-fish {
+    display: none;
+  }
+}

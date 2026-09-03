@@ -28,8 +28,9 @@ interface GameRow {
   challenge_order: string
   challenge_index: number
   challenge_round: number
-  phase: "lobby" | "challenge-intro" | "answering" | "reveal" | "finished"
+  phase: "lobby" | "challenge-intro" | "answering" | "reveal" | "leaderboard" | "finished"
   phase_ends_at: string | null
+  is_demo: number
   host_token_hash: string
   created_at: string
 }
@@ -156,6 +157,27 @@ export class GameService {
     return {
       game: this.getGame(code),
       session: { gameCode: code, playerId, playerToken, hostToken },
+    }
+  }
+
+  createDemoGame(): SessionResponse {
+    const created = this.createGame("Démo de Poséithon", "Poséithon")
+    const sessions = [created.session]
+    for (const name of ["Ariel", "Nemo", "Dory", "Sebastien", "Marin", "Poulpy", "Moby"]) {
+      sessions.push(this.joinGame(created.game.code, name).session)
+    }
+    for (const session of sessions) {
+      this.claimTotem(created.game.code, session.playerId, session.playerToken)
+    }
+    this.database.prepare("UPDATE games SET is_demo = 1 WHERE code = ?").run(created.game.code)
+    const demoNames = ["Les Sardines Turbo", "Le Krill Bill", "Les Dents de Mer", "Les Moules Costaudes"]
+    teamDefinitions.forEach((team, index) => {
+      this.database.prepare("UPDATE game_teams SET name = ? WHERE game_id = ? AND team_id = ?")
+        .run(demoNames[index], created.game.id, team.id)
+    })
+    return {
+      game: this.startGame(created.game.code, created.session.hostToken!),
+      session: created.session,
     }
   }
 
@@ -374,10 +396,14 @@ export class GameService {
           return this.finishGame(game.code, hostToken)
         }
         this.database.prepare(
-          `UPDATE games SET challenge_index = challenge_index + 1, challenge_round = 0,
-           current_round = 0, phase = 'challenge-intro', phase_ends_at = NULL WHERE id = ?`,
+          "UPDATE games SET phase = 'leaderboard', phase_ends_at = NULL WHERE id = ?",
         ).run(game.id)
       }
+    } else if (game.phase === "leaderboard") {
+      this.database.prepare(
+        `UPDATE games SET challenge_index = challenge_index + 1, challenge_round = 0,
+         current_round = 0, phase = 'challenge-intro', phase_ends_at = NULL WHERE id = ?`,
+      ).run(game.id)
     } else {
       throw new GameError("Phase de tournoi invalide.", 409)
     }
@@ -454,16 +480,17 @@ export class GameService {
     const challenge = this.currentChallenge(game)
     const round = challenge.rounds[game.challenge_round]
     if (!round) throw new GameError("Manche introuvable.", 500)
+    const hasRevealedRound = game.phase === "reveal" || game.phase === "leaderboard"
     const answerRows = this.database.prepare(
       `SELECT team_id, answer, locked FROM team_answers
        WHERE game_id = ? AND challenge_id = ? AND round_index = ? ORDER BY team_id`,
     ).all(game.id, challenge.id, game.challenge_round) as TeamAnswerRow[]
     const answers: TeamAnswerView[] = answerRows.map((entry) => ({
       teamId: entry.team_id,
-      answer: game.phase === "reveal" ? entry.answer : null,
+      answer: hasRevealedRound ? entry.answer : null,
       locked: Boolean(entry.locked),
     }))
-    const resultRows = game.phase === "reveal"
+    const resultRows = hasRevealedRound
       ? this.database.prepare(
           `SELECT team_id, answer, points, is_correct, distance FROM round_results
            WHERE game_id = ? AND challenge_id = ? AND round_index = ?
@@ -496,7 +523,7 @@ export class GameService {
         presenterImageUrl: challenge.presenterImageUrl,
         confirmationLabel: challenge.confirmationLabel,
       },
-      round: projectRound(round, game.phase === "reveal"),
+      round: projectRound(round, hasRevealedRound),
       answers,
       results,
     }
@@ -523,6 +550,9 @@ export class GameService {
       const teamRows = this.database
         .prepare("SELECT team_id, category, name, score FROM game_teams WHERE game_id = ? ORDER BY rowid")
         .all(fresh.id) as TeamRow[]
+      if (fresh.is_demo) {
+        this.seedDemoAnswers(fresh, teamRows)
+      }
       const answerRows = this.database.prepare(
         `SELECT team_id, answer, locked FROM team_answers
          WHERE game_id = ? AND challenge_id = ? AND round_index = ?`,
@@ -560,6 +590,36 @@ export class GameService {
         "UPDATE games SET phase = 'reveal', phase_ends_at = NULL WHERE id = ?",
       ).run(fresh.id)
     })()
+  }
+
+  private seedDemoAnswers(game: GameRow, teamRows: TeamRow[]): void {
+    const challenge = this.currentChallenge(game)
+    const round = challenge.rounds[game.challenge_round]
+    const insert = this.database.prepare(
+      `INSERT OR IGNORE INTO team_answers
+        (game_id, challenge_id, round_index, team_id, answer, locked, updated_by, updated_at)
+       VALUES (?, ?, ?, ?, ?, 1, 'demo-simulator', ?)`,
+    )
+    teamRows.forEach((team, index) => {
+      let answer: string
+      if (round.kind === "number") {
+        const multipliers = [1, 0.88, 1.22, 1.65]
+        answer = String(Number((round.correctAnswer * multipliers[(index + game.challenge_round) % multipliers.length]).toFixed(3)))
+      } else {
+        const wrongChoices = round.choices.filter((choice) => choice.id !== round.correctAnswer)
+        answer = index === game.challenge_round % teamRows.length || index === 0
+          ? round.correctAnswer
+          : wrongChoices[(index + game.challenge_round) % wrongChoices.length].id
+      }
+      insert.run(
+        game.id,
+        challenge.id,
+        game.challenge_round,
+        team.team_id,
+        answer,
+        new Date().toISOString(),
+      )
+    })
   }
 
   private startAnswering(game: GameRow, durationSeconds: number): void {

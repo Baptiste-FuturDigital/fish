@@ -32,6 +32,10 @@ export function createApp(service: GameService, staticDir?: string) {
     response.status(201).json(service.createGame(body.name, body.hostName))
   })
 
+  app.post("/api/demo", (_request, response) => {
+    response.status(201).json(service.createDemoGame())
+  })
+
   app.post("/api/games/:code/join", (request, response) => {
     const body = joinSchema.parse(request.body)
     response.status(201).json(service.joinGame(request.params.code, body.name))

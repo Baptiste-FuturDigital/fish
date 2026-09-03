@@ -156,4 +156,27 @@ describe("game API", () => {
     expect(reveal.body.tournament.phase).toBe("reveal")
     expect(reveal.body.tournament.round.correctAnswer).toBe(0.09)
   })
+
+  it("creates a ready-to-play demo with simulated answers from all four teams", async () => {
+    const demo = await request(app)
+      .post("/api/demo")
+      .expect(201)
+
+    expect(demo.body.game.status).toBe("running")
+    expect(demo.body.game.tournament.phase).toBe("challenge-intro")
+    expect(demo.body.game.players).toHaveLength(8)
+    expect(demo.body.game.teams.map((team: { memberIds: string[] }) => team.memberIds.length).sort())
+      .toEqual([2, 2, 2, 2])
+    expect(demo.body.session.hostToken).toBeTypeOf("string")
+
+    const code = demo.body.game.code
+    const hostToken = demo.body.session.hostToken
+    await request(app).post(`/api/games/${code}/advance`).send({ hostToken }).expect(200)
+    const reveal = await request(app).post(`/api/games/${code}/advance`).send({ hostToken }).expect(200)
+
+    expect(reveal.body.tournament.phase).toBe("reveal")
+    expect(reveal.body.tournament.answers).toHaveLength(4)
+    expect(reveal.body.tournament.answers.every((answer: { locked: boolean }) => answer.locked)).toBe(true)
+    expect(reveal.body.tournament.results).toHaveLength(4)
+  })
 })
