@@ -1,0 +1,17 @@
+services:
+  app:
+    build:
+      context: .
+    container_name: poisson-chelou
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      NODE_ENV: production
+      PORT: 8787
+      FISH_DB: /app/data/fish.db
+    volumes:
+      - fish-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  fish-data:

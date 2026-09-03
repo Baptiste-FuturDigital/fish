@@ -23,6 +23,21 @@ L'application complète est alors disponible sur `http://localhost:8787`. Depuis
 
 La base SQLite persistante est créée automatiquement dans `data/fish.db`.
 
+## Lancer avec Docker
+
+```bash
+docker compose up --build -d
+```
+
+Ouvrir ensuite [http://localhost:8787](http://localhost:8787). La base SQLite est conservée dans le volume nommé `fish-data`.
+
+```bash
+docker compose logs -f app
+docker compose down
+```
+
+`docker compose down` arrête l'application sans supprimer les parties. Ajouter `--volumes` uniquement pour supprimer volontairement la base persistante.
+
 ## Vérification
 
 ```bash
