@@ -68,7 +68,7 @@ function Brand() {
           <p className="font-heading text-xl leading-none font-black">Poisson chelou</p>
         </div>
       </div>
-      <Badge variant="secondary">MVP iodé</Badge>
+          <Badge variant="secondary">Fish Party</Badge>
     </header>
   )
 }

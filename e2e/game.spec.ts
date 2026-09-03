@@ -7,6 +7,7 @@ test("a host and guest can play several rounds and finish", async ({ browser }) 
   const guest = await guestContext.newPage()
 
   await host.goto("/")
+  await expect(host.getByText("Fish Party")).toBeVisible()
   await host.getByRole("button", { name: "Créer une partie" }).click()
   await host.getByLabel("Nom de la partie").fill("L'aquarium du test")
   await host.getByLabel("Ton pseudo d'hôte").fill("Baptiste")
