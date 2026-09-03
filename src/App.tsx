@@ -22,6 +22,7 @@ import { BackgroundMusic } from "@/components/background-music"
 import { ChallengeScreen } from "@/components/challenge-screen"
 import { FinalReveal } from "@/components/final-reveal"
 import { LeaderboardScreen } from "@/components/leaderboard-screen"
+import { SalmonDemoScreen } from "@/components/salmon-demo-screen"
 import { TeamBoard } from "@/components/team-board"
 import { TotemScan } from "@/components/totem-scan"
 import {
@@ -413,13 +414,15 @@ function LoadingScreen() {
 
 export default function App() {
   const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, submitAnswer } = useGame()
+  const isSalmonDemo = new URLSearchParams(window.location.search).get("salmon-demo") === "1"
   const screen = useMemo(() => {
+    if (isSalmonDemo) return <SalmonDemoScreen />
     if (!session) return <HomeScreen onEnter={enter} />
     if (loading || !game) return <LoadingScreen />
     if (game.status === "lobby") return <LobbyScreen game={game} session={session} onStart={() => hostAction("start").then(() => undefined)} onClaimTotem={claimTotem} onRenameTeam={renameTeam} />
     if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} />
     return <EndScreen game={game} onLeave={leave} />
-  }, [claimTotem, enter, game, hostAction, leave, loading, renameTeam, session, submitAnswer])
+  }, [claimTotem, enter, game, hostAction, isSalmonDemo, leave, loading, renameTeam, session, submitAnswer])
 
   return (
     <OceanShell>

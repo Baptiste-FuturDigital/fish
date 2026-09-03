@@ -520,6 +520,8 @@ export class GameService {
         description: challenge.description,
         rules: challenge.rules,
         introMusicYoutubeId: challenge.introMusicYoutubeId,
+        introMusicStartSeconds: challenge.introMusicStartSeconds,
+        introMusicEndSeconds: challenge.introMusicEndSeconds,
         presenterImageUrl: challenge.presenterImageUrl,
         confirmationLabel: challenge.confirmationLabel,
       },

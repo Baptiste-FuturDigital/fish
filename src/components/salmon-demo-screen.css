@@ -1,0 +1,155 @@
+.salmon-demo {
+  display: flex;
+  width: 100%;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.salmon-demo-header {
+  text-align: center;
+}
+
+.salmon-demo-header p,
+.salmon-demo-header span {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.salmon-demo-header h1 {
+  margin: 0.35rem 0 0.4rem;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(2rem, 10vw, 3.3rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.salmon-demo-header span {
+  color: oklch(0.8 0.035 195);
+  font-size: 0.58rem;
+  letter-spacing: 0.11em;
+}
+
+.salmon-demo-stage-card {
+  overflow: hidden;
+  border: 1px solid oklch(0.96 0.025 96 / 30%);
+  border-radius: 1.45rem;
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: 0 1.4rem 3rem oklch(0.06 0.045 220 / 36%);
+}
+
+.salmon-demo-status {
+  display: flex;
+  min-height: 6rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem;
+  text-align: left;
+}
+
+.salmon-demo-status > svg {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
+.salmon-demo-status strong,
+.salmon-demo-status p,
+.salmon-demo-answer h2 {
+  margin: 0;
+}
+
+.salmon-demo-status strong {
+  font-family: "Fraunces Variable", serif;
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.salmon-demo-status p {
+  margin-top: 0.2rem;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.salmon-demo-pulse {
+  position: relative;
+  width: 1.25rem;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  border: 0.24rem solid var(--primary);
+  border-radius: 50%;
+}
+
+.salmon-demo-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -0.6rem;
+  border: 1px solid var(--primary);
+  border-radius: inherit;
+  animation: salmon-demo-sonar 1.3s ease-out infinite;
+}
+
+.salmon-demo-answer {
+  width: 100%;
+  text-align: center;
+  animation: salmon-demo-answer-in 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.salmon-demo-answer p {
+  color: var(--primary);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.salmon-demo-answer h2 {
+  margin-top: 0.2rem;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1.75rem, 9vw, 2.6rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.salmon-demo > .challenge-audio {
+  align-self: center;
+}
+
+.salmon-demo-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.salmon-demo-actions [data-slot="button"] {
+  width: min(100%, 21rem);
+  min-height: 3.15rem;
+  font-weight: 850;
+}
+
+@keyframes salmon-demo-sonar {
+  from { opacity: 0.75; transform: scale(0.55); }
+  to { opacity: 0; transform: scale(1.45); }
+}
+
+@keyframes salmon-demo-answer-in {
+  from { opacity: 0; transform: translateY(0.65rem) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .salmon-demo-pulse::after,
+  .salmon-demo-answer {
+    animation: none;
+  }
+}

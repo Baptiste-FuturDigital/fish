@@ -12,9 +12,22 @@ describe("whosDatSalmon", () => {
     for (const round of whosDatSalmon.rounds) {
       expect(round.kind).toBe("choice")
       expect(round.durationSeconds).toBe(20)
-      expect(round.imageUrl).toMatch(/^\/totems\/totem-\d{2}\.jpg$/)
+      expect(round.imageUrl).toMatch(/^(\/hippocampe-cutout\.png|\/totems\/totem-\d{2}\.jpg)$/)
       expect(round.maskImage).toBe(true)
     }
+  })
+
+  it("ouvre avec l’hippocampe et un générique limité aux cinq premières secondes", () => {
+    const firstRound = whosDatSalmon.rounds[0]
+
+    expect(whosDatSalmon.introMusicYoutubeId).toBe("FsvGm4pqlW8")
+    expect(whosDatSalmon.introMusicStartSeconds).toBe(0)
+    expect(whosDatSalmon.introMusicEndSeconds).toBe(5)
+    expect(firstRound.id).toBe("salmon-1-hippocampe")
+    expect(firstRound.imageUrl).toBe("/hippocampe-cutout.png")
+    expect(firstRound.correctAnswer).toBe("hippocampe")
+    expect(firstRound.answerLabel).toBe("L’hippocampe")
+    expect(firstRound.choices).toContainEqual({ id: "hippocampe", label: "L’hippocampe" })
   })
 
   it("propose exactement quatre réponses uniques par manche", () => {
@@ -45,7 +58,7 @@ describe("whosDatSalmon", () => {
   it("révèle un fait et une source institutionnelle pour chaque animal", () => {
     for (const round of whosDatSalmon.rounds) {
       expect(round.fact.length).toBeGreaterThan(30)
-      expect(round.sourceUrl).toMatch(/^https:\/\/www\.fisheries\.noaa\.gov\//)
+      expect(round.sourceUrl).toMatch(/^https:\/\/(?:www\.fisheries|oceanservice)\.noaa\.gov\//)
     }
   })
 

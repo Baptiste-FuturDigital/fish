@@ -1,30 +1,36 @@
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Volume2, VolumeX } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { beginAmbientSuspension, buildChallengeAudioSource } from "@/components/challenge-audio-control"
 
 const YOUTUBE_ORIGIN = "https://www.youtube-nocookie.com"
 
 interface ChallengeAudioProps {
   videoId: string
   title: string
+  startSeconds?: number
+  endSeconds?: number
 }
 
-export function ChallengeAudio({ videoId, title }: ChallengeAudioProps) {
+export function ChallengeAudio({ videoId, title, startSeconds, endSeconds }: ChallengeAudioProps) {
   const playerRef = useRef<HTMLIFrameElement>(null)
   const [isMuted, setIsMuted] = useState(false)
   const source = useMemo(() => {
-    const parameters = new URLSearchParams({
-      autoplay: "1",
-      controls: "0",
-      enablejsapi: "1",
-      mute: "0",
+    return buildChallengeAudioSource({
+      videoId,
+      startSeconds,
+      endSeconds,
       origin: window.location.origin,
-      playsinline: "1",
-      rel: "0",
     })
-    return `${YOUTUBE_ORIGIN}/embed/${videoId}?${parameters.toString()}`
-  }, [videoId])
+  }, [endSeconds, startSeconds, videoId])
+
+  useEffect(() => {
+    if (endSeconds === undefined) return
+    const durationSeconds = endSeconds - (startSeconds ?? 0)
+    if (durationSeconds <= 0) return
+    return beginAmbientSuspension(durationSeconds * 1_000)
+  }, [endSeconds, startSeconds])
 
   const command = useCallback((name: "mute" | "playVideo" | "unMute") => {
     playerRef.current?.contentWindow?.postMessage(

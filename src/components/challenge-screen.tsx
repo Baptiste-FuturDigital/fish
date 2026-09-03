@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
 import { ChallengeAudio } from "@/components/challenge-audio"
+import { WhosThatSalmonStage } from "@/components/whos-that-salmon-stage"
 
 interface ChallengeScreenProps {
   game: GameView
@@ -125,7 +126,12 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
             <ul className="rules-list">
               {tournament.challenge.rules.map((rule) => <li key={rule}>{rule}</li>)}
             </ul>
-            <ChallengeAudio videoId={tournament.challenge.introMusicYoutubeId} title={tournament.challenge.title} />
+            <ChallengeAudio
+              videoId={tournament.challenge.introMusicYoutubeId}
+              title={tournament.challenge.title}
+              startSeconds={tournament.challenge.introMusicStartSeconds}
+              endSeconds={tournament.challenge.introMusicEndSeconds}
+            />
           </CardContent>
           <CardFooter className="justify-center">
             {isHost ? (
@@ -150,14 +156,22 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
           <Countdown endsAt={tournament.endsAt} durationSeconds={tournament.round.durationSeconds} />
           <Card className="my-4">
             {tournament.round.imageUrl ? (
-              <div className="challenge-image-wrap">
-                <img
-                  className={cn("challenge-image", tournament.round.maskImage && "is-masked")}
-                  src={tournament.round.imageUrl}
-                  alt={tournament.round.maskImage ? "Silhouette mystérieuse" : tournament.round.question}
+              tournament.round.id === "salmon-1-hippocampe" ? (
+                <WhosThatSalmonStage
+                  imageUrl={tournament.round.imageUrl}
+                  imageAlt="L’hippocampe"
+                  revealed={false}
                 />
-                {tournament.round.maskImage ? <span className="mystery-mark" aria-hidden="true">?</span> : null}
-              </div>
+              ) : (
+                <div className="challenge-image-wrap">
+                  <img
+                    className={cn("challenge-image", tournament.round.maskImage && "is-masked")}
+                    src={tournament.round.imageUrl}
+                    alt={tournament.round.maskImage ? "Silhouette mystérieuse" : tournament.round.question}
+                  />
+                  {tournament.round.maskImage ? <span className="mystery-mark" aria-hidden="true">?</span> : null}
+                </div>
+              )
             ) : null}
             <CardHeader className="text-center">
               <CardDescription>{tournament.round.kicker}</CardDescription>
@@ -214,7 +228,15 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
       ) : (
         <Card className="my-4 overflow-hidden">
           {tournament.round.imageUrl ? (
-            <div className="challenge-image-wrap"><img className="challenge-image" src={tournament.round.imageUrl} alt={tournament.round.answerLabel} /></div>
+            tournament.round.id === "salmon-1-hippocampe" ? (
+              <WhosThatSalmonStage
+                imageUrl={tournament.round.imageUrl}
+                imageAlt={tournament.round.answerLabel ?? "L’hippocampe"}
+                revealed
+              />
+            ) : (
+              <div className="challenge-image-wrap"><img className="challenge-image" src={tournament.round.imageUrl} alt={tournament.round.answerLabel} /></div>
+            )
           ) : null}
           <CardHeader className="text-center">
             <CardDescription>LA RÉPONSE ÉTAIT</CardDescription>

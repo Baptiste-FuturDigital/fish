@@ -50,6 +50,8 @@ export interface ChallengeDefinition {
   description: string
   rules: readonly string[]
   introMusicYoutubeId: string
+  introMusicStartSeconds?: number
+  introMusicEndSeconds?: number
   presenterImageUrl?: string
   confirmationLabel?: string
   scoring: ScoringRule

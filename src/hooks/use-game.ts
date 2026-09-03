@@ -7,7 +7,9 @@ const STORAGE_KEY = "fish-tournament-session"
 
 function readSession(): PlayerSession | null {
   try {
-    if (new URLSearchParams(window.location.search).get("demo") === "1") {
+    const query = new URLSearchParams(window.location.search)
+    if (query.get("salmon-demo") === "1") return null
+    if (query.get("demo") === "1") {
       localStorage.removeItem(STORAGE_KEY)
       return null
     }
