@@ -16,6 +16,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
 import { ChallengeAudio } from "@/components/challenge-audio"
 import { isHostAudioEnabled } from "@/components/challenge-audio-control"
+import { MillionaireAnswerPanel } from "@/components/millionaire-answer-panel"
 import { SalmonAnswerProgress } from "@/components/salmon-answer-progress"
 import { WhosThatSalmonStage } from "@/components/whos-that-salmon-stage"
 import { formatWeightEstimate } from "@/components/weight-estimate"
@@ -248,6 +249,14 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
                         range={tournament.round.estimateRange!}
                         onChange={setAnswer}
                       />
+                    ) : tournament.challenge.id === "qui-veut-gagner-des-poissons" ? (
+                      <MillionaireAnswerPanel
+                        choices={tournament.round.choices ?? []}
+                        value={answer}
+                        confirmationLabel={tournament.challenge.confirmationLabel ?? "C’est notre dernier mot"}
+                        busy={busy === "answer"}
+                        onValueChange={setAnswer}
+                      />
                     ) : (
                       <Field>
                         <FieldLabel>Réponse de votre banc</FieldLabel>
@@ -265,10 +274,12 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
                         </ToggleGroup>
                       </Field>
                     )}
-                    <Button size="lg" type="submit" disabled={!answer || Boolean(busy)}>
-                      {busy === "answer" ? <LoaderCircle className="animate-spin" data-icon="inline-start" /> : <CheckCircle2 data-icon="inline-start" />}
-                      {tournament.challenge.confirmationLabel ?? "Valider la réponse"}
-                    </Button>
+                    {tournament.challenge.id !== "qui-veut-gagner-des-poissons" ? (
+                      <Button size="lg" type="submit" disabled={!answer || Boolean(busy)}>
+                        {busy === "answer" ? <LoaderCircle className="animate-spin" data-icon="inline-start" /> : <CheckCircle2 data-icon="inline-start" />}
+                        {tournament.challenge.confirmationLabel ?? "Valider la réponse"}
+                      </Button>
+                    ) : null}
                   </FieldGroup>
                 </form>
               )}
