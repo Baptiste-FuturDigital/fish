@@ -5,13 +5,13 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --no-audit --no-fund
 
 FROM dependencies AS build
 
 COPY . .
 RUN npm run build \
-    && npm prune --omit=dev
+    && npm prune --omit=dev --no-audit --no-fund
 
 FROM node:22-bookworm-slim AS runtime
 
