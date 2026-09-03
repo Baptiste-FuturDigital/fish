@@ -162,7 +162,7 @@ describe("GameService", () => {
     )
     expect(started.status).toBe("running")
     expect(started.currentRound).toBe(1)
-    expect(started.tournament?.challenge.title).toBe("Le Juste Poisson")
+    expect(started.tournament?.challenge.title).toBe("Le juste poisson")
     expect(started.tournament?.phase).toBe("challenge-intro")
 
     const advanced = service.nextRound(
@@ -178,6 +178,29 @@ describe("GameService", () => {
     )
     expect(finished.status).toBe("finished")
     expect(finished.currentPrompt).toBeNull()
+  })
+
+  it("normalizes the canonical challenge order when an existing lobby starts", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const joined = service.joinGame(created.game.code, "Léa")
+    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
+    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
+    database.prepare("UPDATE games SET challenge_order = ? WHERE code = ?").run(
+      JSON.stringify([
+        "le-juste-poisson",
+        "whos-dat-salmon",
+        "question-pour-un-poisson",
+        "qui-veut-gagner-des-poissons",
+      ]),
+      created.game.code,
+    )
+
+    let game = service.startGame(created.game.code, created.session.hostToken!)
+    while (game.tournament?.challenge.id === "le-juste-poisson") {
+      game = service.advanceTournament(created.game.code, created.session.hostToken!)
+    }
+
+    expect(game.tournament?.challenge.id).toBe("question-pour-un-poisson")
   })
 
   it("runs an intro, timed answer, reveal and next round with team scoring", () => {
@@ -247,8 +270,8 @@ describe("GameService", () => {
 
     expect(challengeIntros).toEqual([
       "le-juste-poisson",
-      "whos-dat-salmon",
       "question-pour-un-poisson",
+      "whos-dat-salmon",
       "qui-veut-gagner-des-poissons",
     ])
     expect(answeringRounds.size).toBe(23)

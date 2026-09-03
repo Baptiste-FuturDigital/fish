@@ -2,8 +2,8 @@ import type { ChallengeDefinition } from "./types.js"
 
 export const leJustePoisson = {
   id: "le-juste-poisson",
-  title: "Le Juste Poisson",
-  shortTitle: "Juste Poisson",
+  title: "Le juste poisson",
+  shortTitle: "Le juste poisson",
   emoji: "⚖️",
   description: "Estimez le poids de trois créatures marines sans couler sous la pression.",
   rules: [

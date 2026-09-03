@@ -72,7 +72,7 @@ test("four players form teams and start the tournament", async ({ browser }) => 
   await expect(host.getByRole("button", { name: "Lancer la partie" })).toBeEnabled()
   await host.getByRole("button", { name: "Lancer la partie" }).click()
 
-  await expect(host.getByRole("heading", { name: "Le Juste Poisson" })).toBeVisible()
+  await expect(host.getByRole("heading", { name: "Le juste poisson" })).toBeVisible()
   await expect(host.getByTestId("challenge-music-player")).toHaveAttribute("src", /UaRrDZWhtWA/)
   await host.getByRole("button", { name: "Lancer l'épreuve" }).click()
   await host.getByLabel("Estimation en kg").fill("0,09")

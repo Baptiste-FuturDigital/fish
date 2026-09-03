@@ -16,7 +16,7 @@
 
 - [x] Define discriminated round types for numeric and choice answers, public round projection, score results and challenge metadata.
 - [x] Have four independent agents create one definition module each with deterministic IDs, timers, answers, reveal text, point values and music IDs.
-- [x] Test catalog uniqueness, expected round counts (`3 + 5 + 10 + 5`) and answer validity.
+- [x] Test catalog uniqueness, expected round counts (`3 + 10 + 5 + 5`) and answer validity.
 - [x] Run `npm test`; all content tests must pass.
 
 ### Task 2: Balanced teams and editable names

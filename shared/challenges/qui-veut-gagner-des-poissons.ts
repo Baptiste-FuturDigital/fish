@@ -3,7 +3,7 @@ import type { ChallengeDefinition } from "./types.js"
 export const quiVeutGagnerDesPoissons = {
   id: "qui-veut-gagner-des-poissons",
   title: "Qui veut gagner des poissons ?",
-  shortTitle: "Gagner des poissons",
+  shortTitle: "Qui veut gagner des poissons ?",
   emoji: "🐡",
   description:
     "Cinq questions, quatre réponses et un présentateur beaucoup trop sûr de ses branchies.",

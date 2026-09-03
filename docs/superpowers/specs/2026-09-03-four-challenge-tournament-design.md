@@ -31,26 +31,26 @@ Transformer le prototype en jeu de soirée complet : chaque joueur rejoint depui
 
 ## Épreuves
 
-### Le Juste Poisson
+### 1. Le juste poisson
 
 - Trois poissons, trois estimations en kilogrammes, vingt secondes par estimation.
 - Le classement utilise l’écart relatif afin de comparer équitablement des animaux de tailles différentes.
 - Barème par manche : 4, 3, 2 et 1 points du plus proche au plus éloigné. Une absence de réponse vaut zéro.
 - La révélation montre le poids, l’écart de chaque banc et un fait étonnant.
 
-### Who’s Dat Salmon?
-
-- Cinq animaux marins apparaissent en silhouette noire avec quatre propositions.
-- Vingt secondes, puis révélation de l’image originale et d’un fun fact.
-- Deux points par bonne réponse.
-
-### Question pour un poisson
+### 2. Question pour un poisson
 
 - Dix questions difficiles, surprenantes et pédagogiques, quatre choix, vingt secondes.
 - Deux points par bonne réponse.
 - La révélation explique la réponse en une phrase courte.
 
-### Qui veut gagner des poissons ?
+### 3. Who's that salmon ?
+
+- Cinq animaux marins apparaissent en silhouette noire avec quatre propositions.
+- Vingt secondes, puis révélation de l’image originale et d’un fun fact.
+- Deux points par bonne réponse.
+
+### 4. Qui veut gagner des poissons ?
 
 - Cinq questions A/B/C/D à difficulté et valeur croissantes : 100, 200, 300, 500 et 1 000 points.
 - Trente secondes. Après une sélection, le banc confirme avec « C’est notre dernier mot ».
@@ -78,4 +78,3 @@ Transformer le prototype en jeu de soirée complet : chaque joueur rejoint depui
 - Tests API : renommage d’un banc, réponse authentifiée, commandes hôte.
 - Playwright mobile multi-contexte : quatre joueurs, quatre bancs, renommage, une réponse par type, enchaînement jusqu’au classement final.
 - Build TypeScript, contrôle console, Docker et healthcheck.
-

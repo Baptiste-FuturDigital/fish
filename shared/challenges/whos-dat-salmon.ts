@@ -2,8 +2,8 @@ import type { ChallengeDefinition } from "./types.js"
 
 export const whosDatSalmon = {
   id: "whos-dat-salmon",
-  title: "Who’s Dat Salmon?",
-  shortTitle: "Who’s Dat Salmon?",
+  title: "Who's that salmon ?",
+  shortTitle: "Who's that salmon ?",
   emoji: "🐟",
   description:
     "Reconnaissez cinq créatures marines cachées derrière leur silhouette.",

@@ -5,7 +5,7 @@ import { projectRound, scoreRound } from "./tournament-engine.js"
 
 const numericChallenge: ChallengeDefinition = {
   id: "le-juste-poisson",
-  title: "Le Juste Poisson",
+  title: "Le juste poisson",
   shortTitle: "Juste Poisson",
   emoji: "⚖️",
   description: "Estime le poids.",

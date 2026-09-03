@@ -5,6 +5,8 @@ import { whosDatSalmon } from "./whos-dat-salmon.js"
 describe("whosDatSalmon", () => {
   it("définit cinq manches visuelles à choix de vingt secondes", () => {
     expect(whosDatSalmon.id).toBe("whos-dat-salmon")
+    expect(whosDatSalmon.title).toBe("Who's that salmon ?")
+    expect(whosDatSalmon.shortTitle).toBe("Who's that salmon ?")
     expect(whosDatSalmon.rounds).toHaveLength(5)
 
     for (const round of whosDatSalmon.rounds) {

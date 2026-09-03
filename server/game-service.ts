@@ -336,9 +336,10 @@ export class GameService {
     this.database
       .prepare(`UPDATE games
         SET status = 'running', current_round = 0, challenge_index = 0,
-            challenge_round = 0, phase = 'challenge-intro', phase_ends_at = NULL
+            challenge_round = 0, phase = 'challenge-intro', phase_ends_at = NULL,
+            challenge_order = ?
         WHERE id = ?`)
-      .run(game.id)
+      .run(JSON.stringify(challenges.map((challenge) => challenge.id)), game.id)
     return this.getGame(game.code)
   }
 

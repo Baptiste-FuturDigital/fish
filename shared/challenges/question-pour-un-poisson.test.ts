@@ -5,6 +5,8 @@ import { questionPourUnPoisson } from "./question-pour-un-poisson.js"
 describe("questionPourUnPoisson", () => {
   it("définit le bon habillage et le barème exact", () => {
     expect(questionPourUnPoisson.id).toBe("question-pour-un-poisson")
+    expect(questionPourUnPoisson.title).toBe("Question pour un poisson")
+    expect(questionPourUnPoisson.shortTitle).toBe("Question pour un poisson")
     expect(questionPourUnPoisson.introMusicYoutubeId).toBe("Zcl98Bguq7k")
     expect(questionPourUnPoisson.scoring).toEqual({ kind: "exact", points: 2 })
   })

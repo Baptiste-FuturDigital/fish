@@ -7,6 +7,12 @@ describe("quiVeutGagnerDesPoissons", () => {
     expect(quiVeutGagnerDesPoissons.id).toBe(
       "qui-veut-gagner-des-poissons",
     )
+    expect(quiVeutGagnerDesPoissons.title).toBe(
+      "Qui veut gagner des poissons ?",
+    )
+    expect(quiVeutGagnerDesPoissons.shortTitle).toBe(
+      "Qui veut gagner des poissons ?",
+    )
     expect(quiVeutGagnerDesPoissons.presenterImageUrl).toBe(
       "/goerge-clownez-fun.png",
     )
