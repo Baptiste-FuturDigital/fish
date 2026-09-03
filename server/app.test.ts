@@ -25,10 +25,40 @@ describe("game API", () => {
     const { code } = created.body.game
     const hostToken = created.body.session.hostToken
 
-    await request(app)
+    const joined = await request(app)
       .post(`/api/games/${code}/join`)
       .send({ name: "Léa" })
       .expect(201)
+
+    const hostClaim = await request(app)
+      .post(`/api/games/${code}/totem`)
+      .send({
+        playerId: created.body.session.playerId,
+        playerToken: created.body.session.playerToken,
+      })
+      .expect(200)
+    const repeatedHostClaim = await request(app)
+      .post(`/api/games/${code}/totem`)
+      .send({
+        playerId: created.body.session.playerId,
+        playerToken: created.body.session.playerToken,
+      })
+      .expect(200)
+    await request(app)
+      .post(`/api/games/${code}/totem`)
+      .send({
+        playerId: joined.body.session.playerId,
+        playerToken: joined.body.session.playerToken,
+      })
+      .expect(200)
+
+    const hostTotem = hostClaim.body.players.find(
+      (player: { id: string }) => player.id === created.body.session.playerId,
+    ).totem
+    const repeatedTotem = repeatedHostClaim.body.players.find(
+      (player: { id: string }) => player.id === created.body.session.playerId,
+    ).totem
+    expect(repeatedTotem).toEqual(hostTotem)
 
     const started = await request(app)
       .post(`/api/games/${code}/start`)

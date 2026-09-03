@@ -17,10 +17,11 @@ import type { GameView, PlayerSession } from "@shared/game"
 import { gameApi } from "@/api"
 import { useGame } from "@/hooks/use-game"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BackgroundMusic } from "@/components/background-music"
+import { TotemScan } from "@/components/totem-scan"
 import {
   Card,
   CardAction,
@@ -238,6 +239,7 @@ function PlayerList({ game, session }: { game: GameView; session: PlayerSession 
       {game.players.map((player, index) => (
         <div className="player-chip" key={player.id}>
           <Avatar size="sm">
+            {player.totem && <AvatarImage src={player.totem.imageUrl} alt={player.totem.name} />}
             <AvatarFallback>{["🐟", "🐡", "🦐", "🐙"][index % 4]}</AvatarFallback>
           </Avatar>
           <span className="min-w-0 truncate font-semibold">{player.name}</span>
@@ -249,9 +251,18 @@ function PlayerList({ game, session }: { game: GameView; session: PlayerSession 
   )
 }
 
-function LobbyScreen({ game, session, onStart }: { game: GameView; session: PlayerSession; onStart: () => Promise<void> }) {
+function LobbyScreen({ game, session, onStart, onClaimTotem }: { game: GameView; session: PlayerSession; onStart: () => Promise<void>; onClaimTotem: () => Promise<GameView> }) {
   const [busy, setBusy] = useState(false)
   const isHost = Boolean(session.hostToken)
+  const currentPlayer = game.players.find((player) => player.id === session.playerId)
+  const unassignedPlayers = game.players.filter((player) => !player.totem)
+
+  async function claimCurrentTotem() {
+    const nextGame = await onClaimTotem()
+    const assigned = nextGame.players.find((player) => player.id === session.playerId)?.totem
+    if (!assigned) throw new Error("Animal totem introuvable.")
+    return assigned
+  }
 
   async function copyCode() {
     try {
@@ -276,6 +287,7 @@ function LobbyScreen({ game, session, onStart }: { game: GameView; session: Play
   return (
     <>
       <GameHeader game={game} />
+      <TotemScan totem={currentPlayer?.totem ?? null} onClaim={claimCurrentTotem} />
       <Card className="mb-4">
         <CardHeader>
           <CardTitle>En attente du banc</CardTitle>
@@ -300,7 +312,7 @@ function LobbyScreen({ game, session, onStart }: { game: GameView; session: Play
 
       <div className="mt-auto pt-3">
         {isHost ? (
-          <Button size="lg" className="w-full" onClick={start} disabled={busy || game.players.length < 2}>
+          <Button size="lg" className="w-full" onClick={start} disabled={busy || game.players.length < 2 || unassignedPlayers.length > 0}>
             {busy ? <LoaderCircle data-icon="inline-start" className="animate-spin" /> : <Users data-icon="inline-start" />}
             Lancer la partie
           </Button>
@@ -312,6 +324,11 @@ function LobbyScreen({ game, session, onStart }: { game: GameView; session: Play
           </Alert>
         )}
         {isHost && game.players.length < 2 && <p className="mt-2 text-center text-xs text-muted-foreground">Il faut au moins un autre poisson.</p>}
+        {isHost && game.players.length >= 2 && unassignedPlayers.length > 0 && (
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            En attente de {unassignedPlayers.map((player) => player.name).join(", ")}.
+          </p>
+        )}
       </div>
     </>
   )
@@ -420,14 +437,14 @@ function LoadingScreen() {
 }
 
 export default function App() {
-  const { session, game, loading, error, enter, leave, hostAction } = useGame()
+  const { session, game, loading, error, enter, leave, hostAction, claimTotem } = useGame()
   const screen = useMemo(() => {
     if (!session) return <HomeScreen onEnter={enter} />
     if (loading || !game) return <LoadingScreen />
-    if (game.status === "lobby") return <LobbyScreen game={game} session={session} onStart={() => hostAction("start").then(() => undefined)} />
+    if (game.status === "lobby") return <LobbyScreen game={game} session={session} onStart={() => hostAction("start").then(() => undefined)} onClaimTotem={claimTotem} />
     if (game.status === "running") return <GameScreen game={game} session={session} onAction={(action) => hostAction(action).then(() => undefined)} />
     return <EndScreen game={game} session={session} onLeave={leave} />
-  }, [enter, game, hostAction, leave, loading, session])
+  }, [claimTotem, enter, game, hostAction, leave, loading, session])
 
   return (
     <OceanShell>

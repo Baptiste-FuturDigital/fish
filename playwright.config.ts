@@ -15,7 +15,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
+    command: "PORT=8790 VITE_API_PROXY_TARGET=http://localhost:8790 npm run dev",
     url: "http://127.0.0.1:5179",
     reuseExistingServer: true,
     timeout: 30_000,

@@ -14,39 +14,39 @@
 
 **Files:** `shared/game.ts`, `server/totems.ts`, `server/db.ts`, `server/game-service.ts`, `server/game-service.test.ts`
 
-- [ ] Add failing tests proving unique and idempotent assignment, twenty-player capacity, and start rejection while a player lacks a totem.
-- [ ] Run `npm test`; expect failures because `claimTotem` and the view model do not exist.
-- [ ] Add `TotemView`, a twenty-entry server catalog, the migrated `totem_id` column and unique index.
-- [ ] Implement `claimTotem(code, playerId, playerToken)` as one SQLite transaction and expose totems through `PlayerView` without IDs/categories.
-- [ ] Enforce the twenty-player limit and require all players to claim before start.
-- [ ] Run `npm test`; expect all service tests to pass.
+- [x] Add failing tests proving unique and idempotent assignment, twenty-player capacity, and start rejection while a player lacks a totem.
+- [x] Run `npm test`; expect failures because `claimTotem` and the view model do not exist.
+- [x] Add `TotemView`, a twenty-entry server catalog, the migrated `totem_id` column and unique index.
+- [x] Implement `claimTotem(code, playerId, playerToken)` as one SQLite transaction and expose totems through `PlayerView` without IDs/categories.
+- [x] Enforce the twenty-player limit and require all players to claim before start.
+- [x] Run `npm test`; expect all service tests to pass.
 
 ### Task 2: Player API
 
 **Files:** `server/app.ts`, `server/app.test.ts`, `src/api.ts`, `src/hooks/use-game.ts`
 
-- [ ] Add a failing API test for authenticated claim and stable repeated claim.
-- [ ] Run `npm test`; expect 404 for the missing endpoint.
-- [ ] Add `POST /api/games/:code/totem` with `playerId` and `playerToken` validation.
-- [ ] Add `gameApi.claimTotem` and a `claimTotem` hook action that updates local game state.
-- [ ] Run `npm test`; expect all API tests to pass.
+- [x] Add a failing API test for authenticated claim and stable repeated claim.
+- [x] Run `npm test`; expect 404 for the missing endpoint.
+- [x] Add `POST /api/games/:code/totem` with `playerId` and `playerToken` validation.
+- [x] Add `gameApi.claimTotem` and a `claimTotem` hook action that updates local game state.
+- [x] Run `npm test`; expect all API tests to pass.
 
 ### Task 3: Scan and reveal interface
 
 **Files:** `src/components/totem-scan.tsx`, `src/App.tsx`, `src/index.css`, `e2e/game.spec.ts`
 
-- [ ] Extend the mobile journey test to claim host and guest totems, assert distinct images and names, then start the game.
-- [ ] Run the Playwright test; expect failure because the scan control does not exist.
-- [ ] Build `TotemScan`: camera preview with local-only `getUserMedia`, fallback face, five-second progress, cleanup, and reveal card.
-- [ ] Render it above the lobby code, show totem thumbnails in player chips, and explain incomplete scans beside the disabled start action.
-- [ ] Run `npm run test:e2e -- --reporter=line && npm test && npm run build`; expect all checks to pass.
+- [x] Extend the mobile journey test to claim host and guest totems, assert distinct images and names, then start the game.
+- [x] Run the Playwright test; expect failure because the scan control does not exist.
+- [x] Build `TotemScan`: camera preview with local-only `getUserMedia`, fallback face, five-second progress, cleanup, and reveal card.
+- [x] Render it above the lobby code, show totem thumbnails in player chips, and explain incomplete scans beside the disabled start action.
+- [x] Run `npm run test:e2e -- --reporter=line && npm test && npm run build`; expect all checks to pass.
 
 ### Task 4: Assets and delivery
 
 **Files:** `public/totems/*`, `public/favicon.svg`, Docker image
 
-- [ ] Generate opaque JPEG derivatives at 1,200 px maximum without modifying source images.
-- [ ] Replace the favicon glyph with `🐡`.
-- [ ] Rebuild using `docker compose up --build -d`.
-- [ ] Verify `/api/health`, all twenty optimized images, and the complete two-player journey.
-- [ ] Commit only project changes; preserve unrelated user files.
+- [x] Generate opaque JPEG derivatives at 1,200 px maximum without modifying source images.
+- [x] Replace the favicon glyph with `🐡`.
+- [x] Rebuild using `docker compose up --build -d`.
+- [x] Verify `/api/health`, all twenty optimized images, and the complete two-player journey.
+- [x] Commit only project changes; preserve unrelated user files.

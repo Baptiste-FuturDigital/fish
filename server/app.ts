@@ -11,6 +11,7 @@ const createSchema = z.object({
 })
 const joinSchema = z.object({ name: z.string() })
 const hostSchema = z.object({ hostToken: z.string() })
+const playerSchema = z.object({ playerId: z.string(), playerToken: z.string() })
 
 export function createApp(service: GameService, staticDir?: string) {
   const app = express()
@@ -33,6 +34,11 @@ export function createApp(service: GameService, staticDir?: string) {
 
   app.get("/api/games/:code", (request, response) => {
     response.json(service.getGame(request.params.code))
+  })
+
+  app.post("/api/games/:code/totem", (request, response) => {
+    const body = playerSchema.parse(request.body)
+    response.json(service.claimTotem(request.params.code, body.playerId, body.playerToken))
   })
 
   app.post("/api/games/:code/start", (request, response) => {

@@ -45,9 +45,60 @@ describe("GameService", () => {
     )
   })
 
-  it("runs multiple seeded rounds and finishes the game", () => {
+  it("assigns distinct and stable totems to players", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const joined = service.joinGame(created.game.code, "Léa")
+
+    const hostClaim = service.claimTotem(
+      created.game.code,
+      created.session.playerId,
+      created.session.playerToken,
+    )
+    const repeatedClaim = service.claimTotem(
+      created.game.code,
+      created.session.playerId,
+      created.session.playerToken,
+    )
+    const guestClaim = service.claimTotem(
+      created.game.code,
+      joined.session.playerId,
+      joined.session.playerToken,
+    )
+
+    const hostTotem = hostClaim.players.find((player) => player.id === created.session.playerId)?.totem
+    const repeatedTotem = repeatedClaim.players.find((player) => player.id === created.session.playerId)?.totem
+    const guestTotem = guestClaim.players.find((player) => player.id === joined.session.playerId)?.totem
+
+    expect(hostTotem).toEqual(repeatedTotem)
+    expect(hostTotem?.imageUrl).not.toBe(guestTotem?.imageUrl)
+    expect(hostTotem).toEqual(expect.objectContaining({ name: expect.any(String), fact: expect.any(String), teamName: expect.any(String) }))
+  })
+
+  it("limits a lobby to the twenty available totems", () => {
+    const created = service.createGame("La marée bizarre", "Capitaine")
+    for (let index = 1; index < 20; index += 1) {
+      service.joinGame(created.game.code, `Poisson ${index}`)
+    }
+
+    expect(() => service.joinGame(created.game.code, "Poisson 20")).toThrowError(
+      new GameError("L'aquarium est complet : vingt poissons maximum.", 409),
+    )
+  })
+
+  it("requires every player to claim a totem before starting", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     service.joinGame(created.game.code, "Léa")
+
+    expect(() => service.startGame(created.game.code, created.session.hostToken!)).toThrowError(
+      new GameError("Tous les poissons doivent révéler leur animal totem.", 409),
+    )
+  })
+
+  it("runs multiple seeded rounds and finishes the game", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const joined = service.joinGame(created.game.code, "Léa")
+    service.claimTotem(created.game.code, created.session.playerId, created.session.playerToken)
+    service.claimTotem(created.game.code, joined.session.playerId, joined.session.playerToken)
 
     const started = service.startGame(
       created.game.code,

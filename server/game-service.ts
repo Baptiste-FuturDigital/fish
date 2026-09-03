@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomInt, randomUUID } from "node:crypto"
 
 import type { GameDatabase } from "./db.js"
 import { prompts, type PromptDefinition } from "./content.js"
+import { findTotem, totems } from "./totems.js"
 import type {
   GameStatus,
   GameView,
@@ -26,6 +27,13 @@ interface PlayerRow {
   name: string
   is_host: number
   score: number
+  totem_id: number | null
+}
+
+interface PlayerAuthRow {
+  id: string
+  token_hash: string
+  totem_id: number | null
 }
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -117,6 +125,12 @@ export class GameService {
     if (game.status !== "lobby") {
       throw new GameError("Cette partie a déjà quitté le port.", 409)
     }
+    const playerCount = this.database
+      .prepare("SELECT COUNT(*) AS count FROM players WHERE game_id = ?")
+      .get(game.id) as { count: number }
+    if (playerCount.count >= totems.length) {
+      throw new GameError("L'aquarium est complet : vingt poissons maximum.", 409)
+    }
 
     const playerId = randomUUID()
     const playerToken = makeToken()
@@ -153,7 +167,7 @@ export class GameService {
     const game = this.getGameRow(codeInput.trim().toUpperCase())
     const players = this.database
       .prepare(
-        `SELECT id, name, is_host, score
+        `SELECT id, name, is_host, score, totem_id
          FROM players WHERE game_id = ? ORDER BY created_at, rowid`,
       )
       .all(game.id) as PlayerRow[]
@@ -162,6 +176,7 @@ export class GameService {
       name: player.name,
       isHost: Boolean(player.is_host),
       score: player.score,
+      totem: findTotem(player.totem_id),
     }))
     const roundIds = JSON.parse(game.round_order) as string[]
     const definition =
@@ -190,6 +205,36 @@ export class GameService {
     }
   }
 
+  claimTotem(codeInput: string, playerId: string, playerToken: string): GameView {
+    const game = this.getGameRow(codeInput.trim().toUpperCase())
+    if (game.status !== "lobby") {
+      throw new GameError("Le tirage des totems est terminé.", 409)
+    }
+
+    this.database.transaction(() => {
+      const player = this.database
+        .prepare("SELECT id, token_hash, totem_id FROM players WHERE game_id = ? AND id = ?")
+        .get(game.id, playerId) as PlayerAuthRow | undefined
+      if (!player || !playerToken || hashToken(playerToken) !== player.token_hash) {
+        throw new GameError("Session de poisson invalide.", 403)
+      }
+      if (player.totem_id !== null) return
+
+      const usedRows = this.database
+        .prepare("SELECT totem_id FROM players WHERE game_id = ? AND totem_id IS NOT NULL")
+        .all(game.id) as Array<{ totem_id: number }>
+      const usedIds = new Set(usedRows.map((row) => row.totem_id))
+      const available = totems.filter((candidate) => !usedIds.has(candidate.id))
+      if (available.length === 0) {
+        throw new GameError("Tous les animaux totems ont déjà été attribués.", 409)
+      }
+      const selected = available[randomInt(available.length)]
+      this.database.prepare("UPDATE players SET totem_id = ? WHERE id = ?").run(selected.id, player.id)
+    })()
+
+    return this.getGame(game.code)
+  }
+
   startGame(code: string, hostToken: string): GameView {
     const game = this.assertHost(code, hostToken)
     if (game.status !== "lobby") {
@@ -200,6 +245,12 @@ export class GameService {
       .get(game.id) as { count: number }
     if (count.count < 2) {
       throw new GameError("Il faut au moins deux poissons pour démarrer.", 409)
+    }
+    const unassigned = this.database
+      .prepare("SELECT COUNT(*) AS count FROM players WHERE game_id = ? AND totem_id IS NULL")
+      .get(game.id) as { count: number }
+    if (unassigned.count > 0) {
+      throw new GameError("Tous les poissons doivent révéler leur animal totem.", 409)
     }
     this.database
       .prepare("UPDATE games SET status = 'running', current_round = 0 WHERE id = ?")

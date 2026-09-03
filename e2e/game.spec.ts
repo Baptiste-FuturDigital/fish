@@ -37,6 +37,19 @@ test("a host and guest can play several rounds and finish", async ({ browser }) 
   await guest.getByRole("button", { name: "Plonger dans la partie" }).click()
 
   await expect(host.getByText("2 poissons à bord")).toBeVisible()
+  await expect(host.getByRole("button", { name: "Lancer la partie" })).toBeDisabled()
+  await Promise.all([
+    host.getByRole("button", { name: "Scanner mon visage" }).click(),
+    guest.getByRole("button", { name: "Scanner mon visage" }).click(),
+  ])
+  await host.waitForTimeout(1_000)
+  await expect(host.locator('[data-slot="avatar-image"]')).toHaveCount(0)
+  await expect(host.getByText("Votre animal totem est…")).toBeVisible({ timeout: 8_000 })
+  await expect(guest.getByText("Votre animal totem est…")).toBeVisible({ timeout: 8_000 })
+  const hostTotemImage = await host.getByTestId("totem-reveal-image").getAttribute("src")
+  const guestTotemImage = await guest.getByTestId("totem-reveal-image").getAttribute("src")
+  expect(hostTotemImage).not.toBe(guestTotemImage)
+  await expect(host.getByRole("button", { name: "Lancer la partie" })).toBeEnabled()
   await host.getByRole("button", { name: "Lancer la partie" }).click()
 
   await expect(host.getByText("Manche 1 / 8")).toBeVisible()

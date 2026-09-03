@@ -35,6 +35,12 @@ export const gameApi = {
   get(code: string) {
     return request<GameView>(`/api/games/${code}`)
   },
+  claimTotem(code: string, playerId: string, playerToken: string) {
+    return request<GameView>(`/api/games/${code}/totem`, {
+      method: "POST",
+      body: JSON.stringify({ playerId, playerToken }),
+    })
+  },
   hostAction(code: string, action: "start" | "next" | "finish", hostToken: string) {
     return request<GameView>(`/api/games/${code}/${action}`, {
       method: "POST",

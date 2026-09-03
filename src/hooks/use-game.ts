@@ -70,5 +70,16 @@ export function useGame() {
     [session],
   )
 
-  return { session, game, loading, error, enter, leave, refresh, hostAction }
+  const claimTotem = useCallback(async () => {
+    if (!session) throw new Error("Session introuvable.")
+    const nextGame = await gameApi.claimTotem(
+      session.gameCode,
+      session.playerId,
+      session.playerToken,
+    )
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
+  return { session, game, loading, error, enter, leave, refresh, hostAction, claimTotem }
 }

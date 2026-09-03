@@ -31,11 +31,18 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       name TEXT NOT NULL COLLATE NOCASE,
       is_host INTEGER NOT NULL DEFAULT 0,
       score INTEGER NOT NULL DEFAULT 0,
+      totem_id INTEGER CHECK (totem_id BETWEEN 1 AND 20),
       token_hash TEXT NOT NULL,
       created_at TEXT NOT NULL,
       UNIQUE(game_id, name)
     );
   `)
+
+  const playerColumns = database.prepare("PRAGMA table_info(players)").all() as Array<{ name: string }>
+  if (!playerColumns.some((column) => column.name === "totem_id")) {
+    database.exec("ALTER TABLE players ADD COLUMN totem_id INTEGER CHECK (totem_id BETWEEN 1 AND 20)")
+  }
+  database.exec("CREATE UNIQUE INDEX IF NOT EXISTS players_game_totem_unique ON players(game_id, totem_id)")
 
   return database
 }
