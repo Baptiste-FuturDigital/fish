@@ -7,6 +7,7 @@ import "./final-reveal.css"
 
 const SUSPENSE_DURATION_MS = 7_000
 const SUSPENSE_SILENCE_MS = 1_000
+const VICTORY_MUSIC_DURATION_MS = 10_000
 const SUSPENSE_VIDEO_ID = "wKw0pvc1HiE"
 const AMBIENT_EVENT = "fish:set-ambient-suspended"
 const YOUTUBE_ORIGIN = "https://www.youtube-nocookie.com"
@@ -17,7 +18,7 @@ export function buildFinalRevealPlayerSource(origin: string) {
     controls: "0",
     disablekb: "1",
     enablejsapi: "1",
-    end: "7",
+    end: "10",
     fs: "0",
     modestbranding: "1",
     mute: "0",
@@ -93,15 +94,18 @@ export function beginFinalRevealTransition({
 
   const revealTimer = setTimeout(() => {
     if (!active) return
-    active = false
-    restoreAmbient()
     onReveal()
   }, SUSPENSE_DURATION_MS)
+
+  const restoreTimer = audioEnabled
+    ? setTimeout(restoreAmbient, SUSPENSE_SILENCE_MS + VICTORY_MUSIC_DURATION_MS)
+    : null
 
   return () => {
     active = false
     if (playTimer !== null) clearTimeout(playTimer)
     clearTimeout(revealTimer)
+    if (restoreTimer !== null) clearTimeout(restoreTimer)
     restoreAmbient()
   }
 }
@@ -136,17 +140,8 @@ export function FinalReveal({
     })
   }, [audioEnabled])
 
-  if (isRevealed) {
-    return <FinalScoreboard game={game} onLeave={onLeave} />
-  }
-
   return (
-    <section
-      className="final-suspense"
-      data-testid="final-suspense"
-      aria-live="polite"
-      aria-label="Le verdict final arrive"
-    >
+    <>
       {audioEnabled ? (
         <iframe
           ref={playerRef}
@@ -163,23 +158,34 @@ export function FinalReveal({
         />
       ) : null}
 
-      <div className="final-suspense-depth" aria-hidden="true" />
-      <div className="final-suspense-sonar" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
+      {isRevealed ? (
+        <FinalScoreboard game={game} onLeave={onLeave} />
+      ) : (
+        <section
+          className="final-suspense"
+          data-testid="final-suspense"
+          aria-live="polite"
+          aria-label="Le verdict final arrive"
+        >
+          <div className="final-suspense-depth" aria-hidden="true" />
+          <div className="final-suspense-sonar" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
 
-      <div className="final-suspense-copy">
-        <span className="final-suspense-trident" aria-hidden="true">🔱</span>
-        <p>Silence dans l’aquarium</p>
-        <h1>Poséithon délibère…</h1>
-        <div className="final-suspense-dots" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </div>
-      </div>
-    </section>
+          <div className="final-suspense-copy">
+            <span className="final-suspense-trident" aria-hidden="true">🔱</span>
+            <p>Silence dans l’aquarium</p>
+            <h1>Poséithon délibère…</h1>
+            <div className="final-suspense-dots" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </div>
+          </div>
+        </section>
+      )}
+    </>
   )
 }

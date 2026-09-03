@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 
 test("four players form teams and start the tournament", async ({ browser }) => {
-  test.setTimeout(45_000)
+  test.setTimeout(65_000)
   const hostContext = await browser.newContext({ permissions: ["clipboard-read", "clipboard-write"] })
   const guestContexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext(), browser.newContext()])
   const host = await hostContext.newPage()
@@ -66,7 +66,7 @@ test("four players form teams and start the tournament", async ({ browser }) => 
   await Promise.all(guests.map((guest) => guest.getByRole("button", { name: "Scanner mon visage" }).click()))
   await host.waitForTimeout(1_000)
   await expect(host.locator('[data-slot="avatar-image"]')).toHaveCount(0)
-  await Promise.all(guests.map((guest) => expect(guest.getByText("Votre animal totem est…")).toBeVisible({ timeout: 12_000 })))
+  await Promise.all(guests.map((guest) => expect(guest.getByText("Votre animal totem est…")).toBeVisible({ timeout: 25_000 })))
   const totemImages = await Promise.all(guests.map((page) => page.getByTestId("totem-reveal-image").getAttribute("src")))
   expect(new Set(totemImages).size).toBe(4)
   await expect(host.getByRole("heading", { name: "Les 4 bancs" })).toBeVisible()
@@ -123,7 +123,9 @@ test("four players form teams and start the tournament", async ({ browser }) => 
   await expect(musicPlayer).toHaveAttribute("data-suspended", "true")
   await expect(host.getByRole("heading", { name: "Classement final" })).not.toBeVisible()
   await expect(host.getByRole("heading", { name: "Classement final" })).toBeVisible({ timeout: 10_000 })
-  await expect(musicPlayer).toHaveAttribute("data-suspended", "false")
+  await expect(host.getByTestId("final-suspense-player")).toHaveCount(1)
+  await expect(musicPlayer).toHaveAttribute("data-suspended", "true")
+  await expect(musicPlayer).toHaveAttribute("data-suspended", "false", { timeout: 6_000 })
   await expect(host.locator("[data-music-control]")).toBeVisible()
   await expect(host.getByRole("img", { name: "Poséithon, dieu des océans" })).toBeVisible()
   await expect(host.getByTestId("final-confetti")).toBeVisible()

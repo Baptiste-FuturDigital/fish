@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { TotemPixelation } from "@/components/totem-pixelation"
 
 import "./totem-scan.css"
 
@@ -16,8 +17,8 @@ interface TotemScanProps {
   onClaim: () => Promise<TotemView>
 }
 
-const SCAN_DURATION_MS = 5_000
-const MATERIALIZATION_DURATION_MS = 5_000
+const SCAN_DURATION_MS = 10_000
+const MATERIALIZATION_DURATION_MS = 10_000
 
 function wait(durationMs: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, durationMs))
@@ -121,6 +122,8 @@ export function TotemScan({ totem, onClaim }: TotemScanProps) {
             aria-hidden="true"
             className="totem-materializing-image"
           />
+          <TotemPixelation imageUrl={revealedTotem.imageUrl} />
+          <div className="totem-pixel-grid" data-testid="totem-pixel-grid" aria-hidden="true" />
 
           <div
             className="totem-analysis-overlay"

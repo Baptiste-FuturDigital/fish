@@ -44,6 +44,7 @@ describe("FinalReveal audio policy", () => {
     const source = new URL(buildFinalRevealPlayerSource("http://localhost:5179"))
     expect(source.searchParams.get("autoplay")).toBe("0")
     expect(source.searchParams.get("enablejsapi")).toBe("1")
+    expect(source.searchParams.get("end")).toBe("10")
     expect(source.searchParams.get("origin")).toBe("http://localhost:5179")
   })
 
@@ -97,6 +98,10 @@ describe("FinalReveal audio policy", () => {
     expect(hostReveals).toBe(0)
     vi.advanceTimersByTime(1)
     expect(hostReveals).toBe(1)
+    expect(hostStates).toEqual([true])
+    vi.advanceTimersByTime(3_999)
+    expect(hostStates).toEqual([true])
+    vi.advanceTimersByTime(1)
     expect(hostStates).toEqual([true, false])
     cleanupHost()
     expect(hostStates).toEqual([true, false])

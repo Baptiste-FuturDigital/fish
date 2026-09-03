@@ -21,7 +21,30 @@
   object-fit: cover;
   filter: blur(28px) brightness(0.34) saturate(0.25);
   transform: scale(1.13);
-  animation: totem-image-materialize 5s cubic-bezier(0.22, 0.75, 0.22, 1) forwards;
+  animation: totem-image-materialize 10s cubic-bezier(0.22, 0.75, 0.22, 1) forwards;
+}
+
+.totem-pixelation {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  object-fit: cover;
+}
+
+.totem-pixel-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(oklch(0.87 0.18 113 / 20%) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.87 0.18 113 / 20%) 1px, transparent 1px);
+  background-size: 2rem 2rem;
+  mix-blend-mode: screen;
+  animation: totem-pixel-grid-decode 10s steps(10, end) forwards;
 }
 
 .totem-analysis-overlay {
@@ -34,7 +57,8 @@
     radial-gradient(circle at center, transparent 0 17%, oklch(0.12 0.055 220 / 20%) 52%, oklch(0.08 0.045 225 / 76%) 100%);
   background-size: 1.6rem 1.6rem, 1.6rem 1.6rem, auto;
   color: oklch(0.91 0.18 110);
-  animation: totem-analysis-depart 5s linear forwards;
+  z-index: 2;
+  animation: totem-analysis-depart 10s linear forwards;
 }
 
 .totem-analysis-overlay::before,
@@ -176,7 +200,7 @@
   background: oklch(0.87 0.18 113);
   box-shadow: 0 0 0.8rem currentColor;
   transform-origin: left;
-  animation: totem-materializing-progress 5s linear forwards;
+  animation: totem-materializing-progress 10s linear forwards;
 }
 
 @keyframes totem-image-materialize {
@@ -189,6 +213,12 @@
 @keyframes totem-analysis-depart {
   0%, 62% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+@keyframes totem-pixel-grid-decode {
+  0% { opacity: 0.9; background-size: 2.4rem 2.4rem; }
+  55% { opacity: 0.5; background-size: 1.1rem 1.1rem; }
+  100% { opacity: 0; background-size: 0.25rem 0.25rem; }
 }
 
 @keyframes totem-question-pulse {
@@ -213,6 +243,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .totem-materializing-image,
+  .totem-pixel-grid,
   .totem-analysis-overlay,
   .totem-materializing-core strong,
   .totem-materializing-ring,

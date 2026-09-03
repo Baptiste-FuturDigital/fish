@@ -436,7 +436,7 @@
   border-radius: inherit;
   background: var(--secondary);
   transform-origin: left;
-  animation: scan-progress 5s linear forwards;
+  animation: scan-progress 10s linear forwards;
 }
 
 .totem-reveal-image-wrap {
