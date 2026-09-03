@@ -21,6 +21,11 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       status TEXT NOT NULL CHECK (status IN ('lobby', 'running', 'finished')),
       current_round INTEGER NOT NULL DEFAULT -1,
       round_order TEXT NOT NULL,
+      challenge_order TEXT NOT NULL DEFAULT '[]',
+      challenge_index INTEGER NOT NULL DEFAULT -1,
+      challenge_round INTEGER NOT NULL DEFAULT -1,
+      phase TEXT NOT NULL DEFAULT 'lobby',
+      phase_ends_at TEXT,
       host_token_hash TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
@@ -36,13 +41,69 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       created_at TEXT NOT NULL,
       UNIQUE(game_id, name)
     );
+
+    CREATE TABLE IF NOT EXISTS game_teams (
+      game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+      team_id TEXT NOT NULL,
+      category TEXT NOT NULL,
+      name TEXT NOT NULL,
+      score INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY(game_id, team_id),
+      UNIQUE(game_id, category)
+    );
+
+    CREATE TABLE IF NOT EXISTS team_answers (
+      game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+      challenge_id TEXT NOT NULL,
+      round_index INTEGER NOT NULL,
+      team_id TEXT NOT NULL,
+      answer TEXT NOT NULL,
+      locked INTEGER NOT NULL DEFAULT 0,
+      updated_by TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY(game_id, challenge_id, round_index, team_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS round_results (
+      game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+      challenge_id TEXT NOT NULL,
+      round_index INTEGER NOT NULL,
+      team_id TEXT NOT NULL,
+      answer TEXT,
+      points INTEGER NOT NULL,
+      is_correct INTEGER NOT NULL,
+      distance REAL,
+      PRIMARY KEY(game_id, challenge_id, round_index, team_id)
+    );
   `)
+
+  const gameColumns = database.prepare("PRAGMA table_info(games)").all() as Array<{ name: string }>
+  const addGameColumn = (name: string, definition: string) => {
+    if (!gameColumns.some((column) => column.name === name)) {
+      database.exec(`ALTER TABLE games ADD COLUMN ${name} ${definition}`)
+    }
+  }
+  addGameColumn("challenge_order", "TEXT NOT NULL DEFAULT '[]'")
+  addGameColumn("challenge_index", "INTEGER NOT NULL DEFAULT -1")
+  addGameColumn("challenge_round", "INTEGER NOT NULL DEFAULT -1")
+  addGameColumn("phase", "TEXT NOT NULL DEFAULT 'lobby'")
+  addGameColumn("phase_ends_at", "TEXT")
 
   const playerColumns = database.prepare("PRAGMA table_info(players)").all() as Array<{ name: string }>
   if (!playerColumns.some((column) => column.name === "totem_id")) {
     database.exec("ALTER TABLE players ADD COLUMN totem_id INTEGER CHECK (totem_id BETWEEN 1 AND 20)")
   }
   database.exec("CREATE UNIQUE INDEX IF NOT EXISTS players_game_totem_unique ON players(game_id, totem_id)")
+  database.exec(`
+    INSERT OR IGNORE INTO game_teams (game_id, team_id, category, name, score)
+      SELECT id, 'abyssaux', 'ugly', 'Les Abyssaux', 0 FROM games;
+    INSERT OR IGNORE INTO game_teams (game_id, team_id, category, name, score)
+      SELECT id, 'coralliens', 'joli', 'Les Coralliens', 0 FROM games;
+    INSERT OR IGNORE INTO game_teams (game_id, team_id, category, name, score)
+      SELECT id, 'electriques', 'cool', 'Les Électriques', 0 FROM games;
+    INSERT OR IGNORE INTO game_teams (game_id, team_id, category, name, score)
+      SELECT id, 'colosses', 'big', 'Les Colosses', 0 FROM games;
+  `)
 
   return database
 }

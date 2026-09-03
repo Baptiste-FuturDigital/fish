@@ -1,0 +1,112 @@
+import type { ChallengeDefinition } from "./types.js"
+
+export const quiVeutGagnerDesPoissons = {
+  id: "qui-veut-gagner-des-poissons",
+  title: "Qui veut gagner des poissons ?",
+  shortTitle: "Gagner des poissons",
+  emoji: "🐡",
+  description:
+    "Cinq questions, quatre réponses et un présentateur beaucoup trop sûr de ses branchies.",
+  rules: [
+    "Chaque banc choisit A, B, C ou D avant la fin des 30 secondes.",
+    "Validez avec « C’est notre dernier mot » : les poissons ne font pas marche arrière.",
+    "Les gains montent à chaque bonne réponse, de 100 à 1 000 points.",
+  ],
+  presenterImageUrl: "/goerge-clownez-fun.png",
+  introMusicYoutubeId: "doSjY-DGmjY",
+  confirmationLabel: "C’est notre dernier mot",
+  scoring: {
+    kind: "escalating",
+    points: [100, 200, 300, 500, 1000],
+  },
+  rounds: [
+    {
+      id: "million-1-plus-grand-poisson",
+      kind: "choice",
+      kicker: "Palier 1 · 100 poissons",
+      question: "Quel est le plus grand poisson vivant au monde ?",
+      durationSeconds: 30,
+      choices: [
+        { id: "requin-baleine", label: "Le requin-baleine" },
+        { id: "baleine-bleue", label: "La baleine bleue" },
+        { id: "requin-blanc", label: "Le grand requin blanc" },
+        { id: "thon-rouge", label: "Le thon rouge" },
+      ],
+      correctAnswer: "requin-baleine",
+      answerLabel: "Le requin-baleine",
+      fact: "Le requin-baleine est bien un requin, et le plus grand poisson vivant.",
+      sourceUrl:
+        "https://www.fisheries.noaa.gov/national/outreach-and-education/fun-facts-about-fascinating-fish",
+    },
+    {
+      id: "million-2-coeurs-pieuvre",
+      kind: "choice",
+      kicker: "Palier 2 · 200 poissons",
+      question: "Combien de cœurs fait battre une pieuvre ?",
+      durationSeconds: 30,
+      choices: [
+        { id: "un", label: "Un" },
+        { id: "deux", label: "Deux" },
+        { id: "trois", label: "Trois" },
+        { id: "huit", label: "Huit, un par bras" },
+      ],
+      correctAnswer: "trois",
+      answerLabel: "Trois",
+      fact: "Deux cœurs alimentent les branchies ; le troisième irrigue le reste du corps.",
+      sourceUrl:
+        "https://ocean.si.edu/ocean-life/invertebrates/octopuses-squids-and-relatives",
+    },
+    {
+      id: "million-3-defense-narval",
+      kind: "choice",
+      kicker: "Palier 3 · 300 poissons",
+      question: "La célèbre défense torsadée du narval est en réalité…",
+      durationSeconds: 30,
+      choices: [
+        { id: "corne", label: "Une corne" },
+        { id: "dent", label: "Une dent" },
+        { id: "os-nasal", label: "Un os nasal" },
+        { id: "nageoire", label: "Une nageoire rigidifiée" },
+      ],
+      correctAnswer: "dent",
+      answerLabel: "Une dent",
+      fact: "Cette défense est une canine géante qui traverse la lèvre supérieure du narval.",
+      sourceUrl: "https://www.si.edu/stories/understanding-narwhals-smile",
+    },
+    {
+      id: "million-4-poisson-sang-chaud",
+      kind: "choice",
+      kicker: "Palier 4 · 500 poissons",
+      question: "Quel poisson chauffe l’ensemble de son corps ?",
+      durationSeconds: 30,
+      choices: [
+        { id: "thon-rouge", label: "Le thon rouge" },
+        { id: "espadon", label: "L’espadon" },
+        { id: "opah", label: "L’opah" },
+        { id: "marlin-bleu", label: "Le marlin bleu" },
+      ],
+      correctAnswer: "opah",
+      answerLabel: "L’opah",
+      fact: "L’opah est le seul poisson connu à faire circuler du sang chaud dans tout son corps.",
+      sourceUrl: "https://oceanservice.noaa.gov/facts/cold-blooded.html",
+    },
+    {
+      id: "million-5-yeux-barreleye",
+      kind: "choice",
+      kicker: "Palier 5 · 1 000 poissons",
+      question: "Chez le barreleye, les deux globes verts visibles sous son front transparent sont…",
+      durationSeconds: 30,
+      choices: [
+        { id: "organes-lumineux", label: "Des lanternes biologiques" },
+        { id: "yeux", label: "Ses yeux" },
+        { id: "poches-venin", label: "Des poches à venin" },
+        { id: "narines", label: "Ses narines" },
+      ],
+      correctAnswer: "yeux",
+      answerLabel: "Ses yeux",
+      fact: "Ses yeux verts regardent vers le haut puis pivotent vers l’avant lorsqu’il mange.",
+      sourceUrl:
+        "https://www.mbari.org/news/researchers-solve-mystery-of-deep-sea-fish-with-tubular-eyes-and-transparent-head/",
+    },
+  ],
+} as const satisfies ChallengeDefinition

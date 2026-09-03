@@ -12,6 +12,11 @@ const createSchema = z.object({
 const joinSchema = z.object({ name: z.string() })
 const hostSchema = z.object({ hostToken: z.string() })
 const playerSchema = z.object({ playerId: z.string(), playerToken: z.string() })
+const renameTeamSchema = playerSchema.extend({ name: z.string() })
+const answerSchema = playerSchema.extend({
+  answer: z.string(),
+  locked: z.boolean().default(true),
+})
 
 export function createApp(service: GameService, staticDir?: string) {
   const app = express()
@@ -41,6 +46,28 @@ export function createApp(service: GameService, staticDir?: string) {
     response.json(service.claimTotem(request.params.code, body.playerId, body.playerToken))
   })
 
+  app.post("/api/games/:code/teams/:teamId/name", (request, response) => {
+    const body = renameTeamSchema.parse(request.body)
+    response.json(service.renameTeam(
+      request.params.code,
+      request.params.teamId,
+      body.name,
+      body.playerId,
+      body.playerToken,
+    ))
+  })
+
+  app.post("/api/games/:code/answer", (request, response) => {
+    const body = answerSchema.parse(request.body)
+    response.json(service.submitTeamAnswer(
+      request.params.code,
+      body.playerId,
+      body.playerToken,
+      body.answer,
+      body.locked,
+    ))
+  })
+
   app.post("/api/games/:code/start", (request, response) => {
     const body = hostSchema.parse(request.body)
     response.json(service.startGame(request.params.code, body.hostToken))
@@ -49,6 +76,11 @@ export function createApp(service: GameService, staticDir?: string) {
   app.post("/api/games/:code/next", (request, response) => {
     const body = hostSchema.parse(request.body)
     response.json(service.nextRound(request.params.code, body.hostToken))
+  })
+
+  app.post("/api/games/:code/advance", (request, response) => {
+    const body = hostSchema.parse(request.body)
+    response.json(service.advanceTournament(request.params.code, body.hostToken))
   })
 
   app.post("/api/games/:code/finish", (request, response) => {

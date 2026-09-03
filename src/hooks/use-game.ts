@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 import type { GameView, PlayerSession, SessionResponse } from "@shared/game"
 import { gameApi } from "@/api"
@@ -19,9 +19,12 @@ export function useGame() {
   const [game, setGame] = useState<GameView | null>(null)
   const [loading, setLoading] = useState(Boolean(session))
   const [error, setError] = useState<string | null>(null)
+  const refreshInFlight = useRef(false)
 
   const refresh = useCallback(async () => {
     if (!session) return
+    if (refreshInFlight.current) return
+    refreshInFlight.current = true
     try {
       const nextGame = await gameApi.get(session.gameCode)
       setGame(nextGame)
@@ -29,6 +32,7 @@ export function useGame() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Aquarium inaccessible.")
     } finally {
+      refreshInFlight.current = false
       setLoading(false)
     }
   }, [session])
@@ -36,9 +40,9 @@ export function useGame() {
   useEffect(() => {
     if (!session) return
     void refresh()
-    const interval = window.setInterval(() => void refresh(), 1_500)
+    const interval = window.setInterval(() => void refresh(), game?.status === "running" ? 1_000 : 1_500)
     return () => window.clearInterval(interval)
-  }, [refresh, session])
+  }, [game?.status, refresh, session])
 
   const enter = useCallback((response: SessionResponse) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(response.session))
@@ -57,7 +61,7 @@ export function useGame() {
   }, [])
 
   const hostAction = useCallback(
-    async (action: "start" | "next" | "finish") => {
+    async (action: "start" | "advance" | "finish") => {
       if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
       const nextGame = await gameApi.hostAction(
         session.gameCode,
@@ -81,5 +85,31 @@ export function useGame() {
     return nextGame
   }, [session])
 
-  return { session, game, loading, error, enter, leave, refresh, hostAction, claimTotem }
+  const renameTeam = useCallback(async (teamId: string, name: string) => {
+    if (!session) throw new Error("Session introuvable.")
+    const nextGame = await gameApi.renameTeam(
+      session.gameCode,
+      teamId,
+      name,
+      session.playerId,
+      session.playerToken,
+    )
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
+  const submitAnswer = useCallback(async (answer: string, locked: boolean) => {
+    if (!session) throw new Error("Session introuvable.")
+    const nextGame = await gameApi.submitAnswer(
+      session.gameCode,
+      session.playerId,
+      session.playerToken,
+      answer,
+      locked,
+    )
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
+  return { session, game, loading, error, enter, leave, refresh, hostAction, claimTotem, renameTeam, submitAnswer }
 }

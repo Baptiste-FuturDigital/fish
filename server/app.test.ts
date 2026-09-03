@@ -99,4 +99,61 @@ describe("game API", () => {
       .expect(403)
     expect(forbidden.body.error).toBe("Seul le capitaine peut toucher à ça.")
   })
+
+  it("supports team naming, answers and host-paced tournament phases", async () => {
+    const created = await request(app)
+      .post("/api/games")
+      .send({ name: "Le grand aquarium", hostName: "Baptiste" })
+      .expect(201)
+    const joined = await request(app)
+      .post(`/api/games/${created.body.game.code}/join`)
+      .send({ name: "Léa" })
+      .expect(201)
+    const code = created.body.game.code
+    const hostSession = created.body.session
+    for (const session of [hostSession, joined.body.session]) {
+      await request(app).post(`/api/games/${code}/totem`).send({
+        playerId: session.playerId,
+        playerToken: session.playerToken,
+      }).expect(200)
+    }
+    const lobby = await request(app).get(`/api/games/${code}`).expect(200)
+    const hostTeamId = lobby.body.players.find(
+      (player: { id: string }) => player.id === hostSession.playerId,
+    ).teamId
+
+    const renamed = await request(app)
+      .post(`/api/games/${code}/teams/${hostTeamId}/name`)
+      .send({
+        name: "Les Moules Costaudes",
+        playerId: hostSession.playerId,
+        playerToken: hostSession.playerToken,
+      })
+      .expect(200)
+    expect(renamed.body.teams.find((team: { id: string }) => team.id === hostTeamId).name)
+      .toBe("Les Moules Costaudes")
+
+    await request(app).post(`/api/games/${code}/start`)
+      .send({ hostToken: hostSession.hostToken }).expect(200)
+    const answering = await request(app).post(`/api/games/${code}/advance`)
+      .send({ hostToken: hostSession.hostToken }).expect(200)
+    expect(answering.body.tournament.phase).toBe("answering")
+
+    const answered = await request(app).post(`/api/games/${code}/answer`).send({
+      playerId: hostSession.playerId,
+      playerToken: hostSession.playerToken,
+      answer: "0.09",
+      locked: true,
+    }).expect(200)
+    expect(answered.body.tournament.answers).toContainEqual({
+      teamId: hostTeamId,
+      answer: null,
+      locked: true,
+    })
+
+    const reveal = await request(app).post(`/api/games/${code}/advance`)
+      .send({ hostToken: hostSession.hostToken }).expect(200)
+    expect(reveal.body.tournament.phase).toBe("reveal")
+    expect(reveal.body.tournament.round.correctAnswer).toBe(0.09)
+  })
 })

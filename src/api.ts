@@ -41,7 +41,19 @@ export const gameApi = {
       body: JSON.stringify({ playerId, playerToken }),
     })
   },
-  hostAction(code: string, action: "start" | "next" | "finish", hostToken: string) {
+  renameTeam(code: string, teamId: string, name: string, playerId: string, playerToken: string) {
+    return request<GameView>(`/api/games/${code}/teams/${teamId}/name`, {
+      method: "POST",
+      body: JSON.stringify({ name, playerId, playerToken }),
+    })
+  },
+  submitAnswer(code: string, playerId: string, playerToken: string, answer: string, locked: boolean) {
+    return request<GameView>(`/api/games/${code}/answer`, {
+      method: "POST",
+      body: JSON.stringify({ playerId, playerToken, answer, locked }),
+    })
+  },
+  hostAction(code: string, action: "start" | "advance" | "finish", hostToken: string) {
     return request<GameView>(`/api/games/${code}/${action}`, {
       method: "POST",
       body: JSON.stringify({ hostToken }),

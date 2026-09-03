@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test"
 
-test("a host and guest can play several rounds and finish", async ({ browser }) => {
+test("four players form teams and start the tournament", async ({ browser }) => {
   const hostContext = await browser.newContext({ permissions: ["clipboard-read", "clipboard-write"] })
-  const guestContext = await browser.newContext()
+  const guestContexts = await Promise.all([browser.newContext(), browser.newContext(), browser.newContext()])
   const host = await hostContext.newPage()
-  const guest = await guestContext.newPage()
+  const guests = await Promise.all(guestContexts.map((context) => context.newPage()))
 
   await host.goto("/")
   await expect(host.locator('link[rel="icon"]')).toHaveAttribute("href", "/favicon.svg")
@@ -46,36 +46,44 @@ test("a host and guest can play several rounds and finish", async ({ browser }) 
   await host.getByRole("button", { name: "Copier le code" }).click()
   expect(await host.evaluate(() => navigator.clipboard.readText())).toBe(code)
 
-  await guest.goto(`/?code=${code}`)
-  await guest.getByRole("button", { name: "Rejoindre une partie" }).click()
-  await guest.getByLabel("Ton pseudo").fill("Léa")
-  await guest.getByRole("button", { name: "Plonger dans la partie" }).click()
+  await Promise.all(guests.map(async (guest, index) => {
+    await guest.goto(`/?code=${code}`)
+    await guest.getByRole("button", { name: "Rejoindre une partie" }).click()
+    await guest.getByLabel("Ton pseudo").fill(["Léa", "Sam", "Jo"][index])
+    await guest.getByRole("button", { name: "Plonger dans la partie" }).click()
+  }))
 
-  await expect(host.getByText("2 poissons à bord")).toBeVisible()
+  await expect(host.getByText("4 poissons à bord")).toBeVisible()
   await expect(host.getByRole("button", { name: "Lancer la partie" })).toBeDisabled()
   await Promise.all([
     host.getByRole("button", { name: "Scanner mon visage" }).click(),
-    guest.getByRole("button", { name: "Scanner mon visage" }).click(),
+    ...guests.map((guest) => guest.getByRole("button", { name: "Scanner mon visage" }).click()),
   ])
   await host.waitForTimeout(1_000)
   await expect(host.locator('[data-slot="avatar-image"]')).toHaveCount(0)
   await expect(host.getByText("Votre animal totem est…")).toBeVisible({ timeout: 8_000 })
-  await expect(guest.getByText("Votre animal totem est…")).toBeVisible({ timeout: 8_000 })
-  const hostTotemImage = await host.getByTestId("totem-reveal-image").getAttribute("src")
-  const guestTotemImage = await guest.getByTestId("totem-reveal-image").getAttribute("src")
-  expect(hostTotemImage).not.toBe(guestTotemImage)
+  await Promise.all(guests.map((guest) => expect(guest.getByText("Votre animal totem est…")).toBeVisible({ timeout: 8_000 })))
+  const totemImages = await Promise.all([host, ...guests].map((page) => page.getByTestId("totem-reveal-image").getAttribute("src")))
+  expect(new Set(totemImages).size).toBe(4)
+  await expect(host.getByRole("heading", { name: "Les 4 bancs" })).toBeVisible()
+  await host.getByLabel("Nom de ton banc").fill("Les Moules Costaudes")
+  await host.getByRole("button", { name: "Renommer mon banc" }).click()
+  await expect(guests[0].getByText("Les Moules Costaudes")).toBeVisible()
   await expect(host.getByRole("button", { name: "Lancer la partie" })).toBeEnabled()
   await host.getByRole("button", { name: "Lancer la partie" }).click()
 
-  await expect(host.getByText("Manche 1 / 8")).toBeVisible()
-  await expect(guest.getByText("Manche 1 / 8")).toBeVisible()
-  await host.getByRole("button", { name: "Défi suivant" }).click()
-  await expect(guest.getByText("Manche 2 / 8")).toBeVisible()
-
-  await host.getByRole("button", { name: "Terminer" }).click()
-  await expect(host.getByText("Retour au port")).toBeVisible()
-  await expect(guest.getByText("Retour au port")).toBeVisible()
+  await expect(host.getByRole("heading", { name: "Le Juste Poisson" })).toBeVisible()
+  await expect(host.getByTestId("challenge-music-player")).toHaveAttribute("src", /UaRrDZWhtWA/)
+  await host.getByRole("button", { name: "Lancer l'épreuve" }).click()
+  await host.getByLabel("Estimation en kg").fill("0,09")
+  await host.getByRole("button", { name: "Valider la réponse" }).click()
+  await expect(host.getByText("Réponse verrouillée")).toBeVisible()
+  await host.getByRole("button", { name: "Révéler maintenant" }).click()
+  await expect(host.getByText("0,09 kg — soit 90 grammes")).toBeVisible()
+  await host.getByRole("button", { name: "Terminer le tournoi" }).click()
+  await expect(host.getByRole("heading", { name: "Classement final" })).toBeVisible()
+  await expect(guests[0].getByRole("heading", { name: "Classement final" })).toBeVisible()
 
   await hostContext.close()
-  await guestContext.close()
+  await Promise.all(guestContexts.map((context) => context.close()))
 })

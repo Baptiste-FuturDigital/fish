@@ -1,18 +1,31 @@
 import type { TotemView } from "../shared/game.js"
 
-type TotemCategory = "big" | "cool" | "joli" | "ugly"
+export type TotemCategory = "big" | "cool" | "joli" | "ugly"
 
 export interface TotemDefinition extends TotemView {
   id: number
   category: TotemCategory
 }
 
-const teams: Record<TotemCategory, string> = {
+export const teams: Record<TotemCategory, string> = {
   ugly: "Les Abyssaux",
   joli: "Les Coralliens",
   cool: "Les Électriques",
   big: "Les Colosses",
 }
+
+export const teamIds: Record<TotemCategory, string> = {
+  ugly: "abyssaux",
+  joli: "coralliens",
+  cool: "electriques",
+  big: "colosses",
+}
+
+export const teamDefinitions = (Object.keys(teams) as TotemCategory[]).map((category) => ({
+  id: teamIds[category],
+  category,
+  name: teams[category],
+}))
 
 function totem(id: number, category: TotemCategory, name: string, fact: string): TotemDefinition {
   return {

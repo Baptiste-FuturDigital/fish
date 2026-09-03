@@ -1,4 +1,8 @@
+import type { ChallengeId, PublicRoundView, RoundScoreResult } from "./challenges/types.js"
+
 export type GameStatus = "lobby" | "running" | "finished"
+
+export type TournamentPhase = "challenge-intro" | "answering" | "reveal"
 
 export type PromptKind = "question" | "duel" | "vote" | "mime" | "action"
 
@@ -9,11 +13,50 @@ export interface TotemView {
   imageUrl: string
 }
 
+export interface TeamView {
+  id: string
+  name: string
+  score: number
+  memberIds: string[]
+}
+
+export interface TeamAnswerView {
+  teamId: string
+  answer: string | null
+  locked: boolean
+}
+
+export interface TournamentChallengeView {
+  id: ChallengeId
+  title: string
+  shortTitle: string
+  emoji: string
+  description: string
+  rules: readonly string[]
+  introMusicYoutubeId: string
+  presenterImageUrl?: string
+  confirmationLabel?: string
+}
+
+export interface TournamentView {
+  challengeIndex: number
+  challengeCount: number
+  roundIndex: number
+  roundCount: number
+  phase: TournamentPhase
+  endsAt: string | null
+  challenge: TournamentChallengeView
+  round: PublicRoundView
+  answers: TeamAnswerView[]
+  results: RoundScoreResult[]
+}
+
 export interface PlayerView {
   id: string
   name: string
   isHost: boolean
   score: number
+  teamId: string | null
   totem: TotemView | null
 }
 
@@ -36,6 +79,8 @@ export interface GameView {
   totalRounds: number
   currentPrompt: PromptView | null
   players: PlayerView[]
+  teams: TeamView[]
+  tournament: TournamentView | null
   createdAt: string
 }
 
