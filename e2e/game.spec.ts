@@ -42,6 +42,7 @@ test("four players form teams and start the tournament", async ({ browser }) => 
   await host.getByRole("button", { name: "Créer l'aquarium" }).click()
 
   await expect(host.getByText("En attente du banc")).toBeVisible()
+  await expect(host.getByRole("button", { name: "Activer la musique", exact: true })).toBeVisible()
   expect(await host.evaluate(() => window.scrollY)).toBe(0)
   const code = await host.getByTestId("game-code").textContent()
   expect(code).toMatch(/^[A-Z2-9]{4}$/)
@@ -75,6 +76,7 @@ test("four players form teams and start the tournament", async ({ browser }) => 
   await host.getByRole("button", { name: "Lancer la partie" }).click()
 
   await expect(host.getByRole("heading", { name: "Le juste poisson" })).toBeVisible()
+  await expect(host.getByRole("button", { name: "Activer la musique", exact: true })).toBeVisible()
   await expect(host.getByTestId("challenge-music-player")).toHaveAttribute("src", /UaRrDZWhtWA/)
   await host.getByRole("button", { name: "Lancer l'épreuve" }).click()
   await host.getByLabel("Estimation en kg").fill("0,09")
@@ -92,10 +94,12 @@ test("four players form teams and start the tournament", async ({ browser }) => 
   await host.getByRole("button", { name: "Révéler maintenant" }).click()
   await host.getByRole("button", { name: "Voir le classement" }).click()
   await expect(host.getByRole("heading", { name: "Classement après l'épreuve 1" })).toBeVisible()
+  await expect(host.getByRole("button", { name: "Activer la musique", exact: true })).toBeVisible()
   await host.getByRole("button", { name: "Découvrir l'épreuve suivante" }).click()
   await expect(host.getByRole("heading", { name: "Question pour un poisson" })).toBeVisible()
   await host.getByRole("button", { name: "Terminer le tournoi" }).click()
   await expect(host.getByRole("heading", { name: "Classement final" })).toBeVisible()
+  await expect(host.getByRole("button", { name: "Activer la musique", exact: true })).toBeVisible()
   await expect(host.getByRole("img", { name: "Poséithon, dieu des océans" })).toBeVisible()
   await expect(host.getByTestId("final-confetti")).toBeVisible()
   await expect(guests[0].getByRole("heading", { name: "Classement final" })).toBeVisible()

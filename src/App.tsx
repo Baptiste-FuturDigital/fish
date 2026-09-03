@@ -250,7 +250,6 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
         </Card>
       )}
       <p className="mt-auto pt-8 text-center text-xs text-muted-foreground">Fabriqué dans les profondeurs · 🫧</p>
-      <BackgroundMusic />
     </>
   )
 }
@@ -424,6 +423,7 @@ export default function App() {
 
   return (
     <OceanShell>
+      <BackgroundMusic />
       {error && session && (
         <Alert variant="destructive" className="mb-4">
           <AlertTitle>Connexion perdue</AlertTitle>
