@@ -43,12 +43,16 @@ import { Toaster } from "@/components/ui/sonner"
 
 type HomeMode = "choice" | "create" | "join"
 
+const BUBBLE_COUNT = 12
+
 function OceanShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="ocean-shell">
-      <div className="bubble bubble-one" />
-      <div className="bubble bubble-two" />
-      <div className="bubble bubble-three" />
+      <div className="bubble-field" data-testid="bubble-field" aria-hidden="true">
+        {Array.from({ length: BUBBLE_COUNT }, (_, index) => (
+          <span className="bubble" key={index} />
+        ))}
+      </div>
       <div className="relative mx-auto flex min-h-svh w-full max-w-xl flex-col px-4 py-5 sm:px-6 sm:py-8">
         {children}
       </div>
@@ -113,12 +117,12 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
     <>
       <Brand />
       <section className="mb-7 pt-5">
-        <Badge variant="outline">INTERDIT AUX POISSONS NORMAUX</Badge>
+        <Badge variant="outline">C'EST L'HEURE DU DUEL</Badge>
         <h1 className="mt-4 max-w-md font-heading text-5xl leading-[0.92] font-black tracking-[-0.045em] text-balance sm:text-6xl">
-          Fais remonter les secrets du fond.
+          Quels poissons seront dignes de Poséidon ? 🔱
         </h1>
         <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
-          Des défis absurdes, un banc d'amis et zéro dignité requise.
+          Merci de vous donner à fond, marins, les champions seront dignement récompensés.
         </p>
       </section>
 

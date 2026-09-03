@@ -15,7 +15,7 @@
 **Files:**
 - Modify: `e2e/game.spec.ts`
 
-- [ ] **Step 1: Write the failing expectations**
+- [x] **Step 1: Write the failing expectations**
 
 Add assertions immediately after `host.goto("/")`:
 
@@ -26,7 +26,7 @@ await expect(host.getByText("Merci de vous donner à fond, marins, les champions
 await expect(host.locator("[data-testid='bubble-field'] > span")).toHaveCount(12)
 ```
 
-- [ ] **Step 2: Verify the test fails**
+- [x] **Step 2: Verify the test fails**
 
 Run: `npm run test:e2e -- --reporter=line`
 
@@ -38,7 +38,7 @@ Expected: FAIL because the new hero copy and bubble field do not exist.
 - Modify: `src/App.tsx`
 - Modify: `src/index.css`
 
-- [ ] **Step 1: Render a non-interactive bubble field**
+- [x] **Step 1: Render a non-interactive bubble field**
 
 Replace the three individual bubble nodes with:
 
@@ -48,15 +48,15 @@ Replace the three individual bubble nodes with:
 </div>
 ```
 
-- [ ] **Step 2: Replace the hero copy**
+- [x] **Step 2: Replace the hero copy**
 
 Use the three exact strings from Task 1 in the badge, heading and description.
 
-- [ ] **Step 3: Animate the bubbles**
+- [x] **Step 3: Animate the bubbles**
 
 Make `.bubble-field` an absolute, pointer-events-none layer. Give each child a distinct horizontal position, size, duration and negative delay with `:nth-child()`, then animate from below the viewport to above it with subtle lateral drift. Keep the existing `prefers-reduced-motion` rule.
 
-- [ ] **Step 4: Verify the complete flow**
+- [x] **Step 4: Verify the complete flow**
 
 Run: `npm run test:e2e -- --reporter=line && npm test`
 
@@ -67,19 +67,19 @@ Expected: all end-to-end and unit tests PASS.
 **Files:**
 - No source changes
 
-- [ ] **Step 1: Rebuild and start**
+- [x] **Step 1: Rebuild and start**
 
 Run: `docker compose up --build -d`
 
 Expected: image builds and `poisson-chelou` starts.
 
-- [ ] **Step 2: Verify runtime health and output**
+- [x] **Step 2: Verify runtime health and output**
 
 Run: `curl -fsS http://127.0.0.1:8787/api/health`
 
 Expected: `{"status":"ok"}` and the production bundle contains the new title.
 
-- [ ] **Step 3: Commit the implementation**
+- [x] **Step 3: Commit the implementation**
 
 ```bash
 git add src/App.tsx src/index.css e2e/game.spec.ts docs/superpowers/plans/2026-09-03-home-bubbles-copy.md
