@@ -14,10 +14,12 @@ import { Separator } from "@/components/ui/separator"
 import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
+import { AnimatedScore } from "@/components/animated-score"
 import { ChallengeAudio } from "@/components/challenge-audio"
 import { isHostAudioEnabled } from "@/components/challenge-audio-control"
 import { MillionaireAnswerPanel } from "@/components/millionaire-answer-panel"
 import { SalmonAnswerProgress } from "@/components/salmon-answer-progress"
+import { ScoreRevealSound } from "@/components/score-reveal-sound"
 import { WhosThatSalmonStage } from "@/components/whos-that-salmon-stage"
 import { formatWeightEstimate } from "@/components/weight-estimate"
 
@@ -55,7 +57,7 @@ function ScoreStrip({ game }: { game: GameView }) {
       {[...game.teams].sort((left, right) => right.score - left.score).map((team) => (
         <div className="score-pill" key={team.id}>
           <span>{team.name}</span>
-          <strong>{team.score}</strong>
+          <strong><AnimatedScore points={team.score} /></strong>
         </div>
       ))}
     </div>
@@ -125,6 +127,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
   const teamId = currentPlayer?.teamId
   const teamAnswer = tournament.answers.find((entry) => entry.teamId === teamId)
   const isLocked = Boolean(teamAnswer?.locked)
+  const highestAward = Math.max(0, ...tournament.results.map((result) => result.points))
 
   async function act(action: "advance" | "finish") {
     setBusy(action)
@@ -196,6 +199,11 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
 
   return (
     <>
+      <ScoreRevealSound
+        enabled={isHost && tournament.phase === "reveal"}
+        points={highestAward}
+        roundId={tournament.round.id}
+      />
       <TournamentHeader tournament={tournament} />
       <ScoreStrip game={game} />
       {tournament.phase === "answering" ? (
@@ -313,7 +321,9 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
                   <div className="result-row" key={result.teamId}>
                     <span className="truncate font-bold">{team?.name}</span>
                     <span className="text-xs text-muted-foreground">{result.answer ?? "Pas de réponse"}</span>
-                    <Badge variant={result.points > 0 ? "default" : "secondary"}>+{result.points}</Badge>
+                    <Badge variant={result.points > 0 ? "default" : "secondary"}>
+                      <AnimatedScore points={result.points} prefix="+" />
+                    </Badge>
                   </div>
                 )
               })}

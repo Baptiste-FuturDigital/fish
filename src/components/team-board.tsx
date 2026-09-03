@@ -3,6 +3,7 @@ import { LoaderCircle, Pencil } from "lucide-react"
 import { toast } from "sonner"
 
 import type { GameView, PlayerSession } from "@shared/game"
+import { AnimatedScore } from "@/components/animated-score"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -55,7 +56,9 @@ export function TeamBoard({ game, session, onRename }: TeamBoardProps) {
               <section className="team-card" data-current={isCurrent || undefined} key={team.id}>
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-heading text-base leading-tight font-black">{team.name}</h3>
-                  <Badge variant={isCurrent ? "default" : "secondary"}>{team.score} pt</Badge>
+                  <Badge variant={isCurrent ? "default" : "secondary"}>
+                    <AnimatedScore points={team.score} /> pts
+                  </Badge>
                 </div>
                 <div className="mt-3 flex flex-col gap-2">
                   {members.length > 0 ? members.map((player) => (

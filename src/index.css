@@ -492,6 +492,17 @@
   font-variant-numeric: tabular-nums;
 }
 
+.animated-score {
+  display: inline-block;
+  min-width: 1.3ch;
+  font-variant-numeric: tabular-nums;
+  transform-origin: center;
+}
+
+.animated-score[data-animating="true"] {
+  animation: score-count-pulse 260ms ease-in-out infinite alternate;
+}
+
 .countdown {
   display: flex;
   flex-direction: column;
@@ -660,6 +671,17 @@
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(-2deg); }
   50% { transform: translateY(-0.45rem) rotate(2deg); }
+}
+
+@keyframes score-count-pulse {
+  from {
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+  to {
+    transform: translateY(-0.08em) scale(1.08);
+    filter: brightness(1.35);
+  }
 }
 
 @keyframes bubble-rise {

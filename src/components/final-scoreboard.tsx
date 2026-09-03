@@ -2,6 +2,7 @@ import type { CSSProperties } from "react"
 import { Crown, RotateCcw, Trophy } from "lucide-react"
 
 import type { GameView } from "@shared/game"
+import { AnimatedScore } from "@/components/animated-score"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -124,7 +125,7 @@ export function FinalScoreboard({
         <p>Le banc sacré champion des océans</p>
         <h1>{winner?.name ?? "Un banc mystérieux"}</h1>
         <div className="final-winner-score">
-          <span>{winner?.score ?? 0}</span> points divins
+          <AnimatedScore points={winner?.score ?? 0} /> points divins
         </div>
         <p className="final-winner-message">
           Poséithon vous accorde sa faveur. Faites-en bon usage à la surface.
@@ -168,7 +169,7 @@ export function FinalScoreboard({
               </div>
               <span className="final-team-name">{team.name}</span>
               <Badge variant={index === 0 ? "default" : "secondary"}>
-                {team.score} pts
+                <AnimatedScore points={team.score} /> pts
               </Badge>
             </li>
           ))}

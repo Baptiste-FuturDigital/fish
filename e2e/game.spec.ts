@@ -92,6 +92,7 @@ test("four players form teams and start the tournament", async ({ browser }) => 
   await expect(guests[0].getByText("Réponse verrouillée")).toBeVisible()
   await host.getByRole("button", { name: "Révéler maintenant" }).click()
   await expect(host.getByText("0,09 kg — soit 90 grammes")).toBeVisible()
+  await expect(host.getByLabel("+40 points")).toBeVisible()
   await host.getByRole("button", { name: "Manche suivante" }).click()
   const secondWeightSlider = guests[0].getByRole("slider", { name: "Estimation du poids" })
   await expect(secondWeightSlider).toBeVisible()

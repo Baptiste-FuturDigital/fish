@@ -9,7 +9,7 @@ export const leJustePoisson = {
   rules: [
     "Chaque banc saisit une estimation en kilogrammes avant la fin des 20 secondes.",
     "Plus votre estimation est proche du poids correct, plus votre banc marque de points.",
-    "À chaque manche, les quatre bancs peuvent gagner de 1 à 4 points selon leur classement.",
+    "À chaque manche, les quatre bancs peuvent gagner de 10 à 40 points selon leur classement.",
   ],
   introMusicYoutubeId: "UaRrDZWhtWA",
   scoring: {

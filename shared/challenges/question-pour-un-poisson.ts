@@ -9,7 +9,7 @@ export const questionPourUnPoisson = {
   rules: [
     "Chaque banc choisit une réponse parmi quatre.",
     "Vous avez 20 secondes par question.",
-    "Une bonne réponse rapporte 2 points.",
+    "Une bonne réponse rapporte 20 points.",
   ],
   introMusicYoutubeId: "Zcl98Bguq7k",
   scoring: { kind: "exact", points: 2 },

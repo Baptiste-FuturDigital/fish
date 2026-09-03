@@ -10,20 +10,20 @@ export const quiVeutGagnerDesPoissons = {
   rules: [
     "Chaque banc choisit A, B, C ou D avant la fin des 30 secondes.",
     "Validez avec « C’est notre dernier mot » : les poissons ne font pas marche arrière.",
-    "Les gains montent à chaque bonne réponse, de 100 à 1 000 points.",
+    "Les gains montent à chaque bonne réponse, de 10 à 100 points.",
   ],
   presenterImageUrl: "/goerge-clownez-fun.png",
   introMusicYoutubeId: "doSjY-DGmjY",
   confirmationLabel: "C’est notre dernier mot",
   scoring: {
     kind: "escalating",
-    points: [100, 200, 300, 500, 1000],
+    points: [1, 2, 3, 5, 10],
   },
   rounds: [
     {
       id: "million-1-plus-grand-poisson",
       kind: "choice",
-      kicker: "Palier 1 · 100 poissons",
+      kicker: "Palier 1 · 10 poissons",
       question: "Quel est le plus grand poisson vivant au monde ?",
       durationSeconds: 30,
       choices: [
@@ -41,7 +41,7 @@ export const quiVeutGagnerDesPoissons = {
     {
       id: "million-2-coeurs-pieuvre",
       kind: "choice",
-      kicker: "Palier 2 · 200 poissons",
+      kicker: "Palier 2 · 20 poissons",
       question: "Combien de cœurs fait battre une pieuvre ?",
       durationSeconds: 30,
       choices: [
@@ -59,7 +59,7 @@ export const quiVeutGagnerDesPoissons = {
     {
       id: "million-3-defense-narval",
       kind: "choice",
-      kicker: "Palier 3 · 300 poissons",
+      kicker: "Palier 3 · 30 poissons",
       question: "La célèbre défense torsadée du narval est en réalité…",
       durationSeconds: 30,
       choices: [
@@ -76,7 +76,7 @@ export const quiVeutGagnerDesPoissons = {
     {
       id: "million-4-poisson-sang-chaud",
       kind: "choice",
-      kicker: "Palier 4 · 500 poissons",
+      kicker: "Palier 4 · 50 poissons",
       question: "Quel poisson chauffe l’ensemble de son corps ?",
       durationSeconds: 30,
       choices: [
@@ -93,7 +93,7 @@ export const quiVeutGagnerDesPoissons = {
     {
       id: "million-5-yeux-barreleye",
       kind: "choice",
-      kicker: "Palier 5 · 1 000 poissons",
+      kicker: "Palier 5 · 100 poissons",
       question: "Chez le barreleye, les deux globes verts visibles sous son front transparent sont…",
       durationSeconds: 30,
       choices: [

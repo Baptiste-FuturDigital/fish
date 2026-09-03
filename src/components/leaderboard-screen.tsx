@@ -2,6 +2,8 @@ import { useState, type CSSProperties } from "react"
 import { ArrowRight, Crown, Flag, LoaderCircle, Trophy, Waves } from "lucide-react"
 
 import type { GameView, PlayerSession } from "@shared/game"
+import { AnimatedScore } from "@/components/animated-score"
+import { toDisplayPoints } from "@/components/score-display"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,6 +35,7 @@ export function LeaderboardScreen({
     (left, right) => right.score - left.score || left.name.localeCompare(right.name, "fr"),
   )
   const maxScore = Math.max(1, ...ranking.map((team) => team.score))
+  const displayedMaxScore = toDisplayPoints(maxScore)
 
   async function run(action: Exclude<PendingAction, null>) {
     setPending(action)
@@ -94,7 +97,7 @@ export function LeaderboardScreen({
                   </div>
                   <strong className="leaderboard-team-name">{team.name}</strong>
                   <Badge className="leaderboard-score" variant={rank === 1 ? "default" : "secondary"}>
-                    {team.score} {team.score === 1 ? "pt" : "pts"}
+                    <AnimatedScore points={team.score} /> pts
                   </Badge>
                 </div>
 
@@ -103,8 +106,8 @@ export function LeaderboardScreen({
                   role="progressbar"
                   aria-label={`Score de ${team.name}`}
                   aria-valuemin={0}
-                  aria-valuemax={maxScore}
-                  aria-valuenow={team.score}
+                  aria-valuemax={displayedMaxScore}
+                  aria-valuenow={toDisplayPoints(team.score)}
                 >
                   <span style={{ "--leaderboard-fill": fill } as CSSProperties} />
                 </div>

@@ -10,7 +10,7 @@ export const whosDatSalmon = {
   rules: [
     "Une silhouette apparaît pendant 20 secondes.",
     "Chaque équipe choisit une réponse parmi quatre.",
-    "Chaque bonne réponse rapporte 2 points.",
+    "Chaque bonne réponse rapporte 20 points.",
   ],
   introMusicYoutubeId: "FsvGm4pqlW8",
   introMusicStartSeconds: 0,

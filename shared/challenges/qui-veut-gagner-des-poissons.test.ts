@@ -69,10 +69,10 @@ describe("quiVeutGagnerDesPoissons", () => {
     })
   })
 
-  it("fait monter les gains de 100 à 1 000 points", () => {
+  it("garde des gains internes équilibrés avant l’affichage multiplié par dix", () => {
     expect(quiVeutGagnerDesPoissons.scoring).toEqual({
       kind: "escalating",
-      points: [100, 200, 300, 500, 1000],
+      points: [1, 2, 3, 5, 10],
     })
   })
 })
