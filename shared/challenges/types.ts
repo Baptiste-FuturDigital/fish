@@ -23,7 +23,17 @@ interface RoundBase {
 export interface NumericRoundDefinition extends RoundBase {
   kind: "number"
   unit: "kg"
+  estimateRange: WeightEstimateRange
   correctAnswer: number
+}
+
+export type WeightDisplayUnit = "g" | "kg" | "t"
+
+export interface WeightEstimateRange {
+  min: number
+  max: number
+  step: number
+  displayUnit: WeightDisplayUnit
 }
 
 export interface ChoiceRoundDefinition extends RoundBase {
@@ -66,6 +76,7 @@ export interface PublicRoundView {
   durationSeconds: number
   imageUrl?: string
   unit?: "kg"
+  estimateRange?: WeightEstimateRange
   choices?: readonly ChoiceOption[]
   maskImage?: boolean
   correctAnswer?: string | number

@@ -265,6 +265,66 @@
   pointer-events: none;
 }
 
+.weight-estimate-field {
+  gap: 1rem;
+  padding: 1.1rem;
+  border: 1px solid color-mix(in oklch, var(--primary) 32%, var(--border));
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(circle at 88% 12%, color-mix(in oklch, var(--secondary) 28%, transparent), transparent 8rem),
+    var(--muted);
+}
+
+.weight-estimate-heading,
+.weight-estimate-limits {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.weight-estimate-value {
+  color: var(--primary);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1.35rem, 7vw, 2rem);
+  font-weight: 900;
+  line-height: 1;
+  text-align: right;
+}
+
+.weight-estimate-slider {
+  min-height: 3.75rem;
+  touch-action: none;
+}
+
+.weight-estimate-slider [data-slot="slider-track"] {
+  height: 1rem;
+  border: 1px solid color-mix(in oklch, var(--primary) 18%, var(--border));
+  box-shadow: inset 0 0.15rem 0.35rem oklch(0.2 0.04 205 / 18%);
+}
+
+.weight-estimate-slider [data-slot="slider-range"] {
+  background: linear-gradient(90deg, var(--accent), var(--primary));
+}
+
+.weight-estimate-slider [data-slot="slider-thumb"] {
+  width: 2.9rem;
+  height: 2.9rem;
+  border: 0.35rem solid var(--card);
+  background: var(--primary);
+  box-shadow:
+    0 0 0 0.15rem var(--ring),
+    0 0.65rem 1.1rem oklch(0.2 0.04 205 / 28%);
+}
+
+.weight-estimate-limits {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
 .totem-scan-intro {
   position: relative;
   display: grid;

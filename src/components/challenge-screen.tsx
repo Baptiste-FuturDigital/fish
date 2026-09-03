@@ -2,20 +2,22 @@ import { useEffect, useState, type FormEvent } from "react"
 import { CheckCircle2, Eye, Flag, LoaderCircle, LockKeyhole, Play, Trophy } from "lucide-react"
 import { toast } from "sonner"
 
+import type { WeightEstimateRange } from "@shared/challenges/types"
 import type { GameView, PlayerSession, TournamentView } from "@shared/game"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import { Slider } from "@/components/ui/slider"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
 import { ChallengeAudio } from "@/components/challenge-audio"
 import { isHostAudioEnabled } from "@/components/challenge-audio-control"
 import { WhosThatSalmonStage } from "@/components/whos-that-salmon-stage"
+import { formatWeightEstimate } from "@/components/weight-estimate"
 
 interface ChallengeScreenProps {
   game: GameView
@@ -68,6 +70,46 @@ function TournamentHeader({ tournament }: { tournament: TournamentView }) {
       </div>
       <Progress value={progress} aria-label="Progression du tournoi" />
     </div>
+  )
+}
+
+function WeightEstimateField({
+  answer,
+  range,
+  onChange,
+}: {
+  answer: string
+  range: WeightEstimateRange
+  onChange: (answer: string) => void
+}) {
+  const value = answer ? Number(answer) : range.min
+
+  return (
+    <Field className="weight-estimate-field">
+      <div className="weight-estimate-heading">
+        <FieldLabel>Estimation du poids</FieldLabel>
+        <output className="weight-estimate-value" aria-live="polite">
+          {answer ? formatWeightEstimate(value, range.displayUnit) : "Glisse ton pouce"}
+        </output>
+      </div>
+      <Slider
+        className="weight-estimate-slider"
+        value={[value]}
+        min={range.min}
+        max={range.max}
+        step={range.step}
+        getAriaLabel={() => "Estimation du poids"}
+        getAriaValueText={(_formattedValue, kilograms) => formatWeightEstimate(kilograms, range.displayUnit)}
+        onValueChange={(values) => {
+          const nextValue = Array.isArray(values) ? values[0] : values
+          onChange(String(nextValue ?? range.min))
+        }}
+      />
+      <div className="weight-estimate-limits" aria-hidden="true">
+        <span>{formatWeightEstimate(range.min, range.displayUnit)}</span>
+        <span>{formatWeightEstimate(range.max, range.displayUnit)}</span>
+      </div>
+    </Field>
   )
 }
 
@@ -197,16 +239,11 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
                 <form onSubmit={submit}>
                   <FieldGroup>
                     {tournament.round.kind === "number" ? (
-                      <Field>
-                        <FieldLabel htmlFor="numeric-answer">Estimation en kg</FieldLabel>
-                        <Input
-                          id="numeric-answer"
-                          inputMode="decimal"
-                          placeholder="Ex. 125"
-                          value={answer}
-                          onChange={(event) => setAnswer(event.target.value)}
-                        />
-                      </Field>
+                      <WeightEstimateField
+                        answer={answer}
+                        range={tournament.round.estimateRange!}
+                        onChange={setAnswer}
+                      />
                     ) : (
                       <Field>
                         <FieldLabel>Réponse de votre banc</FieldLabel>

@@ -20,6 +20,7 @@ export function projectRound(
   }
   if (round.kind === "number") {
     base.unit = round.unit
+    base.estimateRange = round.estimateRange
   } else {
     base.choices = round.choices
     base.maskImage = round.maskImage

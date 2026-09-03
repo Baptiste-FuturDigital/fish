@@ -19,6 +19,7 @@ const numericChallenge: ChallengeDefinition = {
     question: "Quel poids ?",
     durationSeconds: 20,
     unit: "kg",
+    estimateRange: { min: 20, max: 500, step: 2, displayUnit: "kg" },
     correctAnswer: 100,
     answerLabel: "100 kg",
     fact: "Un fait.",
@@ -88,5 +89,12 @@ describe("tournament engine", () => {
       answerLabel: "B",
       fact: "Un fait.",
     }))
+  })
+
+  it("expose la plage d'estimation sans révéler la bonne réponse", () => {
+    expect(projectRound(numericChallenge.rounds[0], false)).toEqual(expect.objectContaining({
+      estimateRange: { min: 20, max: 500, step: 2, displayUnit: "kg" },
+    }))
+    expect(projectRound(numericChallenge.rounds[0], false)).not.toHaveProperty("correctAnswer")
   })
 })
