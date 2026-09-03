@@ -72,8 +72,8 @@ function Brand() {
         <div className="min-w-0">
           <p className="brand-kicker">L'AQUARIUM EN FOLIE</p>
           <p className="font-heading text-2xl leading-none font-black">Fish Tournament</p>
-          <p className="mt-1 max-w-xs text-[0.68rem] leading-snug text-muted-foreground">
-            4 bancs de poissons vont s'affronter à travers quatre manches consécutives.
+          <p className="mt-1 max-w-xs text-sm leading-snug text-muted-foreground">
+            4 bancs de poissons vont s'affronter à travers quatre épreuves consécutives.
           </p>
         </div>
       </div>
