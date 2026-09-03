@@ -254,6 +254,17 @@
 .bubble:nth-child(11) { --bubble-left: 46%; --bubble-size: 0.35rem; --bubble-drift: -1.1rem; --bubble-duration: 8s;  --bubble-delay: -3s; }
 .bubble:nth-child(12) { --bubble-left: 88%; --bubble-size: 1.15rem; --bubble-drift: -2.4rem; --bubble-duration: 16s; --bubble-delay: -11s; }
 
+.background-music-player {
+  position: fixed;
+  right: -200px;
+  bottom: -200px;
+  width: 200px;
+  height: 200px;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(-2deg); }
   50% { transform: translateY(-0.45rem) rotate(2deg); }

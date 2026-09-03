@@ -20,6 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { BackgroundMusic } from "@/components/background-music"
 import {
   Card,
   CardAction,
@@ -211,6 +212,7 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
         </Card>
       )}
       <p className="mt-auto pt-8 text-center text-xs text-muted-foreground">Fabriqué dans les profondeurs · 🫧</p>
+      <BackgroundMusic />
     </>
   )
 }
