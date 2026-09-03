@@ -22,7 +22,7 @@ Add assertions immediately after `host.goto("/")`:
 ```ts
 await expect(host.getByText("C'EST L'HEURE DU DUEL")).toBeVisible()
 await expect(host.getByRole("heading", { name: "Quels poissons seront dignes de Poséithon ? 🔱" })).toBeVisible()
-await expect(host.getByText("Merci de vous donner à fond marin et de ne pas crevette durant les épreuves. Les champions seront honorés d'une faveur divine.")).toBeVisible()
+await expect(host.getByText("Merci de vous donner à fond marin et de ne pas crevette durant les épreuves. Les poissons victorieux seront récompensés d'une faveur divine.")).toBeVisible()
 await expect(host.locator("[data-testid='bubble-field'] > span")).toHaveCount(12)
 ```
 

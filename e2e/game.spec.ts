@@ -24,7 +24,7 @@ test("a host and guest can play several rounds and finish", async ({ browser }) 
     range.selectNodeContents(element)
     return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size
   })).toBe(3)
-  await expect(host.getByText("Merci de vous donner à fond marin et de ne pas crevette durant les épreuves. Les champions seront honorés d'une faveur divine.")).toBeVisible()
+  await expect(host.getByText("Merci de vous donner à fond marin et de ne pas crevette durant les épreuves. Les poissons victorieux seront récompensés d'une faveur divine.")).toBeVisible()
   await expect(host.locator("[data-testid='bubble-field'] > span")).toHaveCount(12)
   const musicPlayer = host.getByTestId("background-music-player")
   await expect(musicPlayer).toHaveAttribute("src", /youtube-nocookie\.com\/embed\/8g8Utx0gvv8/)
