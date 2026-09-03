@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 
 test("a host and guest can play several rounds and finish", async ({ browser }) => {
-  const hostContext = await browser.newContext()
+  const hostContext = await browser.newContext({ permissions: ["clipboard-read", "clipboard-write"] })
   const guestContext = await browser.newContext()
   const host = await hostContext.newPage()
   const guest = await guestContext.newPage()
@@ -28,6 +28,8 @@ test("a host and guest can play several rounds and finish", async ({ browser }) 
   expect(await host.evaluate(() => window.scrollY)).toBe(0)
   const code = await host.getByTestId("game-code").textContent()
   expect(code).toMatch(/^[A-Z2-9]{4}$/)
+  await host.getByRole("button", { name: "Copier le code" }).click()
+  expect(await host.evaluate(() => navigator.clipboard.readText())).toBe(code)
 
   await guest.goto(`/?code=${code}`)
   await guest.getByRole("button", { name: "Rejoindre une partie" }).click()

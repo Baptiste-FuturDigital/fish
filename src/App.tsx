@@ -253,11 +253,10 @@ function LobbyScreen({ game, session, onStart }: { game: GameView; session: Play
   const [busy, setBusy] = useState(false)
   const isHost = Boolean(session.hostToken)
 
-  async function copyInvite() {
-    const url = `${window.location.origin}/?code=${game.code}`
+  async function copyCode() {
     try {
-      await navigator.clipboard.writeText(url)
-      toast.success("Lien copié. Fais entrer le banc !")
+      await navigator.clipboard.writeText(game.code)
+      toast.success("Code copié. Fais entrer le banc !")
     } catch {
       toast.info(`Code de partie : ${game.code}`)
     }
@@ -285,8 +284,8 @@ function LobbyScreen({ game, session, onStart }: { game: GameView; session: Play
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-3 py-4">
           <p data-testid="game-code" className="game-code">{game.code}</p>
-          <Button variant="secondary" onClick={copyInvite}>
-            <Copy data-icon="inline-start" /> Copier le lien
+          <Button variant="secondary" onClick={copyCode}>
+            <Copy data-icon="inline-start" /> Copier le code
           </Button>
         </CardContent>
       </Card>
