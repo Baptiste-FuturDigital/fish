@@ -1,4 +1,4 @@
-# Poisson Chelou
+# Fish Tournament
 
 Jeu de soirée multijoueur mobile-first : un hôte crée un aquarium, les joueurs rejoignent avec un code à quatre caractères, puis le groupe enchaîne huit défis absurdes sur le thème de l'océan.
 

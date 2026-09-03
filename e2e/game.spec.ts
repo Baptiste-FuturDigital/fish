@@ -8,6 +8,8 @@ test("a host and guest can play several rounds and finish", async ({ browser }) 
 
   await host.goto("/")
   await expect(host.locator('link[rel="icon"]')).toHaveAttribute("href", "/favicon.svg")
+  await expect(host.getByText("L'AQUARIUM EN FOLIE")).toBeVisible()
+  await expect(host.getByText("Fish Tournament")).toBeVisible()
   await expect(host.getByText("Fish Party")).toBeVisible()
   await expect(host.getByText("C'EST L'HEURE DU DUEL")).toBeVisible()
   await expect(host.getByRole("heading", { name: "Quels poissons seront dignes de Poséithon ? 🔱" })).toBeVisible()

@@ -1,4 +1,4 @@
-# Poisson Chelou MVP Implementation Plan
+# Fish Tournament MVP Implementation Plan
 
 > **For agentic workers:** Execute inline with strict red-green-refactor cycles; the user explicitly requested uninterrupted end-to-end delivery.
 

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react"
 import type { GameView, PlayerSession, SessionResponse } from "@shared/game"
 import { gameApi } from "@/api"
 
-const STORAGE_KEY = "poisson-chelou-session"
+const STORAGE_KEY = "fish-tournament-session"
 
 function readSession(): PlayerSession | null {
   try {

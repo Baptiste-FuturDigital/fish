@@ -71,7 +71,7 @@ Expected: all end-to-end and unit tests PASS.
 
 Run: `docker compose up --build -d`
 
-Expected: image builds and `poisson-chelou` starts.
+Expected: image builds and `fish-tournament` starts.
 
 - [x] **Step 2: Verify runtime health and output**
 

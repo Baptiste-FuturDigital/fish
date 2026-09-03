@@ -13,7 +13,7 @@ const staticDir =
 const app = createApp(new GameService(database), staticDir)
 
 const server = app.listen(port, "0.0.0.0", () => {
-  console.log(`🐟 Poisson Chelou écoute sur http://localhost:${port}`)
+  console.log(`🐟 Fish Tournament écoute sur http://localhost:${port}`)
 })
 
 function shutdown() {

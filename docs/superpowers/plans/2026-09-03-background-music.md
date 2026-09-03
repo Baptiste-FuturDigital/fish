@@ -72,7 +72,7 @@ Expected: one Playwright scenario, seven unit tests, and the production build al
 
 Run: `docker compose up --build -d`
 
-Expected: `poisson-chelou` is recreated from the new bundle.
+Expected: `fish-tournament` is recreated from the new bundle.
 
 - [x] **Step 2: Verify runtime and bundle**
 
@@ -80,7 +80,7 @@ Run the health endpoint and confirm that the built assets include `8g8Utx0gvv8` 
 
 ```bash
 curl -fsS http://127.0.0.1:8787/api/health
-docker exec poisson-chelou sh -c "grep -R -q '8g8Utx0gvv8' /app/dist/assets"
+docker exec fish-tournament sh -c "grep -R -q '8g8Utx0gvv8' /app/dist/assets"
 ```
 
 Expected: `{"status":"ok"}` and exit status 0.

@@ -1,4 +1,4 @@
-# Poisson Chelou MVP Design
+# Fish Tournament MVP Design
 
 ## Outcome
 
@@ -30,4 +30,3 @@ A phone-first party game where one host creates a room, guests join with a short
 - API validation rejects missing names, invalid codes, duplicate names, insufficient players, invalid tokens, and illegal transitions.
 - Client requests show a useful error and retain room identity across refreshes.
 - Automated API tests cover the complete game lifecycle; browser smoke tests cover the multi-player flow and mobile layout.
-

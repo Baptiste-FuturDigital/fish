@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-    container_name: poisson-chelou
+    container_name: fish-tournament
     ports:
       - "127.0.0.1:8787:8787"
     environment:

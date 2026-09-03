@@ -70,8 +70,8 @@ function Brand() {
           🐟
         </div>
         <div>
-          <p className="brand-kicker">JEU DE SOIRÉE</p>
-          <p className="font-heading text-xl leading-none font-black">Poisson chelou</p>
+          <p className="brand-kicker">L'AQUARIUM EN FOLIE</p>
+          <p className="font-heading text-xl leading-none font-black">Fish Tournament</p>
         </div>
       </div>
           <Badge variant="secondary">Fish Party</Badge>
