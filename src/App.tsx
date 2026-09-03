@@ -119,10 +119,10 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
       <section className="mb-7 pt-5">
         <Badge variant="outline">C'EST L'HEURE DU DUEL</Badge>
         <h1 className="mt-4 max-w-md font-heading text-5xl leading-[0.92] font-black tracking-[-0.045em] text-balance sm:text-6xl">
-          Quels poissons seront dignes de Poséidon ? 🔱
+          Quels poissons seront dignes de Poséithon ? 🔱
         </h1>
         <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
-          Merci de vous donner à fond, marins, les champions seront dignement récompensés.
+          Merci de vous donner à fond marin et de ne pas crevette durant les épreuves. Les champions seront honorés d'une faveur divine.
         </p>
       </section>
 
