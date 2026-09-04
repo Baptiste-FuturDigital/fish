@@ -16,7 +16,9 @@ describe("quiVeutGagnerDesPoissons", () => {
     expect(quiVeutGagnerDesPoissons.presenterImageUrl).toBe(
       "/jean-pierre-foucault-requin.webp",
     )
-    expect(quiVeutGagnerDesPoissons.introMusicYoutubeId).toBe("doSjY-DGmjY")
+    expect(quiVeutGagnerDesPoissons.introMusicYoutubeId).toBe("ntFaUwJMhg0")
+    expect(quiVeutGagnerDesPoissons.answeringMusicYoutubeId).toBe("236sJVHRh1M")
+    expect(quiVeutGagnerDesPoissons.timerEndSoundYoutubeId).toBe("5ijevRmcIBM")
     expect(quiVeutGagnerDesPoissons.confirmationLabel).toBe(
       "C’est mon dernier mot",
     )

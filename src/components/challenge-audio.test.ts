@@ -105,4 +105,101 @@ describe("challenge audio", () => {
     stop()
     expect(states).toEqual([true, false])
   })
+
+  it("enchaîne la musique de question et l’effet de fin exactement à zéro", async () => {
+    const audioControl = await import("./challenge-audio-control.js")
+    const beginSequence = Reflect.get(audioControl, "beginQuestionTimerAudioSequence") as
+      | undefined
+      | ((options: {
+        deadlineMs: number
+        now: number
+        endSoundDurationMs: number
+        sendTimerCommand: (command: { name: string; args: readonly unknown[] }) => void
+        sendEndCommand: (command: { name: string; args: readonly unknown[] }) => void
+        target: EventTarget
+      }) => { hasExpired: () => boolean; stop: () => void })
+
+    expect(typeof beginSequence).toBe("function")
+    if (!beginSequence) return
+
+    vi.useFakeTimers()
+    const target = new EventTarget()
+    const ambientStates: boolean[] = []
+    const timerCommands: Array<{ name: string; args: readonly unknown[] }> = []
+    const endCommands: Array<{ name: string; args: readonly unknown[] }> = []
+    target.addEventListener("fish:set-ambient-suspended", (event) => {
+      ambientStates.push((event as CustomEvent<boolean>).detail)
+    })
+
+    const sequence = beginSequence({
+      deadlineMs: 30_000,
+      now: 0,
+      endSoundDurationMs: 6_000,
+      sendTimerCommand: (command) => timerCommands.push(command),
+      sendEndCommand: (command) => endCommands.push(command),
+      target,
+    })
+
+    expect(ambientStates).toEqual([true])
+    expect(timerCommands.map(({ name }) => name)).toEqual(["seekTo", "unMute", "playVideo"])
+    expect(endCommands).toEqual([])
+
+    vi.advanceTimersByTime(29_999)
+    expect(sequence.hasExpired()).toBe(false)
+    expect(endCommands).toEqual([])
+
+    vi.advanceTimersByTime(1)
+    expect(sequence.hasExpired()).toBe(true)
+    expect(timerCommands.at(-1)?.name).toBe("pauseVideo")
+    expect(endCommands.map(({ name }) => name)).toEqual(["seekTo", "unMute", "playVideo"])
+    expect(ambientStates).toEqual([true])
+
+    vi.advanceTimersByTime(6_000)
+    expect(ambientStates).toEqual([true, false])
+    sequence.stop()
+    expect(ambientStates).toEqual([true, false])
+  })
+
+  it("coupe la tension sans effet final quand le maître révèle avant zéro", async () => {
+    const audioControl = await import("./challenge-audio-control.js")
+    const beginSequence = Reflect.get(audioControl, "beginQuestionTimerAudioSequence") as
+      | undefined
+      | ((options: {
+        deadlineMs: number
+        now: number
+        endSoundDurationMs: number
+        sendTimerCommand: (command: { name: string; args: readonly unknown[] }) => void
+        sendEndCommand: (command: { name: string; args: readonly unknown[] }) => void
+        target: EventTarget
+      }) => { stop: () => void })
+
+    expect(typeof beginSequence).toBe("function")
+    if (!beginSequence) return
+
+    vi.useFakeTimers()
+    const target = new EventTarget()
+    const ambientStates: boolean[] = []
+    const timerCommands: string[] = []
+    const endCommands: string[] = []
+    target.addEventListener("fish:set-ambient-suspended", (event) => {
+      ambientStates.push((event as CustomEvent<boolean>).detail)
+    })
+
+    const sequence = beginSequence({
+      deadlineMs: 30_000,
+      now: 0,
+      endSoundDurationMs: 6_000,
+      sendTimerCommand: ({ name }) => timerCommands.push(name),
+      sendEndCommand: ({ name }) => endCommands.push(name),
+      target,
+    })
+
+    vi.advanceTimersByTime(10_000)
+    sequence.stop()
+    vi.runAllTimers()
+
+    expect(timerCommands.at(-1)).toBe("pauseVideo")
+    expect(endCommands).toEqual([])
+    expect(ambientStates).toEqual([true, false])
+  })
 })

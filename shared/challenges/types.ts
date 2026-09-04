@@ -62,6 +62,8 @@ export interface ChallengeDefinition {
   introMusicYoutubeId: string
   introMusicStartSeconds?: number
   introMusicEndSeconds?: number
+  answeringMusicYoutubeId?: string
+  timerEndSoundYoutubeId?: string
   presenterImageUrl?: string
   confirmationLabel?: string
   scoring: ScoringRule

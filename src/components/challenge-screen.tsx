@@ -220,7 +220,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
     <>
       <AnswerValidationSound enabled={!isHost && Boolean(teamId)} />
       <ScoreRevealSound
-        enabled={isHost && tournament.phase === "reveal"}
+        enabled={isHost && tournament.phase === "reveal" && !tournament.challenge.timerEndSoundYoutubeId}
         points={highestAward}
         roundId={tournament.round.id}
       />

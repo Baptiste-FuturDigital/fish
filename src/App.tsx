@@ -24,6 +24,7 @@ import { ChallengeScreen } from "@/components/challenge-screen"
 import { FinalReveal } from "@/components/final-reveal"
 import { HostSessionControls } from "@/components/host-session-controls"
 import { LeaderboardScreen } from "@/components/leaderboard-screen"
+import { QuestionTimerAudio } from "@/components/question-timer-audio"
 import { SalmonDemoScreen } from "@/components/salmon-demo-screen"
 import { TeamBoard } from "@/components/team-board"
 import { TotemScan } from "@/components/totem-scan"
@@ -386,9 +387,20 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam }: { g
 }
 
 function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty, onBonus }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView>; onUseFiftyFifty: () => Promise<GameView>; onBonus: () => Promise<GameView> }) {
+  const questionAudio = game.tournament ? (
+    <QuestionTimerAudio
+      enabled={isHostAudioEnabled(session)}
+      phase={game.tournament.phase}
+      roundId={game.tournament.round.id}
+      endsAt={game.tournament.endsAt}
+      timerVideoId={game.tournament.challenge.answeringMusicYoutubeId}
+      endVideoId={game.tournament.challenge.timerEndSoundYoutubeId}
+    />
+  ) : null
   if (game.tournament?.phase === "leaderboard") {
     return (
       <>
+        {questionAudio}
         <GameHeader game={game} />
         <LeaderboardScreen game={game} session={session} onAdvance={onAdvance} onFinish={onFinish} onBonus={onBonus} />
       </>
@@ -396,6 +408,7 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFi
   }
   return (
     <>
+      {questionAudio}
       <GameHeader game={game} />
       <ChallengeScreen
         key={`${game.tournament?.challenge.id}-${game.tournament?.round.id}-${game.tournament?.phase}`}

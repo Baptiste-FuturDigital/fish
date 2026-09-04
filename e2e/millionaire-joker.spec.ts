@@ -4,7 +4,12 @@ interface SessionResponse {
   game: {
     code: string
     tournament: null | {
-      challenge: { id: string }
+      challenge: {
+        id: string
+        introMusicYoutubeId: string
+        answeringMusicYoutubeId?: string
+        timerEndSoundYoutubeId?: string
+      }
       phase: string
     }
   }
@@ -22,7 +27,7 @@ async function post<T>(request: APIRequestContext, path: string, data: unknown):
   return response.json() as Promise<T>
 }
 
-test("a team uses its single 50/50 joker on the responsive millionaire stage", async ({ page }) => {
+test("a team uses its single 50/50 joker on the responsive millionaire stage", async ({ browser, page }) => {
   const created = await post<SessionResponse>(page.request, "/api/games", {
     name: "Aquarium 50/50",
     hostName: "Poséithon",
@@ -51,6 +56,22 @@ test("a team uses its single 50/50 joker on the responsive millionaire stage", a
   }
   expect(game.tournament?.challenge.id).toBe("qui-veut-gagner-des-poissons")
   expect(game.tournament?.phase).toBe("challenge-intro")
+  expect(game.tournament?.challenge).toMatchObject({
+    introMusicYoutubeId: "ntFaUwJMhg0",
+    answeringMusicYoutubeId: "236sJVHRh1M",
+    timerEndSoundYoutubeId: "5ijevRmcIBM",
+  })
+
+  const hostContext = await browser.newContext()
+  await hostContext.addInitScript(({ session }) => {
+    localStorage.setItem("fish-tournament-session", JSON.stringify(session))
+  }, { session: created.session })
+  const hostPage = await hostContext.newPage()
+  await hostPage.goto("/")
+  await expect(hostPage.getByTestId("challenge-music-player")).toHaveAttribute("src", /ntFaUwJMhg0/)
+  await expect(hostPage.getByTestId("question-timer-music-player")).toHaveAttribute("src", /236sJVHRh1M/)
+  await expect(hostPage.getByTestId("question-timer-end-player")).toHaveAttribute("src", /5ijevRmcIBM/)
+  await expect(hostPage.getByTestId("question-timer-music-player")).toHaveAttribute("data-active", "false")
 
   await page.addInitScript(({ session }) => {
     localStorage.setItem("fish-tournament-session", JSON.stringify(session))
@@ -65,6 +86,11 @@ test("a team uses its single 50/50 joker on the responsive millionaire stage", a
   await post(page.request, `/api/games/${code}/advance`, {
     hostToken: created.session.hostToken,
   })
+  await expect(hostPage.getByTestId("question-timer-music-player")).toHaveAttribute("src", /236sJVHRh1M/)
+  await expect(hostPage.getByTestId("question-timer-end-player")).toHaveAttribute("src", /5ijevRmcIBM/)
+  await expect(hostPage.getByTestId("question-timer-music-player")).toHaveAttribute("data-active", "true")
+  await expect(page.getByTestId("question-timer-music-player")).toHaveCount(0)
+  await expect(page.getByTestId("question-timer-end-player")).toHaveCount(0)
   const panel = page.getByTestId("millionaire-answer-panel")
   const answerChoices = panel.locator("[data-choice-id]")
   await expect(panel.getByRole("button", { name: "Joker 50/50" })).toBeVisible()
@@ -89,4 +115,5 @@ test("a team uses its single 50/50 joker on the responsive millionaire stage", a
   await expect(page.getByText("Palier 2 · 20 poissons")).toBeVisible()
   await expect(panel.getByRole("button", { name: "Joker utilisé" })).toBeDisabled()
   await expect(answerChoices).toHaveCount(4)
+  await hostContext.close()
 })

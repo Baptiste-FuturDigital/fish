@@ -104,3 +104,64 @@ export function beginChallengeAudioSequence({
     restore()
   }
 }
+
+export type QuestionAudioCommand = {
+  name: "mute" | "pauseVideo" | "playVideo" | "seekTo" | "unMute"
+  args: readonly unknown[]
+}
+
+interface QuestionTimerAudioSequenceOptions {
+  deadlineMs: number
+  now?: number
+  endSoundDurationMs: number
+  sendTimerCommand: (command: QuestionAudioCommand) => void
+  sendEndCommand: (command: QuestionAudioCommand) => void
+  target?: EventTarget
+}
+
+export function beginQuestionTimerAudioSequence({
+  deadlineMs,
+  now = Date.now(),
+  endSoundDurationMs,
+  sendTimerCommand,
+  sendEndCommand,
+  target = window,
+}: QuestionTimerAudioSequenceOptions) {
+  let expired = false
+  let stopped = false
+  let restoreTimer: ReturnType<typeof setTimeout> | undefined
+
+  const restore = () => {
+    if (stopped) return
+    stopped = true
+    sendTimerCommand({ name: "pauseVideo", args: [] })
+    if (expired) sendEndCommand({ name: "pauseVideo", args: [] })
+    setAmbientSuspended(target, false)
+  }
+
+  const expire = () => {
+    if (stopped || expired) return
+    expired = true
+    sendTimerCommand({ name: "pauseVideo", args: [] })
+    sendEndCommand({ name: "seekTo", args: [0, true] })
+    sendEndCommand({ name: "unMute", args: [] })
+    sendEndCommand({ name: "playVideo", args: [] })
+    restoreTimer = setTimeout(restore, endSoundDurationMs)
+  }
+
+  setAmbientSuspended(target, true)
+  sendTimerCommand({ name: "seekTo", args: [0, true] })
+  sendTimerCommand({ name: "unMute", args: [] })
+  sendTimerCommand({ name: "playVideo", args: [] })
+  const expiryTimer = setTimeout(expire, Math.max(0, deadlineMs - now))
+
+  return {
+    hasExpired: () => expired,
+    expireNow: expire,
+    stop() {
+      clearTimeout(expiryTimer)
+      if (restoreTimer !== undefined) clearTimeout(restoreTimer)
+      restore()
+    },
+  }
+}

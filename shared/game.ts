@@ -62,6 +62,8 @@ export interface TournamentChallengeView {
   introMusicYoutubeId: string
   introMusicStartSeconds?: number
   introMusicEndSeconds?: number
+  answeringMusicYoutubeId?: string
+  timerEndSoundYoutubeId?: string
   presenterImageUrl?: string
   confirmationLabel?: string
 }

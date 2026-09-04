@@ -14,7 +14,9 @@ export const quiVeutGagnerDesPoissons = {
     "Les gains individuels montent à chaque bonne réponse, de 10 à 100 points ; un banc n'est crédité qu'une fois.",
   ],
   presenterImageUrl: "/jean-pierre-foucault-requin.webp",
-  introMusicYoutubeId: "doSjY-DGmjY",
+  introMusicYoutubeId: "ntFaUwJMhg0",
+  answeringMusicYoutubeId: "236sJVHRh1M",
+  timerEndSoundYoutubeId: "5ijevRmcIBM",
   confirmationLabel: "C’est mon dernier mot",
   scoring: {
     kind: "escalating",

@@ -740,6 +740,8 @@ export class GameService {
         introMusicYoutubeId: challenge.introMusicYoutubeId,
         introMusicStartSeconds: challenge.introMusicStartSeconds,
         introMusicEndSeconds: challenge.introMusicEndSeconds,
+        answeringMusicYoutubeId: challenge.answeringMusicYoutubeId,
+        timerEndSoundYoutubeId: challenge.timerEndSoundYoutubeId,
         presenterImageUrl: challenge.presenterImageUrl,
         confirmationLabel: challenge.confirmationLabel,
       },
