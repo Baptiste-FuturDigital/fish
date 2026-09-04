@@ -2,7 +2,7 @@
 
 Jeu de soirée multijoueur mobile-first : un maître du jeu crée un aquarium hors compétition, les joueurs rejoignent avec un code à quatre caractères, reçoivent un totem et enchaînent quatre épreuves océaniques.
 
-Chaque joueur répond sur son téléphone et cumule un score personnel. Pour les estimations numériques, le meilleur joueur de chaque banc porte le score collectif ; pour les QCM, le banc marque une seule fois si au moins un membre répond juste. Le classement individuel apparaît entre les épreuves et le classement final sacre le banc vainqueur. L'hôte peut déclencher une « Marée de Poséithon » par intermission pour donner 20 points au banc dernier.
+Chaque joueur répond sur son téléphone et cumule un score personnel. Pour les estimations numériques, le meilleur joueur de chaque banc porte le score collectif ; pour les QCM, le banc marque une seule fois si au moins un membre répond juste. Dans « Qui veut gagner des poissons ? », chaque banc partage un unique joker 50/50 pour toute l'épreuve. Le classement individuel apparaît entre les épreuves et le classement final sacre le banc vainqueur. L'hôte peut déclencher une « Marée de Poséithon » par intermission pour donner 20 points au banc dernier.
 
 ## Lancer en développement
 

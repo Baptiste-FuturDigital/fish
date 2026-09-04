@@ -22,6 +22,7 @@ import type {
   TeamView,
   TournamentView,
   PoseithonBonusView,
+  TeamFiftyFiftyJokerView,
 } from "../shared/game.js"
 
 interface GameRow {
@@ -91,6 +92,13 @@ interface BonusRow {
   team_name: string
   points: number
   created_at: string
+}
+
+interface FiftyFiftyJokerRow {
+  team_id: string
+  round_index: number
+  kept_choice_ids: string
+  used_at: string
 }
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -488,6 +496,80 @@ export class GameService {
     return this.getGame(game.code)
   }
 
+  useFiftyFifty(
+    codeInput: string,
+    playerId: string,
+    playerToken: string,
+  ): GameView {
+    const code = codeInput.trim().toUpperCase()
+    this.database.transaction(() => {
+      let game = this.getGameRow(code)
+      game = this.synchronizeDeadline(game)
+      if (
+        game.status !== "running" ||
+        game.phase !== "answering" ||
+        this.currentChallenge(game).id !== "qui-veut-gagner-des-poissons"
+      ) {
+        throw new GameError(
+          "Le joker 50/50 n'est disponible que pendant Qui veut gagner des poissons.",
+          409,
+        )
+      }
+
+      const player = this.assertPlayer(game.id, playerId, playerToken)
+      const totem = findTotem(player.totem_id)
+      if (!totem) throw new GameError("Révèle d'abord ton animal totem.", 409)
+      const teamId = teamIds[totem.category]
+      const challenge = this.currentChallenge(game)
+      const round = challenge.rounds[game.challenge_round]
+      if (round.kind !== "choice") {
+        throw new GameError("Cette question n'accepte pas le joker 50/50.", 409)
+      }
+
+      const existing = this.database.prepare(
+        `SELECT 1 FROM team_fifty_fifty_jokers
+         WHERE game_id = ? AND challenge_id = ? AND team_id = ?`,
+      ).get(game.id, challenge.id, teamId)
+      if (existing) {
+        throw new GameError("Ton banc a déjà utilisé son joker 50/50.", 409)
+      }
+
+      const lockedAnswer = this.database.prepare(
+        `SELECT locked FROM player_answers
+         WHERE game_id = ? AND challenge_id = ? AND round_index = ? AND player_id = ?`,
+      ).get(game.id, challenge.id, game.challenge_round, player.id) as { locked: number } | undefined
+      if (lockedAnswer?.locked) {
+        throw new GameError("Ton dernier mot est déjà verrouillé.", 409)
+      }
+
+      const wrongChoices = round.choices.filter((choice) => choice.id !== round.correctAnswer)
+      const digest = createHash("sha256")
+        .update(`${game.id}:${teamId}:${round.id}`)
+        .digest()
+      const keptWrongChoice = wrongChoices[digest[0] % wrongChoices.length]
+      const keptChoiceIds = round.choices
+        .filter((choice) => choice.id === round.correctAnswer || choice.id === keptWrongChoice.id)
+        .map((choice) => choice.id)
+      const inserted = this.database.prepare(
+        `INSERT OR IGNORE INTO team_fifty_fifty_jokers
+          (game_id, challenge_id, team_id, round_index, kept_choice_ids, used_by_player_id, used_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        game.id,
+        challenge.id,
+        teamId,
+        game.challenge_round,
+        JSON.stringify(keptChoiceIds),
+        player.id,
+        new Date().toISOString(),
+      )
+      if (inserted.changes !== 1) {
+        throw new GameError("Ton banc a déjà utilisé son joker 50/50.", 409)
+      }
+    })()
+    return this.getGame(code)
+  }
+
   finishGame(code: string, hostToken: string): GameView {
     const game = this.assertHost(code, hostToken)
     if (game.status === "finished") return this.getGame(game.code)
@@ -628,6 +710,18 @@ export class GameService {
           awardedAt: bonusRow.created_at,
         }
       : null
+    const fiftyFiftyRows = this.database.prepare(
+      `SELECT team_id, round_index, kept_choice_ids, used_at
+       FROM team_fifty_fifty_jokers
+       WHERE game_id = ? AND challenge_id = ?
+       ORDER BY used_at, team_id`,
+    ).all(game.id, challenge.id) as FiftyFiftyJokerRow[]
+    const fiftyFiftyJokers: TeamFiftyFiftyJokerView[] = fiftyFiftyRows.map((entry) => ({
+      teamId: entry.team_id,
+      roundIndex: entry.round_index,
+      keptChoiceIds: JSON.parse(entry.kept_choice_ids) as string[],
+      usedAt: entry.used_at,
+    }))
 
     return {
       challengeIndex: game.challenge_index,
@@ -655,6 +749,7 @@ export class GameService {
       teamResults,
       bonus,
       bonusAvailable: game.phase === "leaderboard" && bonus === null,
+      fiftyFiftyJokers,
     }
   }
 

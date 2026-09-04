@@ -9,10 +9,11 @@ export const quiVeutGagnerDesPoissons = {
     "Cinq questions, quatre réponses et un présentateur beaucoup trop sûr de ses branchies.",
   rules: [
     "Chaque poisson choisit A, B, C ou D avant la fin des 30 secondes.",
+    "Chaque banc possède un unique joker 50/50 pour éliminer deux mauvaises réponses.",
     "Validez avec « C’est mon dernier mot » : les poissons ne font pas marche arrière.",
     "Les gains individuels montent à chaque bonne réponse, de 10 à 100 points ; un banc n'est crédité qu'une fois.",
   ],
-  presenterImageUrl: "/goerge-clownez-fun.png",
+  presenterImageUrl: "/jean-pierre-foucault-requin.webp",
   introMusicYoutubeId: "doSjY-DGmjY",
   confirmationLabel: "C’est mon dernier mot",
   scoring: {

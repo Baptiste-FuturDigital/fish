@@ -72,6 +72,15 @@ export function createApp(service: GameService, staticDir?: string) {
     ))
   })
 
+  app.post("/api/games/:code/jokers/fifty-fifty", (request, response) => {
+    const body = playerSchema.parse(request.body)
+    response.json(service.useFiftyFifty(
+      request.params.code,
+      body.playerId,
+      body.playerToken,
+    ))
+  })
+
   app.post("/api/games/:code/start", (request, response) => {
     const body = hostSchema.parse(request.body)
     response.json(service.startGame(request.params.code, body.hostToken))

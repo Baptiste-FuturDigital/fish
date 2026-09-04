@@ -114,6 +114,18 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       PRIMARY KEY(game_id, challenge_index),
       FOREIGN KEY(game_id, target_team_id) REFERENCES game_teams(game_id, team_id)
     );
+
+    CREATE TABLE IF NOT EXISTS team_fifty_fifty_jokers (
+      game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+      challenge_id TEXT NOT NULL,
+      team_id TEXT NOT NULL,
+      round_index INTEGER NOT NULL,
+      kept_choice_ids TEXT NOT NULL,
+      used_by_player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      used_at TEXT NOT NULL,
+      PRIMARY KEY(game_id, challenge_id, team_id),
+      FOREIGN KEY(game_id, team_id) REFERENCES game_teams(game_id, team_id)
+    );
   `)
 
   const gameColumns = database.prepare("PRAGMA table_info(games)").all() as Array<{ name: string }>

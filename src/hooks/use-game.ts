@@ -117,6 +117,17 @@ export function useGame() {
     return nextGame
   }, [session])
 
+  const useFiftyFifty = useCallback(async () => {
+    if (!session) throw new Error("Session introuvable.")
+    const nextGame = await gameApi.useFiftyFifty(
+      session.gameCode,
+      session.playerId,
+      session.playerToken,
+    )
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
   const applyBonus = useCallback(async () => {
     if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
     const nextGame = await gameApi.applyBonus(session.gameCode, session.hostToken)
@@ -124,5 +135,5 @@ export function useGame() {
     return nextGame
   }, [session])
 
-  return { session, game, loading, error, enter, leave, refresh, hostAction, claimTotem, renameTeam, submitAnswer, applyBonus }
+  return { session, game, loading, error, enter, leave, refresh, hostAction, claimTotem, renameTeam, submitAnswer, useFiftyFifty, applyBonus }
 }

@@ -385,7 +385,7 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam }: { g
   )
 }
 
-function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onBonus }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView>; onBonus: () => Promise<GameView> }) {
+function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty, onBonus }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView>; onUseFiftyFifty: () => Promise<GameView>; onBonus: () => Promise<GameView> }) {
   if (game.tournament?.phase === "leaderboard") {
     return (
       <>
@@ -404,6 +404,7 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onBonus }: {
         onAdvance={onAdvance}
         onFinish={onFinish}
         onSubmit={onSubmit}
+        onUseFiftyFifty={onUseFiftyFifty}
       />
     </>
   )
@@ -426,7 +427,7 @@ function LoadingScreen() {
 }
 
 export default function App() {
-  const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, submitAnswer, applyBonus } = useGame()
+  const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, submitAnswer, useFiftyFifty, applyBonus } = useGame()
   const isSalmonDemo = new URLSearchParams(window.location.search).get("salmon-demo") === "1"
   const audioEnabled = isSalmonDemo || (session ? isHostAudioEnabled(session) : false)
   const screen = useMemo(() => {
@@ -434,9 +435,9 @@ export default function App() {
     if (!session) return <HomeScreen onEnter={enter} />
     if (loading || !game) return <LoadingScreen />
     if (game.status === "lobby") return <LobbyScreen game={game} session={session} onStart={() => hostAction("start").then(() => undefined)} onClaimTotem={claimTotem} onRenameTeam={renameTeam} />
-    if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} onBonus={applyBonus} />
+    if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} onUseFiftyFifty={useFiftyFifty} onBonus={applyBonus} />
     return <EndScreen game={game} session={session} onLeave={leave} />
-  }, [applyBonus, claimTotem, enter, game, hostAction, isSalmonDemo, leave, loading, renameTeam, session, submitAnswer])
+  }, [applyBonus, claimTotem, enter, game, hostAction, isSalmonDemo, leave, loading, renameTeam, session, submitAnswer, useFiftyFifty])
 
   return (
     <OceanShell>

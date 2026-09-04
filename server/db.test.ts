@@ -92,6 +92,12 @@ describe("database migrations", () => {
         expect.objectContaining({ name: "challenge_index" }),
         expect.objectContaining({ name: "target_team_id" }),
       ]))
+    expect(migrated.prepare("PRAGMA table_info(team_fifty_fifty_jokers)").all())
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ name: "team_id" }),
+        expect.objectContaining({ name: "kept_choice_ids" }),
+        expect.objectContaining({ name: "used_by_player_id" }),
+      ]))
     const insertBonus = migrated.prepare(
       `INSERT INTO intermission_bonuses
         (game_id, challenge_index, challenge_id, target_team_id, points, created_at)
@@ -99,6 +105,13 @@ describe("database migrations", () => {
     )
     insertBonus.run()
     expect(() => insertBonus.run()).toThrow(/UNIQUE constraint failed/)
+    const insertJoker = migrated.prepare(
+      `INSERT INTO team_fifty_fifty_jokers
+        (game_id, challenge_id, team_id, round_index, kept_choice_ids, used_by_player_id, used_at)
+       VALUES ('game-1', 'qui-veut-gagner-des-poissons', 'abyssaux', 0, '["a","b"]', 'player-1', '2026-09-04T00:03:00.000Z')`,
+    )
+    insertJoker.run()
+    expect(() => insertJoker.run()).toThrow(/UNIQUE constraint failed/)
     migrated.close()
   })
 })

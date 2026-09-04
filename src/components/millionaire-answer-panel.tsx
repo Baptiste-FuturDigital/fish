@@ -1,5 +1,5 @@
 import { useReducer } from "react"
-import { CheckCircle2, ChevronLeft, LockKeyhole } from "lucide-react"
+import { CheckCircle2, ChevronLeft, LoaderCircle, LockKeyhole, Scissors } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
@@ -21,6 +21,12 @@ interface MillionaireAnswerPanelProps {
   value: string
   confirmationLabel: string
   busy: boolean
+  joker: {
+    available: boolean
+    keptChoiceIds: readonly string[] | null
+  }
+  jokerBusy: boolean
+  onUseFiftyFifty: () => void
   onValueChange: (value: string) => void
 }
 
@@ -29,6 +35,9 @@ export function MillionaireAnswerPanel({
   value,
   confirmationLabel,
   busy,
+  joker,
+  jokerBusy,
+  onUseFiftyFifty,
   onValueChange,
 }: MillionaireAnswerPanelProps) {
   const [state, dispatch] = useReducer(
@@ -40,6 +49,9 @@ export function MillionaireAnswerPanel({
     (choice) => choice.id === state.selectedAnswer,
   )
   const selectedChoice = choices[selectedIndex]
+  const displayedChoices = joker.keptChoiceIds
+    ? choices.filter((choice) => joker.keptChoiceIds?.includes(choice.id))
+    : choices
 
   if (state.phase === "confirming" && selectedChoice) {
     return (
@@ -77,8 +89,23 @@ export function MillionaireAnswerPanel({
 
   return (
     <div className="millionaire-answer-panel" data-testid="millionaire-answer-panel">
+      <div className="millionaire-joker-zone">
+        <Button
+          className="millionaire-joker"
+          type="button"
+          variant="outline"
+          disabled={!joker.available || Boolean(state.selectedAnswer) || busy || jokerBusy}
+          onClick={onUseFiftyFifty}
+        >
+          {jokerBusy
+            ? <LoaderCircle className="animate-spin" data-icon="inline-start" />
+            : <Scissors data-icon="inline-start" />}
+          {joker.available ? "Joker 50/50" : "Joker utilisé"}
+        </Button>
+        <p>{joker.available ? "Une seule fois pour tout ton banc" : "Deux réponses ont disparu"}</p>
+      </div>
       <Field>
-        <FieldLabel>Ta réponse</FieldLabel>
+        <FieldLabel>Choisis ta réponse</FieldLabel>
         <ToggleGroup
           className="millionaire-options"
           variant="outline"
@@ -89,16 +116,20 @@ export function MillionaireAnswerPanel({
             onValueChange(answer)
           }}
         >
-          {choices.map((choice, index) => (
+          {displayedChoices.map((choice) => {
+            const originalIndex = choices.findIndex((candidate) => candidate.id === choice.id)
+            return (
             <ToggleGroupItem
               className="millionaire-option"
               value={choice.id}
               key={choice.id}
+              data-choice-id={choice.id}
             >
-              <strong>{String.fromCharCode(65 + index)}</strong>
+              <strong>{String.fromCharCode(65 + originalIndex)}</strong>
               <span>{choice.label}</span>
             </ToggleGroupItem>
-          ))}
+            )
+          })}
         </ToggleGroup>
       </Field>
       <Button

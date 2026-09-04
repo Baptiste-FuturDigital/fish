@@ -30,6 +30,7 @@ interface ChallengeScreenProps {
   onAdvance: () => Promise<GameView>
   onFinish: () => Promise<GameView>
   onSubmit: (answer: string, locked: boolean) => Promise<GameView>
+  onUseFiftyFifty: () => Promise<GameView>
 }
 
 function Countdown({ endsAt, durationSeconds }: { endsAt: string | null; durationSeconds: number }) {
@@ -118,10 +119,10 @@ function WeightEstimateField({
   )
 }
 
-export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }: ChallengeScreenProps) {
+export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty }: ChallengeScreenProps) {
   const tournament = game.tournament
   const [answer, setAnswer] = useState("")
-  const [busy, setBusy] = useState<"advance" | "answer" | "finish" | null>(null)
+  const [busy, setBusy] = useState<"advance" | "answer" | "joker" | "finish" | null>(null)
   if (!tournament) return null
   const isHost = isHostAudioEnabled(session)
   const currentPlayer = game.players.find((player) => player.id === session.playerId)
@@ -129,6 +130,10 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
   const playerAnswer = tournament.answers.find((entry) => entry.playerId === session.playerId)
   const isLocked = Boolean(playerAnswer?.locked)
   const highestAward = Math.max(0, ...tournament.results.map((result) => result.points))
+  const teamJoker = tournament.fiftyFiftyJokers.find((entry) => entry.teamId === teamId)
+  const currentKeptChoiceIds = teamJoker?.roundIndex === tournament.roundIndex
+    ? teamJoker.keptChoiceIds
+    : null
 
   async function act(action: "advance" | "finish") {
     setBusy(action)
@@ -157,13 +162,25 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
     }
   }
 
+  async function useFiftyFifty() {
+    setBusy("joker")
+    try {
+      await onUseFiftyFifty()
+      toast.success("Deux mauvaises réponses coulent à pic.")
+    } catch (caught) {
+      toast.error(caught instanceof Error ? caught.message : "Le joker s'est noyé.")
+    } finally {
+      setBusy(null)
+    }
+  }
+
   if (tournament.phase === "challenge-intro") {
     return (
       <>
         <TournamentHeader tournament={tournament} />
-        <Card className="challenge-intro-card my-auto text-center">
+        <Card className={cn("challenge-intro-card my-auto text-center", tournament.challenge.id === "qui-veut-gagner-des-poissons" && "millionaire-intro-card")}>
           {tournament.challenge.presenterImageUrl ? (
-            <img className="presenter-image" src={tournament.challenge.presenterImageUrl} alt="Georges Clownez, présentateur" />
+            <img className="presenter-image" src={tournament.challenge.presenterImageUrl} alt="Jean-Pierre Foucault requin, présentateur" />
           ) : <p className="challenge-emoji" aria-hidden="true">{tournament.challenge.emoji}</p>}
           <CardHeader>
             <CardDescription>PROCHAINE ÉPREUVE</CardDescription>
@@ -215,7 +232,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
           {tournament.challenge.id === "whos-dat-salmon" ? (
             <SalmonAnswerProgress players={game.players} answers={tournament.answers} />
           ) : null}
-          <Card className="my-4">
+          <Card className={cn("my-4", tournament.challenge.id === "qui-veut-gagner-des-poissons" && "millionaire-stage-card")}>
             {tournament.round.imageUrl ? (
               tournament.round.id === "salmon-1-hippocampe" ? (
                 <WhosThatSalmonStage
@@ -234,7 +251,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
                 </div>
               )
             ) : null}
-            <CardHeader className="text-center">
+            <CardHeader className={cn("text-center", tournament.challenge.id === "qui-veut-gagner-des-poissons" && "millionaire-question-shell")}>
               <CardDescription>{tournament.round.kicker}</CardDescription>
               <CardTitle className="font-heading text-3xl font-black">{tournament.round.question}</CardTitle>
             </CardHeader>
@@ -266,6 +283,12 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit }
                         value={answer}
                         confirmationLabel={tournament.challenge.confirmationLabel ?? "C’est mon dernier mot"}
                         busy={busy === "answer"}
+                        joker={{
+                          available: !teamJoker,
+                          keptChoiceIds: currentKeptChoiceIds,
+                        }}
+                        jokerBusy={busy === "joker"}
+                        onUseFiftyFifty={() => void useFiftyFifty()}
                         onValueChange={setAnswer}
                       />
                     ) : (

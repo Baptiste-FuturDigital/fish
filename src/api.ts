@@ -56,6 +56,12 @@ export const gameApi = {
       body: JSON.stringify({ playerId, playerToken, answer, locked }),
     })
   },
+  useFiftyFifty(code: string, playerId: string, playerToken: string) {
+    return request<GameView>(`/api/games/${code}/jokers/fifty-fifty`, {
+      method: "POST",
+      body: JSON.stringify({ playerId, playerToken }),
+    })
+  },
   hostAction(code: string, action: "start" | "advance" | "finish", hostToken: string) {
     return request<GameView>(`/api/games/${code}/${action}`, {
       method: "POST",

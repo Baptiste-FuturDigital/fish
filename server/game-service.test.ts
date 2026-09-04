@@ -553,4 +553,63 @@ describe("GameService", () => {
       new GameError("Seul le capitaine peut toucher à ça.", 403),
     )
   })
+
+  it("consumes one deterministic 50/50 joker per team for the whole final challenge", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const competitors = joinAndClaimCompetitors(
+      created.game.code,
+      ["Léa", "Sam", "Jo", "Mia", "Noé", "Lou", "Max", "Zoé"],
+    )
+    const lobby = service.getGame(created.game.code)
+    const sharedTeam = lobby.teams.find((team) => team.memberIds.length === 2)!
+    const otherTeam = lobby.teams.find((team) => team.id !== sharedTeam.id && team.memberIds.length > 0)!
+    const first = competitors.find((entry) => entry.session.playerId === sharedTeam.memberIds[0])!
+    const teammate = competitors.find((entry) => entry.session.playerId === sharedTeam.memberIds[1])!
+    const opponent = competitors.find((entry) => entry.session.playerId === otherTeam.memberIds[0])!
+
+    service.startGame(created.game.code, created.session.hostToken!)
+    database.prepare(
+      `UPDATE games SET challenge_index = 3, challenge_round = 0, current_round = 0,
+       phase = 'answering', phase_ends_at = ? WHERE code = ?`,
+    ).run(new Date(Date.now() + 30_000).toISOString(), created.game.code)
+
+    const used = service.useFiftyFifty(
+      created.game.code,
+      first.session.playerId,
+      first.session.playerToken,
+    )
+    const joker = used.tournament?.fiftyFiftyJokers.find((entry) => entry.teamId === sharedTeam.id)
+    expect(joker).toEqual(expect.objectContaining({
+      teamId: sharedTeam.id,
+      roundIndex: 0,
+      keptChoiceIds: expect.arrayContaining(["requin-baleine"]),
+    }))
+    expect(joker?.keptChoiceIds).toHaveLength(2)
+
+    expect(() => service.useFiftyFifty(
+      created.game.code,
+      teammate.session.playerId,
+      teammate.session.playerToken,
+    )).toThrowError(new GameError("Ton banc a déjà utilisé son joker 50/50.", 409))
+
+    const opponentUse = service.useFiftyFifty(
+      created.game.code,
+      opponent.session.playerId,
+      opponent.session.playerToken,
+    )
+    expect(opponentUse.tournament?.fiftyFiftyJokers).toHaveLength(2)
+  })
+
+  it("rejects 50/50 outside the final challenge", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const [competitor] = joinAndClaimCompetitors(created.game.code)
+    service.startGame(created.game.code, created.session.hostToken!)
+    service.advanceTournament(created.game.code, created.session.hostToken!)
+
+    expect(() => service.useFiftyFifty(
+      created.game.code,
+      competitor.session.playerId,
+      competitor.session.playerToken,
+    )).toThrowError(new GameError("Le joker 50/50 n'est disponible que pendant Qui veut gagner des poissons.", 409))
+  })
 })

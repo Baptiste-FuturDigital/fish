@@ -14,12 +14,13 @@ describe("quiVeutGagnerDesPoissons", () => {
       "Qui veut gagner des poissons ?",
     )
     expect(quiVeutGagnerDesPoissons.presenterImageUrl).toBe(
-      "/goerge-clownez-fun.png",
+      "/jean-pierre-foucault-requin.webp",
     )
     expect(quiVeutGagnerDesPoissons.introMusicYoutubeId).toBe("doSjY-DGmjY")
     expect(quiVeutGagnerDesPoissons.confirmationLabel).toBe(
       "C’est mon dernier mot",
     )
+    expect(quiVeutGagnerDesPoissons.rules.join(" ")).toContain("50/50")
   })
 
   it("contient exactement cinq questions de trente secondes", () => {

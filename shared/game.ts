@@ -45,6 +45,13 @@ export interface PoseithonBonusView {
   awardedAt: string
 }
 
+export interface TeamFiftyFiftyJokerView {
+  teamId: string
+  roundIndex: number
+  keptChoiceIds: string[]
+  usedAt: string
+}
+
 export interface TournamentChallengeView {
   id: ChallengeId
   title: string
@@ -73,6 +80,7 @@ export interface TournamentView {
   teamResults: RoundScoreResult[]
   bonus: PoseithonBonusView | null
   bonusAvailable: boolean
+  fiftyFiftyJokers: TeamFiftyFiftyJokerView[]
 }
 
 export interface PlayerView {

@@ -210,4 +210,39 @@ describe("game API", () => {
       .expect(409)
     expect(duplicate.body.error).toBe("La Marée de Poséithon a déjà frappé pendant cette escale.")
   })
+
+  it("exposes the authenticated team 50/50 endpoint", async () => {
+    const created = await request(app).post("/api/games")
+      .send({ name: "Le grand aquarium", hostName: "Baptiste" }).expect(201)
+    const first = await request(app).post(`/api/games/${created.body.game.code}/join`)
+      .send({ name: "Léa" }).expect(201)
+    const second = await request(app).post(`/api/games/${created.body.game.code}/join`)
+      .send({ name: "Sam" }).expect(201)
+    for (const joined of [first, second]) {
+      await request(app).post(`/api/games/${created.body.game.code}/totem`)
+        .send(joined.body.session).expect(200)
+    }
+    await request(app).post(`/api/games/${created.body.game.code}/start`)
+      .send({ hostToken: created.body.session.hostToken }).expect(200)
+    database.prepare(
+      `UPDATE games SET challenge_index = 3, challenge_round = 0, current_round = 0,
+       phase = 'answering', phase_ends_at = ? WHERE code = ?`,
+    ).run(new Date(Date.now() + 30_000).toISOString(), created.body.game.code)
+
+    const used = await request(app)
+      .post(`/api/games/${created.body.game.code}/jokers/fifty-fifty`)
+      .send({
+        playerId: first.body.session.playerId,
+        playerToken: first.body.session.playerToken,
+      })
+      .expect(200)
+
+    expect(used.body.tournament.fiftyFiftyJokers).toEqual([
+      expect.objectContaining({ keptChoiceIds: expect.any(Array) }),
+    ])
+    await request(app)
+      .post(`/api/games/${created.body.game.code}/jokers/fifty-fifty`)
+      .send({ playerId: first.body.session.playerId, playerToken: "intrus" })
+      .expect(403)
+  })
 })
