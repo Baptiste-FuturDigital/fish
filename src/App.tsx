@@ -97,6 +97,7 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
   const [mode, setMode] = useState<HomeMode>("choice")
   const [gameName, setGameName] = useState("L'aquarium de ce soir")
   const [hostName, setHostName] = useState("")
+  const [prankPlayerName, setPrankPlayerName] = useState("")
   const [code, setCode] = useState(initialCode.toUpperCase())
   const [playerName, setPlayerName] = useState("")
   const [busy, setBusy] = useState(false)
@@ -131,7 +132,7 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
     setBusy(true)
     setError(null)
     try {
-      onEnter(await gameApi.create(gameName, hostName))
+      onEnter(await gameApi.create(gameName, hostName, prankPlayerName))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Création impossible.")
     } finally {
@@ -208,6 +209,18 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
                   <FieldLabel htmlFor="host-name">Ton pseudo d'hôte</FieldLabel>
                   <Input id="host-name" value={hostName} maxLength={24} onChange={(event) => setHostName(event.target.value)} autoComplete="nickname" autoFocus />
                   <FieldDescription>Le banc saura qui tient la barre.</FieldDescription>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="prank-player-name">Pseudo à piéger</FieldLabel>
+                  <Input
+                    id="prank-player-name"
+                    value={prankPlayerName}
+                    maxLength={24}
+                    onChange={(event) => setPrankPlayerName(event.target.value)}
+                    autoComplete="off"
+                    placeholder="Optionnel · pseudo exact"
+                  />
+                  <FieldDescription>Ce poisson recevra secrètement un totem spécial.</FieldDescription>
                 </Field>
                 {error && <FieldError>{error}</FieldError>}
               </FieldGroup>

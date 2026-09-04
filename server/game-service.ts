@@ -4,7 +4,7 @@ import type { GameDatabase } from "./db.js"
 import { prompts, type PromptDefinition } from "./content.js"
 import { aggregateTeamResults, projectRound, scorePlayerRound } from "./tournament-engine.js"
 import { selectBalancedTotem } from "./totem-assignment.js"
-import { findTotem, teamDefinitions, teamIds, totems, type TotemCategory } from "./totems.js"
+import { findTotem, prankTotem, teamDefinitions, teamIds, totems, type TotemCategory } from "./totems.js"
 import { challenges, findChallenge } from "../shared/challenges/catalog.js"
 import type {
   ChallengeId,
@@ -38,6 +38,7 @@ interface GameRow {
   phase: "lobby" | "challenge-intro" | "answering" | "reveal" | "leaderboard" | "finished"
   phase_ends_at: string | null
   is_demo: number
+  prank_player_name: string | null
   host_token_hash: string
   created_at: string
 }
@@ -132,6 +133,17 @@ function cleanText(value: string, label: string, maxLength: number): string {
   return cleaned
 }
 
+function cleanOptionalText(value: string | undefined, label: string, maxLength: number): string | null {
+  const cleaned = value?.trim().replace(/\s+/g, " ") ?? ""
+  if (!cleaned) return null
+  if (cleaned.length > maxLength) throw new GameError(`${label} est trop long.`, 400)
+  return cleaned
+}
+
+function normalizedPlayerName(value: string): string {
+  return value.normalize("NFKC").toLocaleLowerCase("fr-FR")
+}
+
 function shuffledPromptIds(): string[] {
   const ids = prompts.map((prompt) => prompt.id)
   for (let index = ids.length - 1; index > 0; index -= 1) {
@@ -144,9 +156,10 @@ function shuffledPromptIds(): string[] {
 export class GameService {
   constructor(private readonly database: GameDatabase) {}
 
-  createGame(gameName: string, hostName: string): SessionResponse {
+  createGame(gameName: string, hostName: string, prankPlayerName?: string): SessionResponse {
     const name = cleanText(gameName, "Le nom de la partie", 40)
     const playerName = cleanText(hostName, "Le pseudo", 24)
+    const prankTarget = cleanOptionalText(prankPlayerName, "Le pseudo à piéger", 24)
     const id = randomUUID()
     const code = this.makeUniqueCode()
     const hostToken = makeToken()
@@ -158,8 +171,8 @@ export class GameService {
       this.database
         .prepare(
           `INSERT INTO games
-            (id, code, name, status, current_round, round_order, challenge_order, host_token_hash, created_at)
-           VALUES (?, ?, ?, 'lobby', -1, ?, ?, ?, ?)`,
+            (id, code, name, status, current_round, round_order, challenge_order, prank_player_name, host_token_hash, created_at)
+           VALUES (?, ?, ?, 'lobby', -1, ?, ?, ?, ?, ?)`,
         )
         .run(
           id,
@@ -167,6 +180,7 @@ export class GameService {
           name,
           JSON.stringify(shuffledPromptIds()),
           JSON.stringify(challenges.map((challenge) => challenge.id)),
+          prankTarget,
           hashToken(hostToken),
           createdAt,
         )
@@ -268,9 +282,14 @@ export class GameService {
     const playerViews: PlayerView[] = players.map((player) => ({
       ...(() => {
         const definition = findTotem(player.totem_id)
+        const isPrankTarget = Boolean(
+          definition &&
+          game.prank_player_name &&
+          normalizedPlayerName(player.name) === normalizedPlayerName(game.prank_player_name),
+        )
         return {
           teamId: definition ? teamIds[definition.category] : null,
-          totem: definition,
+          totem: definition && isPrankTarget ? prankTotem(definition) : definition,
         }
       })(),
       id: player.id,

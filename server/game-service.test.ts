@@ -116,6 +116,27 @@ describe("GameService", () => {
     expect(firstTotem).toEqual(expect.objectContaining({ name: expect.any(String), fact: expect.any(String), teamName: expect.any(String) }))
   })
 
+  it("reveals the private prank totem only for the configured player name", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste", "Axel")
+    const target = service.joinGame(created.game.code, "  AXEL ")
+    const other = service.joinGame(created.game.code, "Léa")
+
+    service.claimTotem(created.game.code, target.session.playerId, target.session.playerToken)
+    service.claimTotem(created.game.code, other.session.playerId, other.session.playerToken)
+
+    const game = service.getGame(created.game.code)
+    const targetPlayer = game.players.find((player) => player.id === target.session.playerId)
+    const otherPlayer = game.players.find((player) => player.id === other.session.playerId)
+
+    expect(targetPlayer?.totem).toEqual(expect.objectContaining({
+      name: "l’axolotl glamour",
+      imageUrl: "/totems/prank-axolotl-glamour.webp",
+    }))
+    expect(otherPlayer?.totem?.imageUrl).toMatch(/^\/totems\/totem-\d{2}\.jpg$/)
+    expect(targetPlayer?.teamId).not.toBeNull()
+    expect(JSON.stringify(game)).not.toContain("prankPlayerName")
+  })
+
   it("balances the first four players across four teams", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     joinAndClaimCompetitors(created.game.code, ["Léa", "Sam", "Jo", "Mia"])

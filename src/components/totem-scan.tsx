@@ -187,7 +187,7 @@ export function TotemScan({ totem, onClaim }: TotemScanProps) {
               <Sparkles />
             </div>
             <p className="text-center text-sm text-muted-foreground">
-              Visage analysé localement. Rien n'est enregistré ni envoyé.
+              La caméra sert uniquement à l'animation. Rien n'est enregistré ni envoyé.
             </p>
             <Button size="lg" className="w-full" onClick={startScan}>
               <ScanFace data-icon="inline-start" /> Scanner mon visage

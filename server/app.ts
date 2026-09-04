@@ -8,6 +8,7 @@ import { GameError, type GameService } from "./game-service.js"
 const createSchema = z.object({
   name: z.string(),
   hostName: z.string(),
+  prankPlayerName: z.string().optional(),
 })
 const joinSchema = z.object({ name: z.string() })
 const hostSchema = z.object({ hostToken: z.string() })
@@ -29,7 +30,7 @@ export function createApp(service: GameService, staticDir?: string) {
 
   app.post("/api/games", (request, response) => {
     const body = createSchema.parse(request.body)
-    response.status(201).json(service.createGame(body.name, body.hostName))
+    response.status(201).json(service.createGame(body.name, body.hostName, body.prankPlayerName))
   })
 
   app.post("/api/demo", (_request, response) => {

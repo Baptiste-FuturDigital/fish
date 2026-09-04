@@ -11,6 +11,7 @@ test("a player totem scans for ten seconds then materializes for ten seconds", a
   await host.getByRole("button", { name: "Créer une partie" }).click()
   await host.getByLabel("Nom de la partie").fill("Aquarium matérialisation")
   await host.getByLabel("Ton pseudo d'hôte").fill("Baptiste")
+  await host.getByLabel("Pseudo à piéger").fill("Ariel")
   await host.getByRole("button", { name: "Créer l'aquarium" }).click()
   const code = await host.getByTestId("game-code").textContent()
 
@@ -30,7 +31,7 @@ test("a player totem scans for ten seconds then materializes for ten seconds", a
   await expect(player.getByText("Votre animal totem est…")).toHaveCount(0)
 
   const image = player.getByTestId("totem-materializing-image")
-  await expect(image).toHaveAttribute("src", /\/totems\/totem-\d{2}\.jpg/)
+  await expect(image).toHaveAttribute("src", "/totems/prank-axolotl-glamour.webp")
   await expect(image).toHaveAttribute("alt", "")
   expect(await image.evaluate((element) => getComputedStyle(element).filter)).toContain("blur(")
   expect(await image.evaluate((element) => getComputedStyle(element).animationDuration)).toBe("10s")
@@ -40,6 +41,7 @@ test("a player totem scans for ten seconds then materializes for ten seconds", a
   await expect(materializer.locator(".totem-materializing-ring")).toHaveCount(3)
 
   await expect(player.getByText("Votre animal totem est…")).toBeVisible({ timeout: 12_000 })
+  await expect(player.getByText("l’axolotl glamour", { exact: true })).toBeVisible()
   expect(Date.now() - scanStartedAt).toBeGreaterThanOrEqual(19_000)
   await expect(player.getByTestId("totem-reveal-image")).toBeVisible()
   await expect(player.getByTestId("totem-materializer")).toHaveCount(0)

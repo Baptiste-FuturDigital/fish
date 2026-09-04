@@ -94,6 +94,26 @@ describe("game API", () => {
     expect(forbidden.body.error).toBe("Seul le capitaine peut toucher à ça.")
   })
 
+  it("keeps the prank target private while returning its special totem", async () => {
+    const created = await request(app)
+      .post("/api/games")
+      .send({ name: "Le grand aquarium", hostName: "Baptiste", prankPlayerName: "Axel" })
+      .expect(201)
+    expect(JSON.stringify(created.body.game)).not.toContain("Axel")
+
+    const joined = await request(app)
+      .post(`/api/games/${created.body.game.code}/join`)
+      .send({ name: "axel" })
+      .expect(201)
+    const claimed = await request(app)
+      .post(`/api/games/${created.body.game.code}/totem`)
+      .send(joined.body.session)
+      .expect(200)
+
+    expect(claimed.body.players[0].totem.imageUrl)
+      .toBe("/totems/prank-axolotl-glamour.webp")
+  })
+
   it("supports team naming, answers and host-paced tournament phases", async () => {
     const created = await request(app)
       .post("/api/games")

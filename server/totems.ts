@@ -64,3 +64,12 @@ export const totems: TotemDefinition[] = [
 export function findTotem(id: number | null): TotemDefinition | null {
   return id === null ? null : (totems.find((candidate) => candidate.id === id) ?? null)
 }
+
+export function prankTotem(base: TotemDefinition): TotemDefinition {
+  return {
+    ...base,
+    name: "l’axolotl glamour",
+    fact: "Mutation abyssale rarissime : barbe, branchies et rouge à lèvres résistent ensemble à la pression.",
+    imageUrl: "/totems/prank-axolotl-glamour.webp",
+  }
+}

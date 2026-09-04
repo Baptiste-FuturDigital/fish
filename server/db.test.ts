@@ -82,6 +82,10 @@ describe("database migrations", () => {
       `SELECT player_id, team_id, answer, locked FROM player_answers
        WHERE game_id = 'game-1'`,
     ).get()).toEqual({ player_id: "player-1", team_id: "abyssaux", answer: "42", locked: 1 })
+    expect(migrated.prepare("PRAGMA table_info(games)").all())
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ name: "prank_player_name" }),
+      ]))
     expect(migrated.prepare("PRAGMA table_info(player_round_results)").all())
       .toEqual(expect.arrayContaining([
         expect.objectContaining({ name: "player_id" }),

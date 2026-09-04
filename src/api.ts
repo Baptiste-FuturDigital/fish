@@ -23,10 +23,10 @@ export const gameApi = {
   demo() {
     return request<SessionResponse>("/api/demo", { method: "POST" })
   },
-  create(name: string, hostName: string) {
+  create(name: string, hostName: string, prankPlayerName?: string) {
     return request<SessionResponse>("/api/games", {
       method: "POST",
-      body: JSON.stringify({ name, hostName }),
+      body: JSON.stringify({ name, hostName, prankPlayerName }),
     })
   },
   join(code: string, name: string) {
