@@ -1,9 +1,13 @@
 import { useEffect, useState, type CSSProperties } from "react"
 import { Crown, Gift, RotateCcw, Trophy, Users } from "lucide-react"
 
-import type { GameView, PlayerSession, PlayerView } from "@shared/game"
+import type { GameView, PlayerSession } from "@shared/game"
 import { AnimatedScore } from "@/components/animated-score"
-import { PlayerPortraitLightbox, type PortraitPlayer } from "@/components/player-portrait-lightbox"
+import {
+  PlayerPortraitLightbox,
+  portraitPlayerFromView,
+  type PortraitPlayer,
+} from "@/components/player-portrait-lightbox"
 import { PrizeClaims, eligiblePrizeTypes } from "@/components/prize-claims"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -104,16 +108,6 @@ function FinalCelebration() {
   )
 }
 
-function playerPortrait(player: PlayerView): PortraitPlayer | null {
-  const imageUrl = player.imageUrl ?? player.totem?.imageUrl
-  if (!imageUrl) return null
-  return {
-    name: player.name,
-    imageUrl,
-    animalName: player.animalName ?? player.totem?.name ?? "Poisson mystérieux",
-  }
-}
-
 export function FinalPlayerRanking({
   game,
   onSelectPlayer,
@@ -131,7 +125,7 @@ export function FinalPlayerRanking({
     >
       {ranking.map(({ player, rank }, index) => {
         const isLast = ranking.length > 1 && index === ranking.length - 1
-        const portrait = playerPortrait(player)
+        const portrait = portraitPlayerFromView(player)
         const teamName = player.teamId
           ? teamNames.get(player.teamId) ?? "Banc inconnu"
           : "Sans banc"

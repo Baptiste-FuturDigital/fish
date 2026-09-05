@@ -102,9 +102,15 @@
   list-style: none;
 }
 
+.player-leaderboard__list > li {
+  margin: 0;
+  padding: 0;
+}
+
 .player-leaderboard__row {
   position: relative;
   display: grid;
+  width: 100%;
   grid-template-columns: 2rem 2.8rem minmax(0, 1fr) auto;
   min-height: 4rem;
   align-items: center;
@@ -119,8 +125,26 @@
     var(--player-board-cream);
   box-shadow: 0 0.42rem 1.1rem oklch(0.08 0.035 222 / 16%);
   color: var(--player-board-ink);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
   content-visibility: auto;
+  transition: box-shadow 160ms ease, border-color 160ms ease;
   animation: player-rank-enter 480ms cubic-bezier(0.16, 1, 0.3, 1) var(--player-rank-delay) both;
+}
+
+.player-leaderboard__row:hover:not(:disabled) {
+  border-color: color-mix(in oklch, var(--player-team-color) 72%, white);
+  box-shadow: 0 0.62rem 1.35rem oklch(0.08 0.035 222 / 22%);
+}
+
+.player-leaderboard__row:focus-visible {
+  outline: 0.2rem solid oklch(0.84 0.17 103);
+  outline-offset: 0.16rem;
+}
+
+.player-leaderboard__row:disabled {
+  cursor: default;
 }
 
 .player-leaderboard__row::after {

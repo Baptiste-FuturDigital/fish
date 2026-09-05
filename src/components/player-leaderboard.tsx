@@ -1,8 +1,13 @@
-import type { CSSProperties } from "react"
+import { useState, type CSSProperties } from "react"
 import { Crown, Gauge, Medal, Waves } from "lucide-react"
 
 import type { GameView, PlayerView } from "@shared/game"
 import { AnimatedScore } from "./animated-score.js"
+import {
+  PlayerPortraitLightbox,
+  portraitPlayerFromView,
+  type PortraitPlayer,
+} from "./player-portrait-lightbox.js"
 
 import "./player-leaderboard.css"
 
@@ -53,6 +58,7 @@ function RankMarker({ rank }: { rank: number }) {
 }
 
 export function PlayerLeaderboard({ game }: { game: GameView }) {
+  const [selectedPlayer, setSelectedPlayer] = useState<PortraitPlayer | null>(null)
   const ranking = rankPlayerLeaderboard(game.players)
   const teamNames = new Map(game.teams.map((team) => [team.id, team.name]))
   const teamColors = new Map(
@@ -84,6 +90,7 @@ export function PlayerLeaderboard({ game }: { game: GameView }) {
           aria-label="Classement individuel des joueurs"
         >
           {ranking.map(({ player, rank }, index) => {
+            const portrait = portraitPlayerFromView(player)
             const teamName = player.teamId
               ? teamNames.get(player.teamId) ?? "Banc inconnu"
               : "Sans banc"
@@ -93,41 +100,52 @@ export function PlayerLeaderboard({ game }: { game: GameView }) {
 
             return (
               <li
-                className="player-leaderboard__row"
-                data-rank={rank}
                 key={player.id}
-                style={{
-                  "--player-rank-delay": `${Math.min(index, 14) * 65}ms`,
-                  "--player-team-color": teamColor,
-                } as RankingStyle}
               >
-                <div className="player-leaderboard__rank" aria-label={`Rang ${rank}`}>
-                  <RankMarker rank={rank} />
-                </div>
+                <button
+                  type="button"
+                  className="player-leaderboard__row"
+                  data-rank={rank}
+                  disabled={!portrait}
+                  aria-label={portrait
+                    ? `Agrandir la photo de ${player.name}`
+                    : `Photo indisponible pour ${player.name}`}
+                  style={{
+                    "--player-rank-delay": `${Math.min(index, 14) * 65}ms`,
+                    "--player-team-color": teamColor,
+                  } as RankingStyle}
+                  onClick={() => {
+                    if (portrait) setSelectedPlayer(portrait)
+                  }}
+                >
+                  <div className="player-leaderboard__rank" aria-label={`Rang ${rank}`}>
+                    <RankMarker rank={rank} />
+                  </div>
 
-                <div className="player-leaderboard__avatar">
-                  {player.totem ? (
-                    <img
-                      src={player.totem.imageUrl}
-                      alt={`${player.name} — ${player.totem.name}`}
-                    />
-                  ) : (
-                    <span aria-hidden="true">{initials(player.name)}</span>
-                  )}
-                </div>
+                  <div className="player-leaderboard__avatar">
+                    {portrait ? (
+                      <img
+                        src={portrait.imageUrl}
+                        alt={`${player.name} — ${portrait.animalName}`}
+                      />
+                    ) : (
+                      <span aria-hidden="true">{initials(player.name)}</span>
+                    )}
+                  </div>
 
-                <div className="player-leaderboard__identity">
-                  <strong>{player.name}</strong>
-                  <span>
-                    <i aria-hidden="true" />
-                    {teamName}
-                  </span>
-                </div>
+                  <div className="player-leaderboard__identity">
+                    <strong>{player.name}</strong>
+                    <span>
+                      <i aria-hidden="true" />
+                      {teamName}
+                    </span>
+                  </div>
 
-                <div className="player-leaderboard__score">
-                  <AnimatedScore points={player.score} />
-                  <small>PTS</small>
-                </div>
+                  <div className="player-leaderboard__score">
+                    <AnimatedScore points={player.score} />
+                    <small>PTS</small>
+                  </div>
+                </button>
               </li>
             )
           })}
@@ -139,6 +157,12 @@ export function PlayerLeaderboard({ game }: { game: GameView }) {
           <p>La grille se remplira après les premières réponses.</p>
         </div>
       )}
+      {selectedPlayer ? (
+        <PlayerPortraitLightbox
+          player={selectedPlayer}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      ) : null}
     </section>
   )
 }

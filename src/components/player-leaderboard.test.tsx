@@ -93,6 +93,10 @@ describe("PlayerLeaderboard", () => {
     expect(markup).toContain('aria-label="70 points"')
     expect(markup).toContain('data-rank="1"')
     expect(markup).toContain('data-rank="4"')
+    expect(markup).toContain('aria-label="Agrandir la photo de Alice"')
+    expect(markup).toContain('aria-label="Agrandir la photo de Zoé"')
+    expect(markup).toContain('aria-label="Photo indisponible pour Émile"')
+    expect(markup).toContain('disabled=""')
   })
 
   it("rend un état vide explicite quand aucun joueur ne participe", () => {

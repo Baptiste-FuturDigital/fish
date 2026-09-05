@@ -130,6 +130,10 @@ test("four players form teams, answer individually and start the tournament", as
   for (const name of guestNames) {
     await expect(playerRanking.getByText(name, { exact: true })).toBeVisible()
   }
+  await playerRanking.getByRole("button", { name: /Agrandir la photo de/ }).first().click()
+  await expect(host.getByRole("dialog", { name: /Portrait de/ })).toBeVisible()
+  await host.getByRole("button", { name: "Fermer le portrait" }).click()
+  await expect(host.getByRole("dialog", { name: /Portrait de/ })).not.toBeVisible()
   await expect(host.getByRole("button", { name: "Déchaîner la faveur" })).toBeVisible()
   await host.getByRole("button", { name: "Déchaîner la faveur" }).click()
   await expect(host.getByText(/reçoit une faveur divine/)).toBeVisible()

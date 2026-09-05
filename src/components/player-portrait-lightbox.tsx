@@ -1,12 +1,25 @@
 import { useEffect } from "react"
 import { X } from "lucide-react"
 
+import type { PlayerView } from "@shared/game"
+
 import "./player-portrait-lightbox.css"
 
 export interface PortraitPlayer {
   name: string
   imageUrl: string
   animalName: string
+}
+
+export function portraitPlayerFromView(player: PlayerView): PortraitPlayer | null {
+  const imageUrl = player.imageUrl ?? player.totem?.imageUrl
+  if (!imageUrl) return null
+
+  return {
+    name: player.name,
+    imageUrl,
+    animalName: player.animalName ?? player.totem?.name ?? "Poisson mystérieux",
+  }
 }
 
 export function PlayerPortraitLightbox({
