@@ -43,6 +43,7 @@ describe("Raspberry Pi deployment", () => {
     expect(backup).toContain("database.backup")
     expect(push).toContain("rsync -az --delete")
     expect(push).toContain("scripts/pi/deploy.sh")
+    expect(push.match(/ssh -t "\$\{target\}"/g)).toHaveLength(2)
     expect(restore).toContain("docker compose run")
     expect(restore).toContain('database.pragma("quick_check")')
     expect(verify).toContain("/api/health")

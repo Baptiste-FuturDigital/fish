@@ -14,7 +14,7 @@ target="$1"
   die "Cible SSH invalide: ${target}"
 
 info "Préparation du répertoire distant sur ${target}..."
-ssh "${target}" \
+ssh -t "${target}" \
   'sudo install -d -o "$(id -un)" -g "$(id -gn)" /opt/fish-tournament'
 
 info "Transfert de la version courante..."
