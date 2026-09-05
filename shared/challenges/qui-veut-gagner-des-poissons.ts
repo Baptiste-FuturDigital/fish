@@ -5,6 +5,7 @@ export const quiVeutGagnerDesPoissons = {
   title: "Qui veut gagner des poissons ?",
   shortTitle: "Qui veut gagner des poissons ?",
   emoji: "🐡",
+  introImageUrl: "/game/Qui veut gagner des poissons/qui-veut-gagner-des-poissons.png",
   description:
     "Cinq questions, quatre réponses et un présentateur beaucoup trop sûr de ses branchies.",
   rules: [
@@ -13,7 +14,6 @@ export const quiVeutGagnerDesPoissons = {
     "Validez avec « C’est mon dernier mot » : les poissons ne font pas marche arrière.",
     "Les gains individuels montent à chaque bonne réponse, de 10 à 100 points ; un banc n'est crédité qu'une fois.",
   ],
-  presenterImageUrl: "/jean-pierre-foucault-requin.webp",
   introMusicYoutubeId: "ntFaUwJMhg0",
   answeringMusicYoutubeId: "236sJVHRh1M",
   timerEndSoundYoutubeId: "5ijevRmcIBM",

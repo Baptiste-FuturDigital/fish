@@ -1,5 +1,5 @@
-import type { CSSProperties } from "react"
-import { Crown, RotateCcw, Trophy } from "lucide-react"
+import { useState, type CSSProperties } from "react"
+import { Crown, RotateCcw, Trophy, Users } from "lucide-react"
 
 import type { GameView } from "@shared/game"
 import { AnimatedScore } from "@/components/animated-score"
@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { rankPlayerLeaderboard } from "./player-leaderboard.js"
 
 import "./final-scoreboard.css"
 
@@ -34,6 +35,7 @@ const FISH = [
 ] as const
 
 type CelebrationStyle = CSSProperties & Record<`--${string}`, string>
+type FinalRankingView = "teams" | "players"
 
 function FinalCelebration() {
   return (
@@ -92,6 +94,62 @@ function FinalCelebration() {
   )
 }
 
+export function FinalPlayerRanking({ game }: { game: GameView }) {
+  const ranking = rankPlayerLeaderboard(game.players)
+  const teamNames = new Map(game.teams.map((team) => [team.id, team.name]))
+
+  return (
+    <ol
+      className="final-player-ranking"
+      aria-label={`Classement final des joueurs — ${ranking.length} joueurs`}
+    >
+      {ranking.map(({ player, rank }, index) => {
+        const isLast = ranking.length > 1 && index === ranking.length - 1
+        const teamName = player.teamId
+          ? teamNames.get(player.teamId) ?? "Banc inconnu"
+          : "Sans banc"
+
+        return (
+          <li
+            className="final-player-ranking-row"
+            data-rank={rank}
+            data-last={isLast || undefined}
+            key={player.id}
+            style={{ animationDelay: `${Math.min(index, 14) * 60}ms` }}
+          >
+            <span className="final-rank-number" aria-label={`Rang ${rank}`}>
+              {rank === 1 ? (
+                <Crown aria-label="Champion individuel" />
+              ) : isLast ? (
+                <span className="final-last-place" aria-label="Dernier du classement">💩</span>
+              ) : rank}
+            </span>
+
+            <Avatar size="default" className="final-player-avatar">
+              {player.totem ? (
+                <AvatarImage
+                  src={player.totem.imageUrl}
+                  alt={`${player.name} — ${player.totem.name}`}
+                />
+              ) : null}
+              <AvatarFallback>🐟</AvatarFallback>
+            </Avatar>
+
+            <span className="final-player-identity">
+              <strong>{player.name}</strong>
+              <small>{teamName}</small>
+            </span>
+
+            <Badge variant={rank === 1 ? "default" : "secondary"}>
+              <AnimatedScore points={player.score} /> pts
+            </Badge>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
 export function FinalScoreboard({
   game,
   onLeave,
@@ -99,6 +157,7 @@ export function FinalScoreboard({
   game: GameView
   onLeave: () => void
 }) {
+  const [rankingView, setRankingView] = useState<FinalRankingView>("teams")
   const ranking = [...game.teams].sort(
     (left, right) =>
       right.score - left.score || left.name.localeCompare(right.name),
@@ -110,7 +169,7 @@ export function FinalScoreboard({
       <FinalCelebration />
 
       <section className="final-poseithon" aria-label="Verdict de Poséithon">
-        <img src="/poseithon.jpg" alt="Poséithon, dieu des océans" />
+        <img src="/references/poseithon.png" alt="Poséithon, dieu des océans" />
         <div className="final-poseithon-shade" />
         <div className="final-divine-seal">
           <Crown aria-hidden="true" />
@@ -135,45 +194,76 @@ export function FinalScoreboard({
       <CardContent className="final-ranking">
         <div className="final-ranking-heading">
           <h2>Classement final</h2>
-          <span>{ranking.length} bancs</span>
+          <span>
+            {rankingView === "teams"
+              ? `${ranking.length} bancs`
+              : `${game.players.filter((player) => !player.isHost).length} joueurs`}
+          </span>
         </div>
 
-        <ol>
-          {ranking.map((team, index) => (
-            <li
-              className="final-ranking-row"
-              data-rank={index + 1}
-              key={team.id}
-            >
-              <span className="final-rank-number">
-                {index === 0 ? <Crown aria-label="Champion" /> : index + 1}
-              </span>
-              <div className="final-team-avatars" aria-hidden="true">
-                {team.memberIds.slice(0, 4).map((memberId) => {
-                  const player = game.players.find(
-                    (candidate) => candidate.id === memberId,
-                  )
+        <div className="final-ranking-switch" role="tablist" aria-label="Type de classement">
+          <button
+            type="button"
+            role="tab"
+            aria-controls="final-ranking-panel"
+            aria-selected={rankingView === "teams"}
+            onClick={() => setRankingView("teams")}
+          >
+            🐟 Bancs
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-controls="final-ranking-panel"
+            aria-selected={rankingView === "players"}
+            onClick={() => setRankingView("players")}
+          >
+            <Users aria-hidden="true" /> Joueurs
+          </button>
+        </div>
 
-                  return (
-                    <Avatar size="sm" key={memberId}>
-                      {player?.totem ? (
-                        <AvatarImage
-                          src={player.totem.imageUrl}
-                          alt={player.totem.name}
-                        />
-                      ) : null}
-                      <AvatarFallback>🐟</AvatarFallback>
-                    </Avatar>
-                  )
-                })}
-              </div>
-              <span className="final-team-name">{team.name}</span>
-              <Badge variant={index === 0 ? "default" : "secondary"}>
-                <AnimatedScore points={team.score} /> pts
-              </Badge>
-            </li>
-          ))}
-        </ol>
+        <div id="final-ranking-panel" role="tabpanel">
+          {rankingView === "teams" ? (
+            <ol className="final-team-ranking" aria-label="Classement final des bancs">
+              {ranking.map((team, index) => (
+                <li
+                  className="final-ranking-row"
+                  data-rank={index + 1}
+                  key={team.id}
+                >
+                  <span className="final-rank-number">
+                    {index === 0 ? <Crown aria-label="Champion" /> : index + 1}
+                  </span>
+                  <div className="final-team-avatars" aria-hidden="true">
+                    {team.memberIds.slice(0, 4).map((memberId) => {
+                      const player = game.players.find(
+                        (candidate) => candidate.id === memberId,
+                      )
+
+                      return (
+                        <Avatar size="sm" key={memberId}>
+                          {player?.totem ? (
+                            <AvatarImage
+                              src={player.totem.imageUrl}
+                              alt={player.totem.name}
+                            />
+                          ) : null}
+                          <AvatarFallback>🐟</AvatarFallback>
+                        </Avatar>
+                      )
+                    })}
+                  </div>
+                  <span className="final-team-name">{team.name}</span>
+                  <Badge variant={index === 0 ? "default" : "secondary"}>
+                    <AnimatedScore points={team.score} /> pts
+                  </Badge>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <FinalPlayerRanking game={game} />
+          )}
+        </div>
       </CardContent>
 
       <CardFooter className="final-footer">

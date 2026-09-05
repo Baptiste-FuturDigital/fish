@@ -22,6 +22,7 @@ import { MillionaireAnswerPanel } from "@/components/millionaire-answer-panel"
 import { SalmonAnswerProgress } from "@/components/salmon-answer-progress"
 import { ScoreRevealSound } from "@/components/score-reveal-sound"
 import { WhosThatSalmonStage } from "@/components/whos-that-salmon-stage"
+import { QuestionBuzzerScreen } from "@/components/question-buzzer-screen"
 import { formatWeightEstimate } from "@/components/weight-estimate"
 
 interface ChallengeScreenProps {
@@ -31,7 +32,19 @@ interface ChallengeScreenProps {
   onFinish: () => Promise<GameView>
   onSubmit: (answer: string, locked: boolean) => Promise<GameView>
   onUseFiftyFifty: () => Promise<GameView>
+  onBuzz: () => Promise<GameView>
+  onResolveBuzz: (correct: boolean) => Promise<GameView>
 }
+
+const CHALLENGE_INTRO_LABELS = [
+  "PREMIÈRE ÉPREUVE",
+  "DEUXIÈME ÉPREUVE",
+  "TROISIÈME ÉPREUVE",
+  "QUATRIÈME ÉPREUVE",
+] as const
+
+const RULE_EMOJIS = ["🐋", "🐢", "🐙", "🦈", "🐠", "🐡", "🦀"] as const
+const QUESTION_CHAMPION_EMOJIS = ["🐋", "🐢", "🐙", "🦈", "🐠"] as const
 
 function Countdown({ endsAt, durationSeconds }: { endsAt: string | null; durationSeconds: number }) {
   const [now, setNow] = useState(Date.now)
@@ -72,7 +85,7 @@ function TournamentHeader({ tournament }: { tournament: TournamentView }) {
     <div className="mb-4 flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
         <Badge variant="secondary">ÉPREUVE {tournament.challengeIndex + 1} / {tournament.challengeCount}</Badge>
-        <span className="text-sm font-black">Manche {tournament.roundIndex + 1} / {tournament.roundCount}</span>
+        <span className="round-counter">Manche {tournament.roundIndex + 1} / {tournament.roundCount}</span>
       </div>
       <Progress value={progress} aria-label="Progression du tournoi" />
     </div>
@@ -119,7 +132,7 @@ function WeightEstimateField({
   )
 }
 
-export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty }: ChallengeScreenProps) {
+export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty, onBuzz, onResolveBuzz }: ChallengeScreenProps) {
   const tournament = game.tournament
   const [answer, setAnswer] = useState("")
   const [busy, setBusy] = useState<"advance" | "answer" | "joker" | "finish" | null>(null)
@@ -178,12 +191,34 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
     return (
       <>
         <TournamentHeader tournament={tournament} />
-        <Card className={cn("challenge-intro-card my-auto text-center", tournament.challenge.id === "qui-veut-gagner-des-poissons" && "millionaire-intro-card")}>
-          {tournament.challenge.presenterImageUrl ? (
+        <Card className={cn(
+          "challenge-intro-card my-auto text-center",
+          tournament.challenge.id === "qui-veut-gagner-des-poissons" && "millionaire-intro-card",
+          tournament.challenge.id === "question-pour-un-poisson" && "question-champion-intro-card",
+        )}>
+          {tournament.challenge.introImageUrl ? (
+            <img
+              className="challenge-intro-image"
+              src={tournament.challenge.introImageUrl}
+              alt={`Présentation de ${tournament.challenge.title}`}
+            />
+          ) : tournament.challenge.id === "question-pour-un-poisson" ? (
+            <div className="question-champion-hero">
+              <img className="question-champion-reference" src="/references/questions-pour-un-poisson.jpg" alt="" />
+              <div className="question-champion-logo" aria-hidden="true">
+                <span>Question</span>
+                <small>pour un</small>
+                <strong>poisson</strong>
+              </div>
+              <div className="question-champion-fish" aria-hidden="true">
+                {QUESTION_CHAMPION_EMOJIS.map((emoji) => <span key={emoji}>{emoji}</span>)}
+              </div>
+            </div>
+          ) : tournament.challenge.presenterImageUrl ? (
             <img className="presenter-image" src={tournament.challenge.presenterImageUrl} alt="Jean-Pierre Foucault requin, présentateur" />
           ) : <p className="challenge-emoji" aria-hidden="true">{tournament.challenge.emoji}</p>}
           <CardHeader>
-            <CardDescription>PROCHAINE ÉPREUVE</CardDescription>
+            <CardDescription>{CHALLENGE_INTRO_LABELS[tournament.challengeIndex] ?? `ÉPREUVE ${tournament.challengeIndex + 1}`}</CardDescription>
             <CardTitle>
               <h2 className="font-heading text-4xl font-black">{tournament.challenge.title}</h2>
             </CardTitle>
@@ -191,7 +226,12 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
           <CardContent className="flex flex-col gap-4">
             <p className="text-base leading-relaxed">{tournament.challenge.description}</p>
             <ul className="rules-list">
-              {tournament.challenge.rules.map((rule) => <li key={rule}>{rule}</li>)}
+              {tournament.challenge.rules.map((rule, index) => (
+                <li key={rule}>
+                  <span className="rule-emoji" aria-hidden="true">{RULE_EMOJIS[index % RULE_EMOJIS.length]}</span>
+                  <span>{rule}</span>
+                </li>
+              ))}
             </ul>
             {isHost ? (
               <ChallengeAudio
@@ -211,14 +251,31 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
             ) : <p className="text-sm font-bold">Poséithon prépare le chronomètre…</p>}
           </CardFooter>
         </Card>
-        {isHost ? <Button className="mt-3" variant="ghost" onClick={() => void act("finish")}>Terminer le tournoi</Button> : null}
+        {isHost ? <Button className="finish-tournament-button mt-3" variant="ghost" onClick={() => void act("finish")}>Terminer le tournoi</Button> : null}
+      </>
+    )
+  }
+
+  if (tournament.challenge.id === "question-pour-un-poisson" && tournament.phase === "answering") {
+    return (
+      <>
+        <TournamentHeader tournament={tournament} />
+        <ScoreStrip game={game} />
+        <QuestionBuzzerScreen
+          game={game}
+          session={session}
+          isHost={isHost}
+          onBuzz={onBuzz}
+          onResolve={onResolveBuzz}
+        />
+        {isHost ? <Button className="finish-tournament-button mt-3" variant="ghost" onClick={() => void act("finish")}>Terminer le tournoi</Button> : null}
       </>
     )
   }
 
   return (
     <>
-      <AnswerValidationSound enabled={!isHost && Boolean(teamId)} />
+      <AnswerValidationSound enabled={!isHost && Boolean(teamId) && tournament.challenge.id !== "question-pour-un-poisson"} />
       <ScoreRevealSound
         enabled={isHost && tournament.phase === "reveal" && !tournament.challenge.timerEndSoundYoutubeId}
         points={highestAward}
@@ -232,12 +289,16 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
           {tournament.challenge.id === "whos-dat-salmon" ? (
             <SalmonAnswerProgress players={game.players} answers={tournament.answers} />
           ) : null}
-          <Card className={cn("my-4", tournament.challenge.id === "qui-veut-gagner-des-poissons" && "millionaire-stage-card")}>
+          <Card className={cn(
+            "my-4",
+            tournament.challenge.id === "qui-veut-gagner-des-poissons" && "millionaire-stage-card",
+            tournament.challenge.id === "whos-dat-salmon" && "salmon-game-card",
+          )}>
             {tournament.round.imageUrl ? (
-              tournament.round.id === "salmon-1-hippocampe" ? (
+              tournament.challenge.id === "whos-dat-salmon" ? (
                 <WhosThatSalmonStage
                   imageUrl={tournament.round.imageUrl}
-                  imageAlt="L’hippocampe"
+                  imageAlt="Silhouette marine mystérieuse"
                   revealed={false}
                 />
               ) : (
@@ -295,14 +356,24 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
                       <Field>
                         <FieldLabel>Ta réponse</FieldLabel>
                         <ToggleGroup
-                          className="grid w-full grid-cols-1"
+                          className={cn(
+                            "grid w-full grid-cols-1",
+                            tournament.challenge.id === "whos-dat-salmon" && "salmon-choice-grid",
+                          )}
                           variant="outline"
                           value={answer ? [answer] : []}
                           onValueChange={(values) => setAnswer((values as string[])[0] ?? "")}
                         >
                           {tournament.round.choices?.map((choice, index) => (
-                            <ToggleGroupItem className="h-auto min-h-12 justify-start whitespace-normal px-4 py-3 text-left" value={choice.id} key={choice.id}>
-                              <strong>{String.fromCharCode(65 + index)}</strong> — {choice.label}
+                            <ToggleGroupItem
+                              className={cn(
+                                "h-auto min-h-12 justify-start whitespace-normal px-4 py-3 text-left",
+                                tournament.challenge.id === "whos-dat-salmon" && "salmon-choice-card",
+                              )}
+                              value={choice.id}
+                              key={choice.id}
+                            >
+                              <strong>{String.fromCharCode(65 + index)}</strong><span>— {choice.label}</span>
                             </ToggleGroupItem>
                           ))}
                         </ToggleGroup>
@@ -323,7 +394,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
       ) : (
         <Card className="my-4 overflow-hidden">
           {tournament.round.imageUrl ? (
-            tournament.round.id === "salmon-1-hippocampe" ? (
+            tournament.challenge.id === "whos-dat-salmon" ? (
               <WhosThatSalmonStage
                 imageUrl={tournament.round.imageUrl}
                 imageAlt={tournament.round.answerLabel ?? "L’hippocampe"}
@@ -365,14 +436,14 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
           <Button size="lg" onClick={() => void act("advance")} disabled={Boolean(busy)}>
             {busy === "advance" ? <LoaderCircle className="animate-spin" data-icon="inline-start" /> : <Eye data-icon="inline-start" />}
             {tournament.phase === "answering"
-              ? "Révéler maintenant"
+              ? tournament.challenge.id === "whos-dat-salmon" ? "Révéler la réponse" : "Révéler maintenant"
               : tournament.roundIndex < tournament.roundCount - 1
-                ? "Manche suivante"
+                ? tournament.challenge.id === "whos-dat-salmon" ? "Image suivante" : "Manche suivante"
                 : tournament.challengeIndex < tournament.challengeCount - 1
                   ? "Voir le classement"
                   : "Voir les résultats"}
           </Button>
-          <Button size="lg" variant="outline" onClick={() => void act("finish")} disabled={Boolean(busy)}>
+          <Button className="finish-tournament-button" size="lg" variant="outline" onClick={() => void act("finish")} disabled={Boolean(busy)}>
             {busy === "finish" ? <LoaderCircle className="animate-spin" data-icon="inline-start" /> : <Flag data-icon="inline-start" />}
             Terminer le tournoi
           </Button>

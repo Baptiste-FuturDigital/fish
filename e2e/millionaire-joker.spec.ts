@@ -34,10 +34,12 @@ test("a team uses its single 50/50 joker on the responsive millionaire stage", a
   })
   const code = created.game.code
   const dummy = await post<SessionResponse>(page.request, `/api/games/${code}/join`, {
-    name: "Poisson témoin",
+    identityId: "anonymous",
+    nickname: "Poisson témoin",
   })
   const player = await post<SessionResponse>(page.request, `/api/games/${code}/join`, {
-    name: "Joueur requin",
+    identityId: "anonymous",
+    nickname: "Joueur requin",
   })
   for (const joined of [dummy, player]) {
     await post(page.request, `/api/games/${code}/totem`, joined.session)
@@ -78,8 +80,8 @@ test("a team uses its single 50/50 joker on the responsive millionaire stage", a
   }, { session: player.session })
   await page.goto("/")
 
-  await expect(page.getByRole("img", { name: "Jean-Pierre Foucault requin, présentateur" }))
-    .toHaveAttribute("src", "/jean-pierre-foucault-requin.webp")
+  await expect(page.getByRole("img", { name: "Présentation de Qui veut gagner des poissons ?" }))
+    .toHaveAttribute("src", "/game/Qui veut gagner des poissons/qui-veut-gagner-des-poissons.png")
   await expect(page.getByText("Chaque banc possède un unique joker 50/50", { exact: false }))
     .toBeVisible()
 

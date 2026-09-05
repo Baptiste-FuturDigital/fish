@@ -70,6 +70,32 @@ describe("GameService", () => {
     expect(created.session.hostToken).toHaveLength(48)
   })
 
+  it("skips directly to the next challenge intro for demo games", () => {
+    const demo = service.createDemoGame()
+
+    expect(demo.game.isDemo).toBe(true)
+
+    const skipped = service.skipDemoChallenge(
+      demo.game.code,
+      demo.session.hostToken!,
+    )
+
+    expect(skipped.tournament).toEqual(expect.objectContaining({
+      challengeIndex: 1,
+      roundIndex: 0,
+      phase: "challenge-intro",
+    }))
+  })
+
+  it("rejects challenge skipping outside demo games", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+
+    expect(() => service.skipDemoChallenge(
+      created.game.code,
+      created.session.hostToken!,
+    )).toThrowError(new GameError("Ce raccourci est réservé à la démo.", 409))
+  })
+
   it("adds a guest to the same lobby", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     const joined = service.joinGame(created.game.code, "Léa")
@@ -77,6 +103,104 @@ describe("GameService", () => {
     expect(joined.game.players.map((player) => player.name)).toEqual(["Léa"])
     expect(joined.session.hostToken).toBeUndefined()
     expect(joined.session.playerToken).toHaveLength(48)
+  })
+
+  it("reserves a named invitation once and exposes its portrait", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const joinWithIdentity = (service as unknown as {
+      joinGame: (code: string, input: { identityId: string; nickname?: string }) => ReturnType<GameService["joinGame"]>
+    }).joinGame.bind(service)
+
+    const joined = joinWithIdentity(created.game.code, { identityId: "agathe" })
+
+    expect(joined.game.players[0]).toEqual(expect.objectContaining({
+      name: "Agathe",
+      identityId: "agathe",
+      imageUrl: "/players/agathe-poisson-globe.png",
+    }))
+    expect(() => joinWithIdentity(created.game.code, { identityId: "agathe" })).toThrowError(
+      new GameError("Agathe a déjà rejoint cet aquarium.", 409),
+    )
+  })
+
+  it("allows several anonymous guests with free unique nicknames and one shared portrait", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const joinWithIdentity = (service as unknown as {
+      joinGame: (code: string, input: { identityId: string; nickname?: string }) => ReturnType<GameService["joinGame"]>
+    }).joinGame.bind(service)
+
+    joinWithIdentity(created.game.code, { identityId: "anonymous", nickname: "Capitaine Haddock" })
+    const second = joinWithIdentity(created.game.code, { identityId: "anonymous", nickname: "Moussaillon" })
+
+    expect(second.game.players).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: "Capitaine Haddock",
+        identityId: "anonymous",
+        imageUrl: "/players/anonyme-poisson-clown.png",
+      }),
+      expect.objectContaining({
+        name: "Moussaillon",
+        identityId: "anonymous",
+        imageUrl: "/players/anonyme-poisson-clown.png",
+      }),
+    ]))
+  })
+
+  it("lists occupied invitations as unavailable while keeping anonymous available", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const identityService = service as unknown as {
+      joinGame: (code: string, input: { identityId: string; nickname?: string }) => ReturnType<GameService["joinGame"]>
+      listPlayerIdentities: (code: string) => Array<{ id: string; available: boolean }>
+    }
+    identityService.joinGame(created.game.code, { identityId: "agathe" })
+
+    const choices = identityService.listPlayerIdentities(created.game.code)
+
+    expect(choices.find((choice) => choice.id === "agathe")?.available).toBe(false)
+    expect(choices.find((choice) => choice.id === "anonymous")?.available).toBe(true)
+    expect(choices.some((choice) => choice.id === "baptiste")).toBe(false)
+  })
+
+  it("lets the host remove a guest from the lobby and releases their nickname", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const joined = service.joinGame(created.game.code, "Léa")
+
+    const kicked = service.kickPlayer(
+      created.game.code,
+      joined.session.playerId,
+      created.session.hostToken!,
+    )
+
+    expect(kicked.players).toEqual([])
+    expect(service.joinGame(created.game.code, "Léa").game.players).toHaveLength(1)
+  })
+
+  it("protects lobby exclusion with host authorization and membership checks", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const joined = service.joinGame(created.game.code, "Léa")
+
+    expect(() => service.kickPlayer(
+      created.game.code,
+      joined.session.playerId,
+      "intrus",
+    )).toThrowError(new GameError("Seul le capitaine peut toucher à ça.", 403))
+    expect(() => service.kickPlayer(
+      created.game.code,
+      "poisson-inconnu",
+      created.session.hostToken!,
+    )).toThrowError(new GameError("Ce poisson n'est plus dans le lobby.", 404))
+  })
+
+  it("rejects player exclusion after the lobby has started", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const [first] = joinAndClaimCompetitors(created.game.code)
+    service.startGame(created.game.code, created.session.hostToken!)
+
+    expect(() => service.kickPlayer(
+      created.game.code,
+      first.session.playerId,
+      created.session.hostToken!,
+    )).toThrowError(new GameError("Les exclusions sont réservées au lobby.", 409))
   })
 
   it("rejects a duplicate player name regardless of casing", () => {
@@ -281,14 +405,14 @@ describe("GameService", () => {
       created.game.code,
       first.session.playerId,
       first.session.playerToken,
-      "0.09",
+      "0.0125",
       true,
     )
     service.submitPlayerAnswer(
       created.game.code,
       second.session.playerId,
       second.session.playerToken,
-      "0.1",
+      "0.02",
       true,
     )
 
@@ -299,7 +423,7 @@ describe("GameService", () => {
 
     const revealed = service.advanceTournament(created.game.code, created.session.hostToken!)
     expect(revealed.tournament?.phase).toBe("reveal")
-    expect(revealed.tournament?.round.correctAnswer).toBe(0.09)
+    expect(revealed.tournament?.round.correctAnswer).toBe(0.0125)
     expect(revealed.teams.some((team) => team.score > 0)).toBe(true)
     expect(revealed.players.find((player) => player.id === first.session.playerId)?.score).toBeGreaterThan(0)
     expect(revealed.players.find((player) => player.id === second.session.playerId)?.score).toBeGreaterThan(0)
@@ -317,7 +441,7 @@ describe("GameService", () => {
     }))
   })
 
-  it("runs Question pour un poisson with readable answers from submission to reveal", () => {
+  it("pauses Question pour un poisson on the first buzz and lets the host award it", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     const [first, second] = joinAndClaimCompetitors(created.game.code)
     service.startGame(created.game.code, created.session.hostToken!)
@@ -333,35 +457,35 @@ describe("GameService", () => {
       phase: "answering",
       challenge: expect.objectContaining({ title: "Question pour un poisson" }),
       round: expect.objectContaining({
-        question: "Combien de cœurs font circuler le sang d’un poulpe ?",
+        question: "Quel animal marin se cache derrière ces indices ?",
+        hostClues: expect.arrayContaining([expect.stringContaining("poissons osseux")]),
       }),
     }))
     expect(answering.tournament?.round).not.toHaveProperty("correctAnswer")
 
-    service.submitPlayerAnswer(
+    const buzzed = service.buzzQuestion(
       created.game.code,
       first.session.playerId,
       first.session.playerToken,
-      "trois",
-      true,
     )
-    service.submitPlayerAnswer(
+    expect(buzzed.tournament?.endsAt).toBeNull()
+    expect(buzzed.tournament?.buzz).toEqual(expect.objectContaining({
+      playerId: first.session.playerId,
+      playerName: "Léa",
+      points: 4,
+    }))
+    expect(() => service.buzzQuestion(
       created.game.code,
       second.session.playerId,
       second.session.playerToken,
-      "neuf",
-      true,
-    )
+    )).toThrowError(new GameError("Un autre banc a déjà buzzé.", 409))
 
-    const revealed = service.advanceTournament(created.game.code, created.session.hostToken!)
+    const revealed = service.resolveQuestionBuzz(created.game.code, created.session.hostToken!, true)
 
     expect(revealed.tournament?.phase).toBe("reveal")
-    expect(revealed.tournament?.round.answerLabel).toBe("Trois cœurs")
+    expect(revealed.tournament?.round.answerLabel).toBe("L’hippocampe")
     expect(revealed.tournament?.results.find((result) => result.playerId === first.session.playerId)).toEqual(
-      expect.objectContaining({ answer: "Trois", isCorrect: true, points: 2, playerName: "Léa" }),
-    )
-    expect(revealed.tournament?.results.find((result) => result.playerId === second.session.playerId)).toEqual(
-      expect.objectContaining({ answer: "Neuf, un par cerveau", isCorrect: false, points: 0, playerName: "Sam" }),
+      expect.objectContaining({ answer: "hippocampe", isCorrect: true, points: 4, playerName: "Léa" }),
     )
 
     const nextQuestion = service.advanceTournament(created.game.code, created.session.hostToken!)
@@ -374,7 +498,31 @@ describe("GameService", () => {
     expect(nextQuestion.tournament?.round.correctAnswer).toBeUndefined()
   })
 
-  it("chains all four challenges and twenty-three rounds into the final scoreboard", () => {
+  it("blocks a wrong buzzer only until another team attempts", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const [first, second] = joinAndClaimCompetitors(created.game.code)
+    service.startGame(created.game.code, created.session.hostToken!)
+    database.prepare(
+      `UPDATE games SET challenge_index = 1, challenge_round = 0, current_round = 0,
+       phase = 'answering', phase_ends_at = ? WHERE code = ?`,
+    ).run(new Date(Date.now() + 40_000).toISOString(), created.game.code)
+
+    const firstBuzz = service.buzzQuestion(created.game.code, first.session.playerId, first.session.playerToken)
+    const firstTeam = firstBuzz.tournament?.buzz?.teamId
+    const resumed = service.resolveQuestionBuzz(created.game.code, created.session.hostToken!, false)
+    expect(resumed.tournament?.blockedTeamId).toBe(firstTeam)
+    expect(resumed.tournament?.endsAt).not.toBeNull()
+    expect(() => service.buzzQuestion(created.game.code, first.session.playerId, first.session.playerToken))
+      .toThrowError(new GameError("Ton banc est bloqué jusqu'à la tentative d'un autre banc.", 409))
+
+    const secondBuzz = service.buzzQuestion(created.game.code, second.session.playerId, second.session.playerToken)
+    expect(secondBuzz.tournament?.buzz?.playerId).toBe(second.session.playerId)
+    const secondWrong = service.resolveQuestionBuzz(created.game.code, created.session.hostToken!, false)
+    expect(secondWrong.tournament?.blockedTeamId).toBe(secondBuzz.tournament?.buzz?.teamId)
+    expect(() => service.buzzQuestion(created.game.code, first.session.playerId, first.session.playerToken)).not.toThrow()
+  })
+
+  it("chains all four challenges and nineteen rounds into the final scoreboard", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     joinAndClaimCompetitors(created.game.code)
 
@@ -399,7 +547,7 @@ describe("GameService", () => {
       "whos-dat-salmon",
       "qui-veut-gagner-des-poissons",
     ])
-    expect(answeringRounds.size).toBe(23)
+    expect(answeringRounds.size).toBe(19)
     expect(game.status).toBe("finished")
     expect(game.tournament).toBeNull()
   })

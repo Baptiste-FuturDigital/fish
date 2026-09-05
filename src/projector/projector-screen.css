@@ -1,0 +1,1261 @@
+.projector-viewport {
+  --projector-ink: oklch(0.16 0.045 220);
+  --projector-cream: oklch(0.97 0.022 96);
+  --projector-lime: oklch(0.87 0.18 113);
+  --projector-coral: oklch(0.68 0.2 30);
+  display: grid;
+  width: 100vw;
+  height: 100vh;
+  place-items: center;
+  overflow: hidden;
+  background: oklch(0.045 0.018 220);
+  color: var(--foreground);
+}
+
+.projector-stage {
+  position: relative;
+  isolation: isolate;
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: min(100vh, calc(100vw * 9 / 16));
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 8%, oklch(0.48 0.12 188 / 42%), transparent 32%),
+    radial-gradient(circle at 92% 75%, oklch(0.31 0.11 238 / 58%), transparent 35%),
+    linear-gradient(145deg, oklch(0.21 0.065 200), oklch(0.1 0.045 229));
+  box-shadow: 0 0 8rem oklch(0.42 0.12 194 / 25%);
+}
+
+.projector-stage::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitchTiles'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
+}
+
+.projector-caustics {
+  position: absolute;
+  z-index: -1;
+  inset: -25%;
+  opacity: 0.17;
+  background:
+    repeating-radial-gradient(ellipse at 25% 20%, transparent 0 7%, oklch(0.9 0.08 190 / 25%) 8%, transparent 10% 18%);
+  animation: projector-caustics-drift 18s ease-in-out infinite alternate;
+}
+
+.projector-bubbles {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.projector-bubbles i {
+  position: absolute;
+  bottom: -5%;
+  left: calc(1% + var(--bubble-index, 1) * 5.25%);
+  width: calc(0.35rem + (var(--bubble-index, 1) % 5) * 0.28rem);
+  aspect-ratio: 1;
+  border: 1px solid oklch(0.9 0.08 190 / 34%);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0.7rem oklch(0.95 0.06 190 / 12%);
+  animation: projector-bubble-rise calc(7s + (var(--bubble-index, 1) % 6) * 1.3s) linear infinite;
+  animation-delay: calc(var(--bubble-index, 1) * -0.8s);
+}
+
+.projector-bubbles i:nth-child(1) { --bubble-index: 1; }
+.projector-bubbles i:nth-child(2) { --bubble-index: 2; }
+.projector-bubbles i:nth-child(3) { --bubble-index: 3; }
+.projector-bubbles i:nth-child(4) { --bubble-index: 4; }
+.projector-bubbles i:nth-child(5) { --bubble-index: 5; }
+.projector-bubbles i:nth-child(6) { --bubble-index: 6; }
+.projector-bubbles i:nth-child(7) { --bubble-index: 7; }
+.projector-bubbles i:nth-child(8) { --bubble-index: 8; }
+.projector-bubbles i:nth-child(9) { --bubble-index: 9; }
+.projector-bubbles i:nth-child(10) { --bubble-index: 10; }
+.projector-bubbles i:nth-child(11) { --bubble-index: 11; }
+.projector-bubbles i:nth-child(12) { --bubble-index: 12; }
+.projector-bubbles i:nth-child(13) { --bubble-index: 13; }
+.projector-bubbles i:nth-child(14) { --bubble-index: 14; }
+.projector-bubbles i:nth-child(15) { --bubble-index: 15; }
+.projector-bubbles i:nth-child(16) { --bubble-index: 16; }
+.projector-bubbles i:nth-child(17) { --bubble-index: 17; }
+.projector-bubbles i:nth-child(18) { --bubble-index: 18; }
+
+.projector-topbar {
+  display: flex;
+  height: 8.2%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 0 2.2%;
+  border-bottom: 1px solid oklch(0.94 0.04 190 / 18%);
+  background: oklch(0.09 0.035 225 / 45%);
+  backdrop-filter: blur(1.2rem);
+}
+
+.projector-brand,
+.projector-live {
+  display: flex;
+  align-items: center;
+}
+
+.projector-brand {
+  gap: 0.75rem;
+}
+
+.projector-brand > span {
+  display: grid;
+  width: clamp(2.2rem, 3vw, 3.4rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid oklch(0.96 0.04 190 / 28%);
+  border-radius: 50% 50% 50% 22%;
+  background: oklch(0.96 0.03 95 / 10%);
+  font-size: clamp(1.2rem, 1.7vw, 2rem);
+}
+
+.projector-brand p,
+.projector-brand strong {
+  display: block;
+  margin: 0;
+}
+
+.projector-brand p {
+  color: var(--projector-lime);
+  font-size: clamp(0.45rem, 0.65vw, 0.78rem);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+
+.projector-brand strong {
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1rem, 1.35vw, 1.75rem);
+  line-height: 1;
+}
+
+.projector-live {
+  gap: 0.7rem;
+  color: oklch(0.85 0.035 195);
+  font-size: clamp(0.55rem, 0.68vw, 0.82rem);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.projector-live svg {
+  width: 1em;
+  height: 1em;
+  color: var(--projector-coral);
+  fill: currentColor;
+  filter: drop-shadow(0 0 0.5rem var(--projector-coral));
+  animation: projector-live-pulse 1.4s ease-in-out infinite;
+}
+
+.projector-live strong {
+  padding: 0.42em 0.7em;
+  border-radius: 999px;
+  background: var(--projector-lime);
+  color: oklch(0.22 0.07 120);
+  font-family: "Fraunces Variable", serif;
+  font-size: 1.35em;
+  letter-spacing: 0.14em;
+}
+
+.projector-content {
+  height: 91.8%;
+  padding: 2.1% 2.3%;
+}
+
+.projector-lobby {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 31% minmax(0, 1fr);
+  gap: 2.2%;
+}
+
+.projector-lobby-join {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4%;
+  border: 1px solid oklch(0.95 0.04 190 / 22%);
+  border-radius: 1.8rem 1.8rem 0.6rem 1.8rem;
+  background: oklch(0.97 0.022 96 / 96%);
+  box-shadow: 0 1.5rem 4rem oklch(0.04 0.03 220 / 35%);
+  color: var(--projector-ink);
+  text-align: center;
+}
+
+.projector-lobby-join h1 {
+  margin: 0.8rem 0 0.7rem;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1.6rem, 2.35vw, 3.2rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.projector-qr {
+  display: grid;
+  width: min(70%, 33vh);
+  aspect-ratio: 1;
+  place-items: center;
+  padding: 4%;
+  border: 0.35rem solid oklch(0.2 0.055 212);
+  border-radius: 1rem;
+  background: var(--projector-cream);
+}
+
+.projector-qr svg {
+  width: 100%;
+  height: 100%;
+}
+
+.projector-lobby-code {
+  margin: 0.8rem 0 0;
+  color: oklch(0.45 0.04 210);
+  font-size: clamp(0.62rem, 0.75vw, 1rem);
+  font-weight: 900;
+  letter-spacing: 0.15em;
+}
+
+.projector-lobby-code strong {
+  margin-left: 0.45rem;
+  color: var(--projector-coral);
+  font-family: "Fraunces Variable", serif;
+  font-size: 2.1em;
+}
+
+.projector-join-url {
+  max-width: 100%;
+  margin: 0.2rem 0 0;
+  overflow: hidden;
+  color: oklch(0.47 0.035 205);
+  font-size: clamp(0.5rem, 0.65vw, 0.8rem);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projector-lobby-roster {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2.5%;
+}
+
+.projector-lobby-roster > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.projector-lobby-roster > header p,
+.projector-lobby-roster > header h2 {
+  margin: 0;
+}
+
+.projector-lobby-roster > header p {
+  color: var(--projector-lime);
+  font-size: clamp(0.55rem, 0.75vw, 0.9rem);
+  font-weight: 900;
+  letter-spacing: 0.17em;
+}
+
+.projector-lobby-roster > header h2 {
+  margin-top: 0.25rem;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1.5rem, 2.4vw, 3.3rem);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.projector-lobby-roster > header > strong {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: oklch(0.9 0.03 190);
+  font-size: clamp(0.65rem, 0.9vw, 1.15rem);
+}
+
+.projector-lobby-roster > header svg {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.projector-team-grid {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 2.2%;
+}
+
+.projector-team-card {
+  --card-spacing: clamp(0.6rem, 1vw, 1.1rem);
+  min-height: 0;
+  border-color: oklch(0.91 0.04 190 / 75%);
+  background: oklch(0.97 0.022 96 / 94%);
+  color: var(--projector-ink);
+}
+
+.projector-team-card [data-slot="card-header"] {
+  display: flex;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid oklch(0.75 0.04 195 / 42%);
+}
+
+.projector-team-card [data-slot="card-title"] {
+  overflow: hidden;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(0.85rem, 1.15vw, 1.5rem);
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projector-team-card [data-slot="card-header"] > span {
+  display: grid;
+  width: 1.8em;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--projector-lime);
+  color: oklch(0.26 0.07 120);
+  font-size: clamp(0.6rem, 0.75vw, 0.9rem);
+  font-weight: 950;
+}
+
+.projector-team-card [data-slot="card-content"] {
+  display: grid;
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.projector-roster-player {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.48rem;
+  color: oklch(0.25 0.05 215);
+  font-size: clamp(0.55rem, 0.72vw, 0.88rem);
+  font-weight: 850;
+}
+
+.projector-roster-player [data-slot="avatar"] {
+  width: clamp(1.55rem, 2.05vw, 2.7rem);
+  height: clamp(1.55rem, 2.05vw, 2.7rem);
+  flex: none;
+  border: 2px solid var(--projector-coral);
+}
+
+.projector-roster-player > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projector-empty-team,
+.projector-waiting {
+  margin: 0;
+  color: oklch(0.51 0.035 205);
+  font-weight: 750;
+}
+
+.projector-empty-team {
+  grid-column: 1 / -1;
+  align-self: center;
+  text-align: center;
+}
+
+.projector-waiting {
+  padding: 0.55rem 0.8rem;
+  border: 1px solid oklch(0.9 0.05 190 / 24%);
+  border-radius: 999px;
+  background: oklch(0.96 0.03 96 / 9%);
+  color: oklch(0.9 0.025 195);
+  font-size: clamp(0.55rem, 0.7vw, 0.85rem);
+}
+
+.projector-intro {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 42% minmax(0, 1fr);
+  align-items: stretch;
+  gap: 3.5%;
+}
+
+.projector-intro-art {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid oklch(0.96 0.04 190 / 22%);
+  border-radius: 2rem 2rem 0.7rem 2rem;
+  background:
+    radial-gradient(circle, oklch(0.7 0.15 190 / 34%), transparent 45%),
+    oklch(0.12 0.05 225);
+  box-shadow: 0 1.5rem 4rem oklch(0.04 0.03 220 / 35%);
+}
+
+.projector-intro-art > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.projector-intro-art > span {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  font-size: clamp(7rem, 16vw, 18rem);
+  filter: drop-shadow(0 1rem 2rem oklch(0.02 0.03 220 / 55%));
+}
+
+.projector-intro-number {
+  position: absolute;
+  right: -0.03em;
+  bottom: -0.18em;
+  color: oklch(0.98 0.025 96 / 18%);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(7rem, 15vw, 18rem);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.projector-intro-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.projector-intro-copy > p,
+.projector-intro-copy h1 {
+  margin: 0;
+}
+
+.projector-intro-copy > p:not(.projector-intro-description) {
+  margin-top: 1rem;
+  color: var(--projector-lime);
+  font-size: clamp(0.55rem, 0.78vw, 0.95rem);
+  font-weight: 950;
+  letter-spacing: 0.2em;
+}
+
+.projector-intro-copy h1 {
+  max-width: 13ch;
+  margin-top: 0.35rem;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(2.5rem, 5.2vw, 6rem);
+  font-weight: 950;
+  line-height: 0.88;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.projector-intro-description {
+  max-width: 58ch;
+  margin-top: 1rem !important;
+  color: oklch(0.88 0.03 190);
+  font-size: clamp(0.72rem, 1vw, 1.25rem);
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.projector-rules {
+  display: flex;
+  margin: 1.3rem 0;
+  padding: 0;
+  flex-direction: column;
+  gap: 0.55rem;
+  list-style: none;
+}
+
+.projector-rules li {
+  display: grid;
+  grid-template-columns: 2em minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  color: oklch(0.92 0.025 190);
+  font-size: clamp(0.62rem, 0.82vw, 1rem);
+  font-weight: 720;
+}
+
+.projector-rules li span {
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--projector-coral);
+  color: var(--primary-foreground);
+  font-family: "Fraunces Variable", serif;
+  font-weight: 950;
+}
+
+.projector-team-score-rail {
+  display: grid;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+  list-style: none;
+}
+
+.projector-team-score {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid oklch(0.94 0.04 190 / 20%);
+  border-radius: 0.8rem;
+  background: oklch(0.95 0.03 96 / 10%);
+  color: oklch(0.96 0.02 96);
+}
+
+.projector-team-score[data-rank="1"] {
+  border-color: oklch(0.87 0.18 113 / 58%);
+  background: oklch(0.87 0.18 113 / 17%);
+}
+
+.projector-team-score > span {
+  grid-row: 1 / 3;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(0.85rem, 1.1vw, 1.35rem);
+  font-weight: 950;
+}
+
+.projector-team-score > span svg {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  color: var(--projector-lime);
+}
+
+.projector-team-score > strong {
+  overflow: hidden;
+  font-size: clamp(0.53rem, 0.7vw, 0.85rem);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projector-team-score > b {
+  grid-row: 1 / 3;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1rem, 1.5vw, 1.85rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.projector-team-score > small {
+  color: oklch(0.75 0.03 190);
+  font-size: clamp(0.4rem, 0.48vw, 0.58rem);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.projector-gameplay,
+.projector-reveal,
+.projector-leaderboard {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 1.6%;
+}
+
+.projector-tournament-progress {
+  display: grid;
+  grid-template-columns: auto minmax(10rem, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  font-size: clamp(0.55rem, 0.7vw, 0.85rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.projector-tournament-progress [data-slot="progress"] {
+  height: 0.5rem;
+  background: oklch(0.96 0.03 96 / 12%);
+}
+
+.projector-gameplay-grid,
+.projector-reveal-grid {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 52% minmax(0, 1fr);
+  gap: 2.2%;
+}
+
+.projector-round-image,
+.projector-round-placeholder {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid oklch(0.94 0.04 190 / 24%);
+  border-radius: 1.7rem 1.7rem 0.55rem 1.7rem;
+  background: oklch(0.08 0.035 225);
+  box-shadow: 0 1.2rem 3rem oklch(0.04 0.03 220 / 32%);
+}
+
+.projector-round-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.projector-round-image[data-masked="true"] img {
+  filter: brightness(0);
+}
+
+.projector-round-image > span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  color: var(--projector-lime);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(6rem, 12vw, 14rem);
+  font-weight: 950;
+  text-shadow: 0 0 3rem oklch(0.87 0.18 113 / 55%);
+  transform: translate(-50%, -50%);
+}
+
+.projector-round-placeholder {
+  display: grid;
+  place-items: center;
+  font-size: clamp(7rem, 15vw, 17rem);
+}
+
+.projector-question-panel,
+.projector-reveal-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.projector-question-panel > p,
+.projector-reveal-copy > p {
+  margin: 0;
+  color: var(--projector-lime);
+  font-size: clamp(0.55rem, 0.78vw, 0.95rem);
+  font-weight: 950;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+}
+
+.projector-question-panel h1,
+.projector-reveal-copy h1 {
+  margin: 0.55rem 0 1.1rem;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(2rem, 3.8vw, 4.6rem);
+  font-weight: 950;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.projector-choice-grid {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  list-style: none;
+}
+
+.projector-choice-grid li {
+  display: grid;
+  min-height: clamp(3rem, 5.2vh, 4.5rem);
+  grid-template-columns: 2.4em minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid oklch(0.94 0.04 190 / 20%);
+  border-radius: 0.9rem;
+  background: oklch(0.95 0.03 96 / 10%);
+  font-size: clamp(0.65rem, 0.88vw, 1.05rem);
+  font-weight: 800;
+}
+
+.projector-choice-grid li span {
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 0.55rem;
+  background: var(--projector-coral);
+  font-family: "Fraunces Variable", serif;
+  font-size: 1.2em;
+  font-weight: 950;
+}
+
+.projector-estimate-hint {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0 0.9rem;
+  padding: 1rem;
+  border: 1px solid oklch(0.94 0.04 190 / 20%);
+  border-radius: 1rem;
+  background: oklch(0.95 0.03 96 / 10%);
+}
+
+.projector-estimate-hint > span {
+  grid-row: 1 / 3;
+  font-size: clamp(2rem, 3.2vw, 4rem);
+}
+
+.projector-estimate-hint p,
+.projector-estimate-hint strong {
+  margin: 0;
+}
+
+.projector-estimate-hint p {
+  color: var(--projector-lime);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1rem, 1.5vw, 1.9rem);
+  font-weight: 900;
+}
+
+.projector-estimate-hint strong {
+  color: oklch(0.86 0.03 190);
+  font-size: clamp(0.55rem, 0.72vw, 0.88rem);
+}
+
+.projector-answer-progress {
+  margin-top: 1.2rem;
+}
+
+.projector-answer-progress > div {
+  height: 0.65rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: oklch(0.96 0.03 96 / 12%);
+}
+
+.projector-answer-progress > div span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--projector-coral), var(--projector-lime));
+  transition: width 450ms ease;
+}
+
+.projector-answer-progress > strong {
+  display: block;
+  margin-top: 0.5rem;
+  color: oklch(0.88 0.03 190);
+  font-size: clamp(0.58rem, 0.78vw, 0.95rem);
+}
+
+.projector-buzz-public {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  border: 1px solid oklch(0.94 0.04 190 / 22%);
+  border-radius: 1.4rem;
+  background: oklch(0.95 0.03 96 / 9%);
+  text-align: center;
+}
+
+.projector-buzz-public > span {
+  color: var(--projector-coral);
+  font-size: clamp(0.55rem, 0.75vw, 0.9rem);
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+
+.projector-buzz-public > strong {
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(3.5rem, 7vw, 8rem);
+  font-weight: 950;
+  line-height: 0.9;
+}
+
+.projector-buzz-public[data-active="true"] > strong {
+  color: var(--projector-lime);
+  font-size: clamp(2rem, 4vw, 5rem);
+}
+
+.projector-buzz-public p {
+  margin: 0.5rem 0 0;
+  color: oklch(0.84 0.035 190);
+  font-weight: 800;
+}
+
+.projector-reveal-copy blockquote {
+  margin: 0 0 1.1rem;
+  padding: 0.8rem 1rem;
+  border-left: 0.35rem solid var(--projector-lime);
+  border-radius: 0 0.8rem 0.8rem 0;
+  background: oklch(0.95 0.03 96 / 9%);
+  color: oklch(0.9 0.025 190);
+  font-size: clamp(0.62rem, 0.82vw, 1rem);
+  font-weight: 680;
+  line-height: 1.45;
+}
+
+.projector-round-results {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  list-style: none;
+}
+
+.projector-round-results li {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.7rem minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 0.55rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid oklch(0.94 0.04 190 / 16%);
+  border-radius: 0.75rem;
+  background: oklch(0.96 0.03 96 / 8%);
+}
+
+.projector-round-results li > span {
+  grid-row: 1 / 3;
+  font-family: "Fraunces Variable", serif;
+  font-weight: 950;
+}
+
+.projector-round-results li > strong,
+.projector-round-results li > small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projector-round-results li > strong {
+  font-size: clamp(0.53rem, 0.68vw, 0.82rem);
+}
+
+.projector-round-results li > small {
+  color: oklch(0.73 0.035 190);
+  font-size: clamp(0.4rem, 0.48vw, 0.58rem);
+}
+
+.projector-round-results li > b {
+  grid-row: 1 / 3;
+  color: var(--projector-lime);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(0.85rem, 1vw, 1.2rem);
+}
+
+.projector-leaderboard > header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+}
+
+.projector-trophy {
+  display: grid;
+  width: clamp(3rem, 4.2vw, 5rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 1rem 1rem 1rem 0.3rem;
+  background: var(--projector-lime);
+  box-shadow: 0.35rem 0.4rem 0 var(--projector-coral);
+  color: oklch(0.25 0.07 120);
+  transform: rotate(-4deg);
+}
+
+.projector-trophy svg {
+  width: 52%;
+  height: 52%;
+}
+
+.projector-leaderboard > header p,
+.projector-leaderboard > header h1 {
+  margin: 0;
+}
+
+.projector-leaderboard > header p {
+  color: var(--projector-lime);
+  font-size: clamp(0.5rem, 0.65vw, 0.78rem);
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.projector-leaderboard > header h1 {
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1.5rem, 2.4vw, 3rem);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.projector-leaderboard > header > strong {
+  color: oklch(0.82 0.03 190);
+  font-size: clamp(0.55rem, 0.75vw, 0.9rem);
+}
+
+.projector-player-ranking {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.35rem 0.7rem;
+  list-style: none;
+}
+
+.projector-player-ranking li {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.8rem 2.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.65rem 0.25rem 0.35rem;
+  border: 1px solid oklch(0.75 0.04 195 / 45%);
+  border-radius: 0.72rem;
+  background: oklch(0.97 0.022 96 / 94%);
+  color: var(--projector-ink);
+}
+
+.projector-player-ranking li[data-rank="1"] {
+  border-color: var(--projector-lime);
+  background: linear-gradient(90deg, oklch(0.87 0.18 113 / 35%), transparent), var(--projector-cream);
+}
+
+.projector-player-ranking li > span {
+  display: grid;
+  place-items: center;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(0.65rem, 0.8vw, 1rem);
+  font-weight: 950;
+}
+
+.projector-player-ranking li > span svg {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  color: oklch(0.65 0.16 85);
+}
+
+.projector-player-ranking [data-slot="avatar"] {
+  width: clamp(1.5rem, 1.8vw, 2.2rem);
+  height: clamp(1.5rem, 1.8vw, 2.2rem);
+}
+
+.projector-player-ranking li > div {
+  min-width: 0;
+}
+
+.projector-player-ranking li > div strong,
+.projector-player-ranking li > div small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projector-player-ranking li > div strong {
+  font-size: clamp(0.53rem, 0.66vw, 0.8rem);
+}
+
+.projector-player-ranking li > div small {
+  color: oklch(0.47 0.035 205);
+  font-size: clamp(0.38rem, 0.45vw, 0.55rem);
+  font-weight: 750;
+}
+
+.projector-player-ranking li > b {
+  color: var(--projector-coral);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(0.8rem, 1vw, 1.25rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.projector-final {
+  position: relative;
+  display: grid;
+  height: 100%;
+  grid-template-columns: 42% minmax(0, 1fr);
+  align-items: center;
+  gap: 3.5%;
+}
+
+.projector-poseithon {
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid oklch(0.96 0.04 190 / 22%);
+  border-radius: 50% 50% 1rem 1rem;
+  background: oklch(0.09 0.04 225);
+  box-shadow:
+    0 0 0 0.55rem oklch(0.87 0.18 113 / 10%),
+    0 1.5rem 4rem oklch(0.04 0.03 220 / 38%);
+}
+
+.projector-poseithon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.projector-final-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.projector-final-copy > p,
+.projector-final-copy h1,
+.projector-final-copy > strong {
+  margin: 0;
+}
+
+.projector-final-copy > p:nth-of-type(1) {
+  margin-top: 1rem;
+  color: var(--projector-lime);
+  font-size: clamp(0.55rem, 0.75vw, 0.9rem);
+  font-weight: 950;
+  letter-spacing: 0.18em;
+}
+
+.projector-final-copy h1 {
+  max-width: 12ch;
+  margin: 0.35rem 0 0.6rem;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(3rem, 6vw, 7rem);
+  font-weight: 950;
+  line-height: 0.85;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.projector-final-copy > strong {
+  display: inline-block;
+  padding: 0.35em 0.6em;
+  border-radius: 0.75rem;
+  background: var(--projector-lime);
+  color: oklch(0.24 0.075 120);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1rem, 1.65vw, 2rem);
+}
+
+.projector-final-copy > p:nth-of-type(2) {
+  margin-top: 0.7rem;
+  color: oklch(0.84 0.035 190);
+  font-size: clamp(0.55rem, 0.75vw, 0.9rem);
+  font-weight: 750;
+}
+
+.projector-final-ranking {
+  display: grid;
+  margin: 1.2rem 0 0;
+  padding: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  list-style: none;
+}
+
+.projector-confetti {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: -2%;
+  left: -2%;
+  overflow: hidden;
+  color: var(--projector-lime);
+  font-size: clamp(1rem, 2.5vw, 3rem);
+  letter-spacing: 0.45em;
+  text-align: center;
+  text-shadow: 0 0 1rem var(--projector-coral);
+  animation: projector-confetti-float 2.4s ease-in-out infinite alternate;
+}
+
+.projector-empty-state {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  align-content: center;
+  gap: 1.4rem;
+  text-align: center;
+}
+
+.projector-empty-state svg {
+  width: clamp(4rem, 7vw, 8rem);
+  height: clamp(4rem, 7vw, 8rem);
+  color: var(--projector-lime);
+}
+
+.projector-empty-state h1 {
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(2rem, 4vw, 5rem);
+}
+
+.projector-setup-stage,
+.projector-connection-stage {
+  display: grid;
+  place-items: center;
+}
+
+.projector-setup-card {
+  --card-spacing: clamp(1.2rem, 2vw, 2.2rem);
+  width: min(34rem, 45%);
+  border: 1px solid oklch(0.94 0.04 190 / 72%);
+  background: oklch(0.97 0.022 96 / 97%);
+  box-shadow: 0 1.5rem 5rem oklch(0.04 0.03 220 / 45%);
+  color: var(--projector-ink);
+}
+
+.projector-setup-card [data-slot="card-header"] {
+  justify-items: center;
+  text-align: center;
+}
+
+.projector-setup-card [data-slot="card-title"] {
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(2rem, 3vw, 4rem);
+  font-weight: 950;
+}
+
+.projector-setup-card [data-slot="card-description"] {
+  color: oklch(0.45 0.04 210);
+  font-size: clamp(0.7rem, 0.95vw, 1.2rem);
+}
+
+.projector-setup-icon {
+  display: grid;
+  width: clamp(4rem, 5.5vw, 6.5rem);
+  aspect-ratio: 1;
+  margin-bottom: 0.5rem;
+  place-items: center;
+  border-radius: 1.4rem 1.4rem 1.4rem 0.45rem;
+  background: var(--projector-lime);
+  box-shadow: 0.45rem 0.5rem 0 var(--projector-coral);
+  color: oklch(0.24 0.075 120);
+  transform: rotate(-3deg);
+}
+
+.projector-setup-icon svg {
+  width: 52%;
+  height: 52%;
+}
+
+.projector-setup-card [data-slot="field-label"] {
+  font-size: clamp(0.7rem, 0.85vw, 1.05rem);
+  font-weight: 850;
+}
+
+.projector-setup-card [data-slot="input"] {
+  height: auto;
+  padding: 0.35em 0.5em;
+  border-width: 2px;
+  background: oklch(0.91 0.025 96);
+  color: var(--projector-ink);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(2rem, 3.6vw, 4.5rem);
+  font-weight: 950;
+  letter-spacing: 0.2em;
+  text-align: center;
+  text-indent: 0.2em;
+  text-transform: uppercase;
+}
+
+.projector-setup-card [data-slot="field-description"] {
+  text-align: center;
+}
+
+.projector-setup-card [data-slot="card-footer"] {
+  justify-content: center;
+}
+
+.projector-setup-card [data-slot="button"] {
+  min-height: 3rem;
+  padding-inline: 1.3rem;
+  font-size: clamp(0.72rem, 0.9vw, 1.1rem);
+}
+
+.projector-connection-state {
+  display: grid;
+  width: 60%;
+  place-items: center;
+  text-align: center;
+}
+
+.projector-connection-state > svg {
+  width: clamp(4rem, 7vw, 8rem);
+  height: clamp(4rem, 7vw, 8rem);
+  color: var(--projector-lime);
+  animation: projector-live-pulse 1.4s ease-in-out infinite;
+}
+
+.projector-connection-state h1 {
+  margin: 1.2rem 0 0.4rem;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(2.3rem, 4.5vw, 5.5rem);
+  font-weight: 950;
+}
+
+.projector-connection-state p {
+  margin: 0;
+  color: oklch(0.84 0.035 190);
+  font-size: clamp(0.75rem, 1.1vw, 1.35rem);
+  font-weight: 720;
+}
+
+.projector-sync-warning {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 10;
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid oklch(0.9 0.1 85 / 60%);
+  border-radius: 999px;
+  background: oklch(0.22 0.06 70 / 94%);
+  color: oklch(0.96 0.04 92);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+@keyframes projector-caustics-drift {
+  to { transform: translate3d(5%, 3%, 0) rotate(5deg) scale(1.08); }
+}
+
+@keyframes projector-bubble-rise {
+  0% { opacity: 0; transform: translate3d(0, 0, 0); }
+  12%, 85% { opacity: 0.7; }
+  100% { opacity: 0; transform: translate3d(2rem, -115vh, 0); }
+}
+
+@keyframes projector-live-pulse {
+  50% { opacity: 0.4; transform: scale(0.86); }
+}
+
+@keyframes projector-confetti-float {
+  to { transform: translateY(0.8rem) rotate(1deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projector-caustics,
+  .projector-bubbles i,
+  .projector-live svg,
+  .projector-connection-state > svg,
+  .projector-confetti {
+    animation: none;
+  }
+}

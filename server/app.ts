@@ -4,13 +4,17 @@ import express, { type NextFunction, type Request, type Response } from "express
 import { z } from "zod"
 
 import { GameError, type GameService } from "./game-service.js"
+import { toTvGameView } from "../shared/tv.js"
 
 const createSchema = z.object({
   name: z.string(),
   hostName: z.string(),
   prankPlayerName: z.string().optional(),
 })
-const joinSchema = z.object({ name: z.string() })
+const joinSchema = z.object({
+  identityId: z.string(),
+  nickname: z.string().optional(),
+})
 const hostSchema = z.object({ hostToken: z.string() })
 const playerSchema = z.object({ playerId: z.string(), playerToken: z.string() })
 const renameTeamSchema = playerSchema.extend({ name: z.string() })
@@ -18,6 +22,7 @@ const answerSchema = playerSchema.extend({
   answer: z.string(),
   locked: z.boolean().default(true),
 })
+const buzzResolutionSchema = hostSchema.extend({ correct: z.boolean() })
 
 export function createApp(service: GameService, staticDir?: string) {
   const app = express()
@@ -39,11 +44,20 @@ export function createApp(service: GameService, staticDir?: string) {
 
   app.post("/api/games/:code/join", (request, response) => {
     const body = joinSchema.parse(request.body)
-    response.status(201).json(service.joinGame(request.params.code, body.name))
+    response.status(201).json(service.joinGame(request.params.code, body))
+  })
+
+  app.get("/api/games/:code/identities", (request, response) => {
+    response.json(service.listPlayerIdentities(request.params.code))
   })
 
   app.get("/api/games/:code", (request, response) => {
     response.json(service.getGame(request.params.code))
+  })
+
+  app.get("/api/games/:code/tv", (request, response) => {
+    response.set("Cache-Control", "no-store")
+    response.json(toTvGameView(service.getGame(request.params.code)))
   })
 
   app.post("/api/games/:code/totem", (request, response) => {
@@ -62,6 +76,15 @@ export function createApp(service: GameService, staticDir?: string) {
     ))
   })
 
+  app.post("/api/games/:code/players/:playerId/kick", (request, response) => {
+    const body = hostSchema.parse(request.body)
+    response.json(service.kickPlayer(
+      request.params.code,
+      request.params.playerId,
+      body.hostToken,
+    ))
+  })
+
   app.post("/api/games/:code/answer", (request, response) => {
     const body = answerSchema.parse(request.body)
     response.json(service.submitPlayerAnswer(
@@ -71,6 +94,16 @@ export function createApp(service: GameService, staticDir?: string) {
       body.answer,
       body.locked,
     ))
+  })
+
+  app.post("/api/games/:code/buzz", (request, response) => {
+    const body = playerSchema.parse(request.body)
+    response.json(service.buzzQuestion(request.params.code, body.playerId, body.playerToken))
+  })
+
+  app.post("/api/games/:code/buzz/resolve", (request, response) => {
+    const body = buzzResolutionSchema.parse(request.body)
+    response.json(service.resolveQuestionBuzz(request.params.code, body.hostToken, body.correct))
   })
 
   app.post("/api/games/:code/jokers/fifty-fifty", (request, response) => {
@@ -95,6 +128,11 @@ export function createApp(service: GameService, staticDir?: string) {
   app.post("/api/games/:code/advance", (request, response) => {
     const body = hostSchema.parse(request.body)
     response.json(service.advanceTournament(request.params.code, body.hostToken))
+  })
+
+  app.post("/api/games/:code/skip-challenge", (request, response) => {
+    const body = hostSchema.parse(request.body)
+    response.json(service.skipDemoChallenge(request.params.code, body.hostToken))
   })
 
   app.post("/api/games/:code/bonus", (request, response) => {

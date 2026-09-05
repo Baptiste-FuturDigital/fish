@@ -32,8 +32,10 @@ export function SalmonDemoScreen() {
 
       <div className="salmon-demo-stage-card">
         <WhosThatSalmonStage
-          imageUrl="/hippocampe-cutout.png"
-          imageAlt="L’hippocampe"
+          imageUrl={revealed
+            ? "/game/Who's that salmon/1-reveal-whale.png"
+            : "/game/Who's that salmon/1-guess-whale.png"}
+          imageAlt="Pikachu"
           revealed={revealed}
         />
 
@@ -57,7 +59,7 @@ export function SalmonDemoScreen() {
           ) : (
             <div className="salmon-demo-answer">
               <p>La réponse était…</p>
-              <h2>C’est l’hippocampe !</h2>
+              <h2>C’est Pikachu !</h2>
             </div>
           )}
         </div>

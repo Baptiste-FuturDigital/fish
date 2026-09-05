@@ -13,8 +13,8 @@ describe("quiVeutGagnerDesPoissons", () => {
     expect(quiVeutGagnerDesPoissons.shortTitle).toBe(
       "Qui veut gagner des poissons ?",
     )
-    expect(quiVeutGagnerDesPoissons.presenterImageUrl).toBe(
-      "/jean-pierre-foucault-requin.webp",
+    expect(quiVeutGagnerDesPoissons.introImageUrl).toBe(
+      "/game/Qui veut gagner des poissons/qui-veut-gagner-des-poissons.png",
     )
     expect(quiVeutGagnerDesPoissons.introMusicYoutubeId).toBe("ntFaUwJMhg0")
     expect(quiVeutGagnerDesPoissons.answeringMusicYoutubeId).toBe("236sJVHRh1M")

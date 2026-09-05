@@ -6,6 +6,11 @@ import { aggregateTeamResults, projectRound, scorePlayerRound } from "./tourname
 import { selectBalancedTotem } from "./totem-assignment.js"
 import { findTotem, prankTotem, teamDefinitions, teamIds, totems, type TotemCategory } from "./totems.js"
 import { challenges, findChallenge } from "../shared/challenges/catalog.js"
+import {
+  anonymousPlayerIdentity,
+  findPlayerIdentity,
+  playerIdentities,
+} from "../shared/player-identities.js"
 import type {
   ChallengeId,
   PlayerRoundScoreResult,
@@ -15,6 +20,8 @@ import type {
 import type {
   GameStatus,
   GameView,
+  JoinPlayerInput,
+  PlayerIdentityChoice,
   PlayerSession,
   PlayerView,
   SessionResponse,
@@ -39,6 +46,11 @@ interface GameRow {
   phase_ends_at: string | null
   is_demo: number
   prank_player_name: string | null
+  buzz_player_id: string | null
+  buzz_team_id: string | null
+  buzz_paused_ms: number | null
+  buzz_points: number | null
+  buzz_blocked_team_id: string | null
   host_token_hash: string
   created_at: string
 }
@@ -46,6 +58,7 @@ interface GameRow {
 interface PlayerRow {
   id: string
   name: string
+  identity_id: string | null
   is_host: number
   score: number
   totem_id: number | null
@@ -71,6 +84,7 @@ interface PlayerAnswerRow {
   team_id: string
   answer: string
   locked: number
+  awarded_points: number | null
 }
 
 interface PlayerRoundResultRow extends RoundResultRow {
@@ -225,9 +239,15 @@ export class GameService {
     }
   }
 
-  joinGame(codeInput: string, nameInput: string): SessionResponse {
+  joinGame(codeInput: string, input: JoinPlayerInput | string): SessionResponse {
     const code = codeInput.trim().toUpperCase()
-    const name = cleanText(nameInput, "Le pseudo", 24)
+    const requestedIdentity = typeof input === "string"
+      ? anonymousPlayerIdentity
+      : findPlayerIdentity(input.identityId)
+    if (!requestedIdentity) throw new GameError("Cette identité n'existe pas dans l'aquarium.", 400)
+    const name = requestedIdentity.anonymous
+      ? cleanText(typeof input === "string" ? input : (input.nickname ?? ""), "Le pseudo", 24)
+      : requestedIdentity.displayName
     const game = this.getGameRow(code)
     if (game.status !== "lobby") {
       throw new GameError("Cette partie a déjà quitté le port.", 409)
@@ -245,18 +265,22 @@ export class GameService {
       this.database
         .prepare(
           `INSERT INTO players
-            (id, game_id, name, is_host, score, token_hash, created_at)
-           VALUES (?, ?, ?, 0, 0, ?, ?)`,
+            (id, game_id, name, identity_id, is_host, score, token_hash, created_at)
+           VALUES (?, ?, ?, ?, 0, 0, ?, ?)`,
         )
         .run(
           playerId,
           game.id,
           name,
+          requestedIdentity.id,
           hashToken(playerToken),
           new Date().toISOString(),
         )
     } catch (error) {
       if (error instanceof Error && error.message.includes("UNIQUE")) {
+        if (!requestedIdentity.anonymous) {
+          throw new GameError(`${requestedIdentity.displayName} a déjà rejoint cet aquarium.`, 409)
+        }
         throw new GameError("Ce pseudo nage déjà dans ce banc.", 409)
       }
       throw error
@@ -270,12 +294,27 @@ export class GameService {
     return { game: this.getGame(code), session }
   }
 
+  listPlayerIdentities(codeInput: string): PlayerIdentityChoice[] {
+    const game = this.getGameRow(codeInput.trim().toUpperCase())
+    const occupied = new Set(
+      (this.database
+        .prepare("SELECT identity_id FROM players WHERE game_id = ? AND is_host = 0 AND identity_id IS NOT NULL")
+        .all(game.id) as Array<{ identity_id: string }>)
+        .map((row) => row.identity_id),
+    )
+
+    return playerIdentities.map((identity) => ({
+      ...identity,
+      available: identity.anonymous || !occupied.has(identity.id),
+    }))
+  }
+
   getGame(codeInput: string): GameView {
     let game = this.getGameRow(codeInput.trim().toUpperCase())
     game = this.synchronizeDeadline(game)
     const players = this.database
       .prepare(
-        `SELECT id, name, is_host, score, totem_id
+        `SELECT id, name, identity_id, is_host, score, totem_id
          FROM players WHERE game_id = ? AND is_host = 0 ORDER BY created_at, rowid`,
       )
       .all(game.id) as PlayerRow[]
@@ -294,6 +333,9 @@ export class GameService {
       })(),
       id: player.id,
       name: player.name,
+      identityId: player.identity_id ?? "anonymous",
+      imageUrl: findPlayerIdentity(player.identity_id ?? "anonymous")?.imageUrl
+        ?? anonymousPlayerIdentity.imageUrl,
       isHost: Boolean(player.is_host),
       score: player.score,
     }))
@@ -318,6 +360,7 @@ export class GameService {
       id: game.id,
       code: game.code,
       name: game.name,
+      isDemo: Boolean(game.is_demo),
       status: game.status,
       currentRound: tournament ? tournament.roundIndex + 1 : 0,
       totalRounds: tournament?.roundCount ?? 0,
@@ -385,6 +428,23 @@ export class GameService {
     return this.getGame(game.code)
   }
 
+  kickPlayer(codeInput: string, playerId: string, hostToken: string): GameView {
+    const game = this.assertHost(codeInput, hostToken)
+    if (game.status !== "lobby") {
+      throw new GameError("Les exclusions sont réservées au lobby.", 409)
+    }
+    const player = this.database.prepare(
+      "SELECT id FROM players WHERE game_id = ? AND id = ? AND is_host = 0",
+    ).get(game.id, playerId) as { id: string } | undefined
+    if (!player) {
+      throw new GameError("Ce poisson n'est plus dans le lobby.", 404)
+    }
+
+    this.database.prepare("DELETE FROM players WHERE game_id = ? AND id = ?")
+      .run(game.id, player.id)
+    return this.getGame(game.code)
+  }
+
   startGame(code: string, hostToken: string): GameView {
     const game = this.assertHost(code, hostToken)
     if (game.status !== "lobby") {
@@ -416,6 +476,36 @@ export class GameService {
     return this.advanceTournament(code, hostToken)
   }
 
+  skipDemoChallenge(code: string, hostToken: string): GameView {
+    const game = this.assertHost(code, hostToken)
+    if (!game.is_demo) {
+      throw new GameError("Ce raccourci est réservé à la démo.", 409)
+    }
+    if (game.status !== "running") {
+      throw new GameError("La démo n'est pas en cours.", 409)
+    }
+    if (game.challenge_index >= this.challengeOrder(game).length - 1) {
+      throw new GameError("La dernière épreuve est déjà atteinte.", 409)
+    }
+
+    this.database.prepare(
+      `UPDATE games
+       SET challenge_index = challenge_index + 1,
+           challenge_round = 0,
+           current_round = 0,
+           phase = 'challenge-intro',
+           phase_ends_at = NULL,
+           buzz_player_id = NULL,
+           buzz_team_id = NULL,
+           buzz_paused_ms = NULL,
+           buzz_points = NULL,
+           buzz_blocked_team_id = NULL
+       WHERE id = ?`,
+    ).run(game.id)
+
+    return this.getGame(game.code)
+  }
+
   advanceTournament(code: string, hostToken: string): GameView {
     const game = this.assertHost(code, hostToken)
     if (game.status !== "running") {
@@ -430,7 +520,9 @@ export class GameService {
       if (game.challenge_round < challenge.rounds.length - 1) {
         const nextRound = game.challenge_round + 1
         this.database.prepare(
-          `UPDATE games SET challenge_round = ?, current_round = ?, phase = 'answering', phase_ends_at = ? WHERE id = ?`,
+          `UPDATE games SET challenge_round = ?, current_round = ?, phase = 'answering', phase_ends_at = ?,
+           buzz_player_id = NULL, buzz_team_id = NULL, buzz_paused_ms = NULL,
+           buzz_points = NULL, buzz_blocked_team_id = NULL WHERE id = ?`,
         ).run(
           nextRound,
           nextRound,
@@ -481,6 +573,8 @@ export class GameService {
       if (!Number.isFinite(numeric) || numeric < 0 || numeric > 1_000_000_000) {
         throw new GameError("Entre une estimation valide.", 400)
       }
+    } else if (round.kind === "buzzer") {
+      throw new GameError("Utilise le buzzer de ton banc.", 409)
     } else if (!round.choices.some((choice) => choice.id === answer)) {
       throw new GameError("Choisis une réponse proposée.", 400)
     }
@@ -512,6 +606,79 @@ export class GameService {
       locked ? 1 : 0,
       new Date().toISOString(),
     )
+    return this.getGame(game.code)
+  }
+
+  buzzQuestion(codeInput: string, playerId: string, playerToken: string): GameView {
+    const code = codeInput.trim().toUpperCase()
+    let game = this.synchronizeDeadline(this.getGameRow(code))
+    if (game.status !== "running" || game.phase !== "answering") {
+      throw new GameError("Le buzzer est fermé.", 409)
+    }
+    const challenge = this.currentChallenge(game)
+    const round = challenge.rounds[game.challenge_round]
+    if (challenge.id !== "question-pour-un-poisson" || round.kind !== "buzzer") {
+      throw new GameError("Le buzzer n'est pas disponible pendant cette épreuve.", 409)
+    }
+    if (game.buzz_player_id) throw new GameError("Un autre banc a déjà buzzé.", 409)
+    const player = this.assertPlayer(game.id, playerId, playerToken)
+    const totem = findTotem(player.totem_id)
+    if (!totem) throw new GameError("Révèle d'abord ton animal totem.", 409)
+    const teamId = teamIds[totem.category]
+    if (game.buzz_blocked_team_id === teamId) {
+      throw new GameError("Ton banc est bloqué jusqu'à la tentative d'un autre banc.", 409)
+    }
+    const remainingMs = game.phase_ends_at
+      ? Math.max(0, Date.parse(game.phase_ends_at) - Date.now())
+      : 0
+    if (remainingMs <= 0) throw new GameError("Le temps est écoulé.", 409)
+    const scoring = challenge.scoring
+    const tier = Math.min(3, Math.floor((round.durationSeconds * 1_000 - remainingMs) / 10_000))
+    const points = scoring.kind === "buzzer-countdown" ? scoring.points[tier] ?? 1 : 1
+    this.database.prepare(
+      `UPDATE games SET buzz_player_id = ?, buzz_team_id = ?, buzz_paused_ms = ?,
+       buzz_points = ?, phase_ends_at = NULL WHERE id = ? AND buzz_player_id IS NULL`,
+    ).run(player.id, teamId, remainingMs, points, game.id)
+    game = this.getGameRow(code)
+    return this.getGame(game.code)
+  }
+
+  resolveQuestionBuzz(codeInput: string, hostToken: string, correct: boolean): GameView {
+    const game = this.assertHost(codeInput, hostToken)
+    const challenge = this.currentChallenge(game)
+    const round = challenge.rounds[game.challenge_round]
+    if (
+      game.status !== "running" || game.phase !== "answering" ||
+      challenge.id !== "question-pour-un-poisson" || round.kind !== "buzzer" ||
+      !game.buzz_player_id || !game.buzz_team_id
+    ) {
+      throw new GameError("Aucune réponse de banc à valider.", 409)
+    }
+    if (!correct) {
+      const resumesAt = new Date(Date.now() + Math.max(1, game.buzz_paused_ms ?? 1)).toISOString()
+      this.database.prepare(
+        `UPDATE games SET buzz_blocked_team_id = buzz_team_id, buzz_player_id = NULL,
+         buzz_team_id = NULL, buzz_paused_ms = NULL, buzz_points = NULL,
+         phase_ends_at = ? WHERE id = ?`,
+      ).run(resumesAt, game.id)
+      return this.getGame(game.code)
+    }
+    this.database.prepare(
+      `INSERT INTO player_answers
+        (game_id, challenge_id, round_index, player_id, team_id, answer, locked, awarded_points, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
+       ON CONFLICT(game_id, challenge_id, round_index, player_id)
+       DO UPDATE SET answer = excluded.answer, locked = 1, awarded_points = excluded.awarded_points,
+                     team_id = excluded.team_id, updated_at = excluded.updated_at`,
+    ).run(
+      game.id, challenge.id, game.challenge_round, game.buzz_player_id, game.buzz_team_id,
+      round.correctAnswer, game.buzz_points ?? 1, new Date().toISOString(),
+    )
+    this.database.prepare(
+      `UPDATE games SET buzz_player_id = NULL, buzz_team_id = NULL, buzz_paused_ms = NULL,
+       buzz_points = NULL, phase_ends_at = NULL WHERE id = ?`,
+    ).run(game.id)
+    this.revealRound(this.getGameRow(game.code))
     return this.getGame(game.code)
   }
 
@@ -663,7 +830,7 @@ export class GameService {
     if (!round) throw new GameError("Manche introuvable.", 500)
     const hasRevealedRound = game.phase === "reveal" || game.phase === "leaderboard"
     const answerRows = this.database.prepare(
-      `SELECT pa.player_id, p.name AS player_name, pa.team_id, pa.answer, pa.locked
+      `SELECT pa.player_id, p.name AS player_name, pa.team_id, pa.answer, pa.locked, pa.awarded_points
        FROM player_answers pa
        JOIN players p ON p.id = pa.player_id
        WHERE pa.game_id = ? AND pa.challenge_id = ? AND pa.round_index = ?
@@ -741,6 +908,19 @@ export class GameService {
       keptChoiceIds: JSON.parse(entry.kept_choice_ids) as string[],
       usedAt: entry.used_at,
     }))
+    const buzz = game.buzz_player_id && game.buzz_team_id
+      ? this.database.prepare(
+          `SELECT p.id AS player_id, p.name AS player_name, gt.team_id, gt.name AS team_name
+           FROM players p
+           JOIN game_teams gt ON gt.game_id = p.game_id AND gt.team_id = ?
+           WHERE p.game_id = ? AND p.id = ?`,
+        ).get(game.buzz_team_id, game.id, game.buzz_player_id) as {
+          player_id: string
+          player_name: string
+          team_id: string
+          team_name: string
+        } | undefined
+      : undefined
 
     return {
       challengeIndex: game.challenge_index,
@@ -761,6 +941,7 @@ export class GameService {
         introMusicEndSeconds: challenge.introMusicEndSeconds,
         answeringMusicYoutubeId: challenge.answeringMusicYoutubeId,
         timerEndSoundYoutubeId: challenge.timerEndSoundYoutubeId,
+        introImageUrl: challenge.introImageUrl,
         presenterImageUrl: challenge.presenterImageUrl,
         confirmationLabel: challenge.confirmationLabel,
       },
@@ -771,6 +952,15 @@ export class GameService {
       bonus,
       bonusAvailable: game.phase === "leaderboard" && bonus === null,
       fiftyFiftyJokers,
+      buzz: buzz ? {
+        playerId: buzz.player_id,
+        playerName: buzz.player_name,
+        teamId: buzz.team_id,
+        teamName: buzz.team_name,
+        points: game.buzz_points ?? 1,
+      } : null,
+      blockedTeamId: game.buzz_blocked_team_id,
+      pausedRemainingMs: game.buzz_paused_ms,
     }
   }
 
@@ -810,17 +1000,18 @@ export class GameService {
         this.seedDemoAnswers(fresh, scoringPlayers)
       }
       const answerRows = this.database.prepare(
-        `SELECT pa.player_id, p.name AS player_name, pa.team_id, pa.answer, pa.locked
+        `SELECT pa.player_id, p.name AS player_name, pa.team_id, pa.answer, pa.locked, pa.awarded_points
          FROM player_answers pa
          JOIN players p ON p.id = pa.player_id
          WHERE pa.game_id = ? AND pa.challenge_id = ? AND pa.round_index = ?`,
       ).all(fresh.id, challenge.id, fresh.challenge_round) as PlayerAnswerRow[]
-      const answersByPlayer = new Map(answerRows.map((entry) => [entry.player_id, entry.answer]))
+      const answersByPlayer = new Map(answerRows.map((entry) => [entry.player_id, entry]))
       const submittedAnswers: SubmittedPlayerAnswer[] = scoringPlayers.map((player) => ({
         playerId: player.id,
         playerName: player.name,
         teamId: player.teamId,
-        answer: answersByPlayer.get(player.id) ?? null,
+        answer: answersByPlayer.get(player.id)?.answer ?? null,
+        awardedPoints: answersByPlayer.get(player.id)?.awarded_points ?? undefined,
       }))
       const playerResults = scorePlayerRound(
         challenge,
@@ -881,7 +1072,9 @@ export class GameService {
         }
       }
       this.database.prepare(
-        "UPDATE games SET phase = 'reveal', phase_ends_at = NULL WHERE id = ?",
+        `UPDATE games SET phase = 'reveal', phase_ends_at = NULL, buzz_player_id = NULL,
+         buzz_team_id = NULL, buzz_paused_ms = NULL, buzz_points = NULL,
+         buzz_blocked_team_id = NULL WHERE id = ?`,
       ).run(fresh.id)
     })()
   }
@@ -894,19 +1087,21 @@ export class GameService {
     const round = challenge.rounds[game.challenge_round]
     const insert = this.database.prepare(
       `INSERT OR IGNORE INTO player_answers
-        (game_id, challenge_id, round_index, player_id, team_id, answer, locked, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
+        (game_id, challenge_id, round_index, player_id, team_id, answer, locked, awarded_points, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
     )
     players.forEach((player, index) => {
       let answer: string
       if (round.kind === "number") {
         const multipliers = [1, 0.88, 1.22, 1.65]
         answer = String(Number((round.correctAnswer * multipliers[(index + game.challenge_round) % multipliers.length]).toFixed(3)))
-      } else {
+      } else if (round.kind === "choice") {
         const wrongChoices = round.choices.filter((choice) => choice.id !== round.correctAnswer)
         answer = index === game.challenge_round % players.length || index % 4 === 0
           ? round.correctAnswer
           : wrongChoices[(index + game.challenge_round) % wrongChoices.length].id
+      } else {
+        answer = index === 0 ? round.correctAnswer : ""
       }
       insert.run(
         game.id,
@@ -915,6 +1110,7 @@ export class GameService {
         player.id,
         player.teamId,
         answer,
+        round.kind === "buzzer" && index === 0 ? 2 : null,
         new Date().toISOString(),
       )
     })
@@ -922,7 +1118,9 @@ export class GameService {
 
   private startAnswering(game: GameRow, durationSeconds: number): void {
     this.database.prepare(
-      "UPDATE games SET phase = 'answering', phase_ends_at = ? WHERE id = ?",
+      `UPDATE games SET phase = 'answering', phase_ends_at = ?, buzz_player_id = NULL,
+       buzz_team_id = NULL, buzz_paused_ms = NULL, buzz_points = NULL,
+       buzz_blocked_team_id = NULL WHERE id = ?`,
     ).run(new Date(Date.now() + durationSeconds * 1_000).toISOString(), game.id)
   }
 

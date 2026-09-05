@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import type { GameView, PlayerSession, SessionResponse } from "@shared/game"
 import { gameApi } from "@/api"
+import { isPlayerSessionEjected, joinPathForGame } from "./player-session-membership.js"
 
 const STORAGE_KEY = "fish-tournament-session"
 
@@ -33,6 +34,18 @@ export function useGame() {
     refreshInFlight.current = true
     try {
       const nextGame = await gameApi.get(session.gameCode)
+      if (isPlayerSessionEjected(session, nextGame)) {
+        localStorage.removeItem(STORAGE_KEY)
+        window.history.replaceState(
+          {},
+          "",
+          joinPathForGame(window.location.pathname, session.gameCode),
+        )
+        setSession(null)
+        setGame(null)
+        setError(null)
+        return
+      }
       setGame(nextGame)
       setError(null)
     } catch (caught) {
@@ -104,6 +117,17 @@ export function useGame() {
     return nextGame
   }, [session])
 
+  const kickPlayer = useCallback(async (playerId: string) => {
+    if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
+    const nextGame = await gameApi.kickPlayer(
+      session.gameCode,
+      playerId,
+      session.hostToken,
+    )
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
   const submitAnswer = useCallback(async (answer: string, locked: boolean) => {
     if (!session) throw new Error("Session introuvable.")
     const nextGame = await gameApi.submitAnswer(
@@ -128,6 +152,20 @@ export function useGame() {
     return nextGame
   }, [session])
 
+  const buzz = useCallback(async () => {
+    if (!session) throw new Error("Session introuvable.")
+    const nextGame = await gameApi.buzz(session.gameCode, session.playerId, session.playerToken)
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
+  const resolveBuzz = useCallback(async (correct: boolean) => {
+    if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
+    const nextGame = await gameApi.resolveBuzz(session.gameCode, session.hostToken, correct)
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
   const applyBonus = useCallback(async () => {
     if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
     const nextGame = await gameApi.applyBonus(session.gameCode, session.hostToken)
@@ -135,5 +173,12 @@ export function useGame() {
     return nextGame
   }, [session])
 
-  return { session, game, loading, error, enter, leave, refresh, hostAction, claimTotem, renameTeam, submitAnswer, useFiftyFifty, applyBonus }
+  const skipChallenge = useCallback(async () => {
+    if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
+    const nextGame = await gameApi.skipChallenge(session.gameCode, session.hostToken)
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
+  return { session, game, loading, error, enter, leave, refresh, hostAction, claimTotem, renameTeam, kickPlayer, submitAnswer, useFiftyFifty, buzz, resolveBuzz, applyBonus, skipChallenge }
 }

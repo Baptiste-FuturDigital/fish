@@ -15,6 +15,7 @@ interface RoundBase {
   question: string
   durationSeconds: number
   imageUrl?: string
+  revealImageUrl?: string
   answerLabel: string
   fact: string
   sourceUrl: string
@@ -43,14 +44,22 @@ export interface ChoiceRoundDefinition extends RoundBase {
   maskImage?: boolean
 }
 
+export interface BuzzerRoundDefinition extends RoundBase {
+  kind: "buzzer"
+  hostClues: readonly string[]
+  correctAnswer: string
+}
+
 export type ChallengeRoundDefinition =
   | NumericRoundDefinition
   | ChoiceRoundDefinition
+  | BuzzerRoundDefinition
 
 export type ScoringRule =
   | { kind: "ranked-relative"; maxPoints: number }
   | { kind: "exact"; points: number }
   | { kind: "escalating"; points: readonly number[] }
+  | { kind: "buzzer-countdown"; points: readonly number[] }
 
 export interface ChallengeDefinition {
   id: ChallengeId
@@ -64,6 +73,7 @@ export interface ChallengeDefinition {
   introMusicEndSeconds?: number
   answeringMusicYoutubeId?: string
   timerEndSoundYoutubeId?: string
+  introImageUrl?: string
   presenterImageUrl?: string
   confirmationLabel?: string
   scoring: ScoringRule
@@ -72,7 +82,7 @@ export interface ChallengeDefinition {
 
 export interface PublicRoundView {
   id: string
-  kind: "number" | "choice"
+  kind: "number" | "choice" | "buzzer"
   kicker: string
   question: string
   durationSeconds: number
@@ -81,6 +91,7 @@ export interface PublicRoundView {
   estimateRange?: WeightEstimateRange
   choices?: readonly ChoiceOption[]
   maskImage?: boolean
+  hostClues?: readonly string[]
   correctAnswer?: string | number
   answerLabel?: string
   fact?: string
@@ -94,6 +105,7 @@ export interface SubmittedTeamAnswer {
 export interface SubmittedPlayerAnswer extends SubmittedTeamAnswer {
   playerId: string
   playerName: string
+  awardedPoints?: number
 }
 
 export interface RoundScoreResult {

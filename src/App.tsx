@@ -15,7 +15,6 @@ import type { GameView, PlayerSession } from "@shared/game"
 import { gameApi } from "@/api"
 import { useGame } from "@/hooks/use-game"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { BackgroundMusic } from "@/components/background-music"
@@ -24,10 +23,14 @@ import { ChallengeScreen } from "@/components/challenge-screen"
 import { FinalReveal } from "@/components/final-reveal"
 import { HostSessionControls } from "@/components/host-session-controls"
 import { LeaderboardScreen } from "@/components/leaderboard-screen"
+import { PlayerList } from "@/components/player-list"
+import { PlayerIdentityPicker } from "@/components/player-identity-picker"
 import { QuestionTimerAudio } from "@/components/question-timer-audio"
+import { SalmonRoundAudio } from "@/components/salmon-round-audio"
 import { SalmonDemoScreen } from "@/components/salmon-demo-screen"
 import { TeamBoard } from "@/components/team-board"
-import { TotemScan } from "@/components/totem-scan"
+import { TotemScan, type PlayerReveal } from "@/components/totem-scan"
+import { ProjectorLaunchButton } from "@/projector/projector-launch-button"
 import {
   Card,
   CardAction,
@@ -78,7 +81,7 @@ function Brand() {
           <p className="brand-kicker">L'AQUARIUM EN FOLIE</p>
           <p className="font-heading text-2xl leading-none font-black">Fish Tournament</p>
           <p className="mt-1 max-w-xs text-sm leading-snug text-muted-foreground">
-            4 bancs de poissons vont s'affronter à travers quatre épreuves consécutives.
+            4 bancs de poissons s'affrontent à travers quatre épreuves consécutives légendaires.
           </p>
         </div>
       </div>
@@ -94,12 +97,13 @@ function Brand() {
 
 function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof gameApi.create>>) => void }) {
   const initialCode = new URLSearchParams(window.location.search).get("code") ?? ""
-  const [mode, setMode] = useState<HomeMode>("choice")
+  const [mode, setMode] = useState<HomeMode>(initialCode ? "join" : "choice")
   const [gameName, setGameName] = useState("L'aquarium de ce soir")
   const [hostName, setHostName] = useState("")
   const [prankPlayerName, setPrankPlayerName] = useState("")
   const [code, setCode] = useState(initialCode.toUpperCase())
-  const [playerName, setPlayerName] = useState("")
+  const [playerIdentityId, setPlayerIdentityId] = useState("")
+  const [playerNickname, setPlayerNickname] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const autoDemo = useRef(new URLSearchParams(window.location.search).get("demo") === "1")
@@ -145,7 +149,10 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
     setBusy(true)
     setError(null)
     try {
-      onEnter(await gameApi.join(code, playerName))
+      onEnter(await gameApi.join(code, {
+        identityId: playerIdentityId,
+        nickname: playerIdentityId === "anonymous" ? playerNickname : undefined,
+      }))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Plongée impossible.")
     } finally {
@@ -249,24 +256,44 @@ function HomeScreen({ onEnter }: { onEnter: (response: Awaited<ReturnType<typeof
                   <FieldLabel htmlFor="game-code">Code de partie</FieldLabel>
                   <Input id="game-code" className="uppercase" value={code} minLength={4} maxLength={4} onChange={(event) => setCode(event.target.value.toUpperCase())} autoComplete="off" inputMode="text" />
                 </Field>
-                <Field>
-                  <FieldLabel htmlFor="player-name">Ton pseudo</FieldLabel>
-                  <Input id="player-name" value={playerName} maxLength={24} onChange={(event) => setPlayerName(event.target.value)} autoComplete="nickname" autoFocus />
-                </Field>
+                <PlayerIdentityPicker
+                  code={code}
+                  identityId={playerIdentityId}
+                  nickname={playerNickname}
+                  onIdentityChange={(nextIdentityId) => {
+                    setPlayerIdentityId(nextIdentityId)
+                    if (nextIdentityId !== "anonymous") setPlayerNickname("")
+                  }}
+                  onNicknameChange={setPlayerNickname}
+                />
                 {error && <FieldError>{error}</FieldError>}
               </FieldGroup>
             </form>
           </CardContent>
           <CardFooter className="gap-2">
             <Button variant="ghost" onClick={() => setMode("choice")}>Retour</Button>
-            <Button form="join-game" type="submit" className="ml-auto" disabled={busy}>
+            <Button
+              form="join-game"
+              type="submit"
+              className="ml-auto"
+              disabled={busy || !playerIdentityId || (playerIdentityId === "anonymous" && !playerNickname.trim())}
+            >
               {busy ? <LoaderCircle data-icon="inline-start" className="animate-spin" /> : <ArrowRight data-icon="inline-start" />}
               Plonger dans la partie
             </Button>
           </CardFooter>
         </Card>
       )}
-      <p className="mt-auto pt-8 text-center text-xs text-muted-foreground">Fabriqué dans les profondeurs · 🫧</p>
+      <p className="mt-auto pt-8 text-center text-xs text-muted-foreground">
+        <a
+          className="rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          href="/prank/footer.png"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Fabriqué dans les profondeurs · 🫧
+        </a>
+      </p>
     </>
   )
 }
@@ -289,34 +316,25 @@ function GameHeader({ game }: { game: GameView }) {
   )
 }
 
-function PlayerList({ game, session }: { game: GameView; session: PlayerSession }) {
-  return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-      {game.players.map((player, index) => (
-        <div className="player-chip" key={player.id}>
-          <Avatar size="sm">
-            {player.totem && <AvatarImage src={player.totem.imageUrl} alt={player.totem.name} />}
-            <AvatarFallback>{["🐟", "🐡", "🦐", "🐙"][index % 4]}</AvatarFallback>
-          </Avatar>
-          <span className="min-w-0 truncate font-semibold">{player.name}</span>
-          {player.isHost && <span title="Capitaine">⚓</span>}
-          {player.id === session.playerId && <span className="sr-only">(toi)</span>}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam }: { game: GameView; session: PlayerSession; onStart: () => Promise<void>; onClaimTotem: () => Promise<GameView>; onRenameTeam: (teamId: string, name: string) => Promise<GameView> }) {
+function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam, onKickPlayer }: { game: GameView; session: PlayerSession; onStart: () => Promise<void>; onClaimTotem: () => Promise<GameView>; onRenameTeam: (teamId: string, name: string) => Promise<GameView>; onKickPlayer: (playerId: string) => Promise<GameView> }) {
   const [busy, setBusy] = useState(false)
   const isHost = Boolean(session.hostToken)
   const currentPlayer = game.players.find((player) => player.id === session.playerId)
+  const currentTeam = game.teams.find((team) => team.id === currentPlayer?.teamId)
   const unassignedPlayers = game.players.filter((player) => !player.totem)
+
+  function revealFor(gameState: GameView): PlayerReveal | null {
+    const player = gameState.players.find((candidate) => candidate.id === session.playerId)
+    if (!player?.totem || !player.teamId) return null
+    const team = gameState.teams.find((candidate) => candidate.id === player.teamId)
+    if (!team) return null
+    return { name: player.name, imageUrl: player.imageUrl ?? player.totem.imageUrl, teamName: team.name }
+  }
 
   async function claimCurrentTotem() {
     const nextGame = await onClaimTotem()
-    const assigned = nextGame.players.find((player) => player.id === session.playerId)?.totem
-    if (!assigned) throw new Error("Animal totem introuvable.")
+    const assigned = revealFor(nextGame)
+    if (!assigned) throw new Error("Banc introuvable.")
     return assigned
   }
 
@@ -344,13 +362,18 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam }: { g
     <>
       <GameHeader game={game} />
       {isHost ? (
-        <Alert className="mb-4">
+        <Alert className="host-orchestrator-card mb-4">
           <Anchor />
           <AlertTitle>Maître du jeu · hors compétition</AlertTitle>
           <AlertDescription>Tu gardes le rythme et les commandes ; seuls les invités rejoignent les bancs.</AlertDescription>
         </Alert>
       ) : (
-        <TotemScan totem={currentPlayer?.totem ?? null} onClaim={claimCurrentTotem} />
+        <TotemScan
+          identity={currentPlayer?.totem && currentTeam
+            ? { name: currentPlayer.name, imageUrl: currentPlayer.imageUrl ?? currentPlayer.totem.imageUrl, teamName: currentTeam.name }
+            : null}
+          onClaim={claimCurrentTotem}
+        />
       )}
       <TeamBoard game={game} session={session} onRename={onRenameTeam} />
       <Card className="mb-4">
@@ -361,9 +384,12 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam }: { g
         </CardHeader>
         <CardContent className="flex flex-col items-center gap-3 py-4">
           <p data-testid="game-code" className="game-code">{game.code}</p>
-          <Button variant="secondary" onClick={copyCode}>
-            <Copy data-icon="inline-start" /> Copier le code
-          </Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button variant="secondary" onClick={copyCode}>
+              <Copy data-icon="inline-start" /> Copier le code
+            </Button>
+            {isHost ? <ProjectorLaunchButton code={game.code} /> : null}
+          </div>
         </CardContent>
       </Card>
 
@@ -372,7 +398,7 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam }: { g
           <CardTitle>{game.players.length} {game.players.length === 1 ? "poisson à bord" : "poissons à bord"}</CardTitle>
           <CardDescription>La liste se met à jour automatiquement.</CardDescription>
         </CardHeader>
-        <CardContent><PlayerList game={game} session={session} /></CardContent>
+        <CardContent><PlayerList game={game} session={session} onKick={onKickPlayer} /></CardContent>
       </Card>
 
       <div className="mt-auto pt-3">
@@ -399,8 +425,9 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam }: { g
   )
 }
 
-function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty, onBonus }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView>; onUseFiftyFifty: () => Promise<GameView>; onBonus: () => Promise<GameView> }) {
-  const questionAudio = game.tournament ? (
+function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty, onBuzz, onResolveBuzz, onBonus }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView>; onUseFiftyFifty: () => Promise<GameView>; onBuzz: () => Promise<GameView>; onResolveBuzz: (correct: boolean) => Promise<GameView>; onBonus: () => Promise<GameView> }) {
+  const isSalmon = game.tournament?.challenge.id === "whos-dat-salmon"
+  const questionAudio = game.tournament && game.tournament.challenge.id !== "question-pour-un-poisson" && !isSalmon ? (
     <QuestionTimerAudio
       enabled={isHostAudioEnabled(session)}
       phase={game.tournament.phase}
@@ -410,10 +437,20 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFi
       endVideoId={game.tournament.challenge.timerEndSoundYoutubeId}
     />
   ) : null
+  const salmonAudio = game.tournament && isSalmon ? (
+    <SalmonRoundAudio
+      enabled={isHostAudioEnabled(session) && game.tournament.phase !== "challenge-intro"}
+      phase={game.tournament.phase}
+      roundId={game.tournament.round.id}
+      backgroundVideoId={game.tournament.challenge.answeringMusicYoutubeId}
+      cueVideoId={game.tournament.challenge.introMusicYoutubeId}
+    />
+  ) : null
   if (game.tournament?.phase === "leaderboard") {
     return (
       <>
         {questionAudio}
+        {salmonAudio}
         <GameHeader game={game} />
         <LeaderboardScreen game={game} session={session} onAdvance={onAdvance} onFinish={onFinish} onBonus={onBonus} />
       </>
@@ -422,6 +459,7 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFi
   return (
     <>
       {questionAudio}
+      {salmonAudio}
       <GameHeader game={game} />
       <ChallengeScreen
         key={`${game.tournament?.challenge.id}-${game.tournament?.round.id}-${game.tournament?.phase}`}
@@ -431,6 +469,8 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFi
         onFinish={onFinish}
         onSubmit={onSubmit}
         onUseFiftyFifty={onUseFiftyFifty}
+        onBuzz={onBuzz}
+        onResolveBuzz={onResolveBuzz}
       />
     </>
   )
@@ -453,17 +493,17 @@ function LoadingScreen() {
 }
 
 export default function App() {
-  const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, submitAnswer, useFiftyFifty, applyBonus } = useGame()
+  const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, kickPlayer, submitAnswer, useFiftyFifty, buzz, resolveBuzz, applyBonus, skipChallenge } = useGame()
   const isSalmonDemo = new URLSearchParams(window.location.search).get("salmon-demo") === "1"
   const audioEnabled = isSalmonDemo || (session ? isHostAudioEnabled(session) : false)
   const screen = useMemo(() => {
     if (isSalmonDemo) return <SalmonDemoScreen />
     if (!session) return <HomeScreen onEnter={enter} />
     if (loading || !game) return <LoadingScreen />
-    if (game.status === "lobby") return <LobbyScreen game={game} session={session} onStart={() => hostAction("start").then(() => undefined)} onClaimTotem={claimTotem} onRenameTeam={renameTeam} />
-    if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} onUseFiftyFifty={useFiftyFifty} onBonus={applyBonus} />
+    if (game.status === "lobby") return <LobbyScreen game={game} session={session} onStart={() => hostAction("start").then(() => undefined)} onClaimTotem={claimTotem} onRenameTeam={renameTeam} onKickPlayer={kickPlayer} />
+    if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} onUseFiftyFifty={useFiftyFifty} onBuzz={buzz} onResolveBuzz={resolveBuzz} onBonus={applyBonus} />
     return <EndScreen game={game} session={session} onLeave={leave} />
-  }, [applyBonus, claimTotem, enter, game, hostAction, isSalmonDemo, leave, loading, renameTeam, session, submitAnswer, useFiftyFifty])
+  }, [applyBonus, buzz, claimTotem, enter, game, hostAction, isSalmonDemo, kickPlayer, leave, loading, renameTeam, resolveBuzz, session, submitAnswer, useFiftyFifty])
 
   return (
     <OceanShell>
@@ -477,8 +517,14 @@ export default function App() {
       {session?.hostToken && game && game.status !== "finished" ? (
         <HostSessionControls
           status={game.status}
+          isDemo={game.isDemo}
+          canSkipChallenge={Boolean(
+            game.tournament &&
+            game.tournament.challengeIndex < game.tournament.challengeCount - 1
+          )}
           onFinish={() => hostAction("finish")}
           onLeave={leave}
+          onSkipChallenge={skipChallenge}
         />
       ) : null}
       {screen}

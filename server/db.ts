@@ -28,6 +28,11 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       phase_ends_at TEXT,
       is_demo INTEGER NOT NULL DEFAULT 0,
       prank_player_name TEXT,
+      buzz_player_id TEXT,
+      buzz_team_id TEXT,
+      buzz_paused_ms INTEGER,
+      buzz_points INTEGER,
+      buzz_blocked_team_id TEXT,
       host_token_hash TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
@@ -36,6 +41,7 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       id TEXT PRIMARY KEY,
       game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
       name TEXT NOT NULL COLLATE NOCASE,
+      identity_id TEXT,
       is_host INTEGER NOT NULL DEFAULT 0,
       score INTEGER NOT NULL DEFAULT 0,
       totem_id INTEGER CHECK (totem_id BETWEEN 1 AND 20),
@@ -60,6 +66,7 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       round_index INTEGER NOT NULL,
       team_id TEXT NOT NULL,
       answer TEXT NOT NULL,
+      awarded_points INTEGER,
       locked INTEGER NOT NULL DEFAULT 0,
       updated_by TEXT NOT NULL,
       updated_at TEXT NOT NULL,
@@ -142,12 +149,29 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
   addGameColumn("phase_ends_at", "TEXT")
   addGameColumn("is_demo", "INTEGER NOT NULL DEFAULT 0")
   addGameColumn("prank_player_name", "TEXT")
+  addGameColumn("buzz_player_id", "TEXT")
+  addGameColumn("buzz_team_id", "TEXT")
+  addGameColumn("buzz_paused_ms", "INTEGER")
+  addGameColumn("buzz_points", "INTEGER")
+  addGameColumn("buzz_blocked_team_id", "TEXT")
 
   const playerColumns = database.prepare("PRAGMA table_info(players)").all() as Array<{ name: string }>
   if (!playerColumns.some((column) => column.name === "totem_id")) {
     database.exec("ALTER TABLE players ADD COLUMN totem_id INTEGER CHECK (totem_id BETWEEN 1 AND 20)")
   }
+  if (!playerColumns.some((column) => column.name === "identity_id")) {
+    database.exec("ALTER TABLE players ADD COLUMN identity_id TEXT")
+  }
+  const playerAnswerColumns = database.prepare("PRAGMA table_info(player_answers)").all() as Array<{ name: string }>
+  if (!playerAnswerColumns.some((column) => column.name === "awarded_points")) {
+    database.exec("ALTER TABLE player_answers ADD COLUMN awarded_points INTEGER")
+  }
   database.exec("CREATE UNIQUE INDEX IF NOT EXISTS players_game_totem_unique ON players(game_id, totem_id)")
+  database.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS players_game_named_identity_unique
+    ON players(game_id, identity_id)
+    WHERE identity_id IS NOT NULL AND identity_id <> 'anonymous'
+  `)
   database.exec(`
     INSERT OR IGNORE INTO game_teams (game_id, team_id, category, name, score)
       SELECT id, 'abyssaux', 'ugly', 'Les Abyssaux', 0 FROM games;

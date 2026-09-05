@@ -64,7 +64,7 @@ export function TeamBoard({ game, session, onRename }: TeamBoardProps) {
                   {members.length > 0 ? members.map((player) => (
                     <div className="flex min-w-0 items-center gap-2" key={player.id}>
                       <Avatar size="sm">
-                        {player.totem ? <AvatarImage src={player.totem.imageUrl} alt={player.totem.name} /> : null}
+                        <AvatarImage src={player.imageUrl ?? player.totem?.imageUrl} alt={player.name} />
                         <AvatarFallback>🐟</AvatarFallback>
                       </Avatar>
                       <span className="truncate text-xs font-bold">{player.name}</span>

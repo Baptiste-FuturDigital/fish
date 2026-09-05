@@ -44,6 +44,7 @@ const game: GameView = {
   id: "game-1",
   code: "FISH",
   name: "Fish Tournament",
+  isDemo: false,
   status: "running",
   currentRound: 2,
   totalRounds: 4,

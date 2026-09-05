@@ -14,6 +14,7 @@ const game = {
   id: "game-1",
   code: "FISH",
   name: "Aquarium",
+  isDemo: false,
   status: "finished",
   currentRound: 0,
   totalRounds: 1,

@@ -90,7 +90,7 @@ export function LeaderboardScreen({
             Découvrir l'épreuve suivante
           </Button>
           <Button
-            className="leaderboard-finish-action"
+            className="leaderboard-finish-action finish-tournament-button"
             size="lg"
             variant="outline"
             onClick={() => void run("finish")}

@@ -30,6 +30,7 @@ interface ChallengeAudioSourceOptions {
   startSeconds?: number
   endSeconds?: number
   origin: string
+  loop?: boolean
 }
 
 interface HostAudioSession {
@@ -45,6 +46,7 @@ export function buildChallengeAudioSource({
   startSeconds,
   endSeconds,
   origin,
+  loop = false,
 }: ChallengeAudioSourceOptions) {
   const parameters = new URLSearchParams({
     autoplay: "0",
@@ -59,12 +61,59 @@ export function buildChallengeAudioSource({
 
   if (startSeconds !== undefined) parameters.set("start", String(startSeconds))
   if (endSeconds !== undefined) parameters.set("end", String(endSeconds))
+  if (loop) {
+    parameters.set("loop", "1")
+    parameters.set("playlist", videoId)
+  }
 
   return `${YOUTUBE_ORIGIN}/embed/${videoId}?${parameters.toString()}`
 }
 
 function setAmbientSuspended(target: EventTarget, suspended: boolean) {
   target.dispatchEvent(new CustomEvent<boolean>(AMBIENT_EVENT, { detail: suspended }))
+}
+
+interface SalmonRoundAudioSessionOptions {
+  cueDurationMs: number
+  sendBackgroundCommand: (command: QuestionAudioCommand) => void
+  sendCueCommand: (command: QuestionAudioCommand) => void
+  target?: EventTarget
+}
+
+export function beginSalmonRoundAudioSession({
+  cueDurationMs,
+  sendBackgroundCommand,
+  sendCueCommand,
+  target = window,
+}: SalmonRoundAudioSessionOptions) {
+  let stopped = false
+  let cueTimer: ReturnType<typeof setTimeout> | undefined
+
+  setAmbientSuspended(target, true)
+  sendBackgroundCommand({ name: "unMute", args: [] })
+  sendBackgroundCommand({ name: "playVideo", args: [] })
+
+  return {
+    playCue() {
+      if (stopped) return
+      if (cueTimer !== undefined) clearTimeout(cueTimer)
+      sendCueCommand({ name: "seekTo", args: [0, true] })
+      sendCueCommand({ name: "unMute", args: [] })
+      sendCueCommand({ name: "playVideo", args: [] })
+      cueTimer = setTimeout(() => {
+        sendCueCommand({ name: "pauseVideo", args: [] })
+        cueTimer = undefined
+      }, cueDurationMs)
+    },
+    stop() {
+      if (stopped) return
+      stopped = true
+      if (cueTimer !== undefined) clearTimeout(cueTimer)
+      sendCueCommand({ name: "pauseVideo", args: [] })
+      sendBackgroundCommand({ name: "pauseVideo", args: [] })
+      setAmbientSuspended(target, false)
+    },
+  }
 }
 
 interface ChallengeAudioSequenceOptions {

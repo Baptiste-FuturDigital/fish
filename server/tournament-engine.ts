@@ -18,14 +18,17 @@ export function projectRound(
     kicker: round.kicker,
     question: round.question,
     durationSeconds: round.durationSeconds,
-    imageUrl: round.imageUrl,
+    imageUrl: revealed ? round.revealImageUrl ?? round.imageUrl : round.imageUrl,
   }
   if (round.kind === "number") {
     base.unit = round.unit
     base.estimateRange = round.estimateRange
-  } else {
+  } else if (round.kind === "choice") {
     base.choices = round.choices
     base.maskImage = round.maskImage
+  } else {
+    base.hostClues = round.hostClues
+    base.answerLabel = round.answerLabel
   }
   if (revealed) {
     base.correctAnswer = round.correctAnswer
@@ -92,6 +95,22 @@ export function scorePlayerRound(
   roundIndex: number,
   answers: readonly SubmittedPlayerAnswer[],
 ): PlayerRoundScoreResult[] {
+  const round = challenge.rounds[roundIndex]
+  if (!round) throw new Error("Manche introuvable.")
+  if (round.kind === "buzzer") {
+    return answers.map((entry) => {
+      const isCorrect = entry.answer === round.correctAnswer
+      return {
+        playerId: entry.playerId,
+        playerName: entry.playerName,
+        teamId: entry.teamId,
+        answer: entry.answer,
+        points: isCorrect ? entry.awardedPoints ?? 0 : 0,
+        isCorrect,
+        distance: null,
+      }
+    })
+  }
   const scored = scoreRound(
     challenge,
     roundIndex,
@@ -144,6 +163,20 @@ export function aggregateTeamResults(
         answer: closestByTeam.get(teamId)?.answer ?? null,
       })),
     )
+  }
+
+  if (challenge.id === "whos-dat-salmon") {
+    return participatingTeamIds.map((teamId) => {
+      const teamPlayers = playerResults.filter((result) => result.teamId === teamId)
+      const correctPlayers = teamPlayers.filter((result) => result.isCorrect)
+      return {
+        teamId,
+        answer: correctPlayers[0]?.answer ?? teamPlayers[0]?.answer ?? null,
+        points: correctPlayers.reduce((total, result) => total + result.points, 0),
+        isCorrect: correctPlayers.length > 0,
+        distance: null,
+      }
+    })
   }
 
   return participatingTeamIds.map((teamId) => {

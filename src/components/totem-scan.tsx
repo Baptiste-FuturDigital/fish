@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Camera, LoaderCircle, ScanFace, Sparkles } from "lucide-react"
 
-import type { TotemView } from "@shared/game"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,8 +12,14 @@ import "./totem-scan.css"
 type ScanPhase = "idle" | "revealed" | "scanning" | "materializing"
 
 interface TotemScanProps {
-  totem: TotemView | null
-  onClaim: () => Promise<TotemView>
+  identity: PlayerReveal | null
+  onClaim: () => Promise<PlayerReveal>
+}
+
+export interface PlayerReveal {
+  name: string
+  imageUrl: string
+  teamName: string
 }
 
 const SCAN_DURATION_MS = 10_000
@@ -24,20 +29,20 @@ function wait(durationMs: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, durationMs))
 }
 
-export function TotemScan({ totem, onClaim }: TotemScanProps) {
-  const [phase, setPhase] = useState<ScanPhase>(totem ? "revealed" : "idle")
-  const [revealedTotem, setRevealedTotem] = useState<TotemView | null>(totem)
+export function TotemScan({ identity, onClaim }: TotemScanProps) {
+  const [phase, setPhase] = useState<ScanPhase>(identity ? "revealed" : "idle")
+  const [revealedIdentity, setRevealedIdentity] = useState<PlayerReveal | null>(identity)
   const [hasCamera, setHasCamera] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
   useEffect(() => {
-    if (totem && phase === "idle") {
-      setRevealedTotem(totem)
+    if (identity && phase === "idle") {
+      setRevealedIdentity(identity)
       setPhase("revealed")
     }
-  }, [phase, totem])
+  }, [identity, phase])
 
   useEffect(() => {
     const stream = streamRef.current
@@ -75,9 +80,9 @@ export function TotemScan({ totem, onClaim }: TotemScanProps) {
 
     try {
       await wait(SCAN_DURATION_MS)
-      const assignedTotem = await onClaim()
+      const assignedIdentity = await onClaim()
       stopCamera()
-      setRevealedTotem(assignedTotem)
+      setRevealedIdentity(assignedIdentity)
       setPhase("materializing")
       await wait(MATERIALIZATION_DURATION_MS)
       setPhase("revealed")
@@ -88,41 +93,43 @@ export function TotemScan({ totem, onClaim }: TotemScanProps) {
     }
   }
 
-  if (phase === "revealed" && revealedTotem) {
+  if (phase === "revealed" && revealedIdentity) {
     return (
       <Card className="mb-4 overflow-hidden">
         <div className="totem-reveal-image-wrap">
           <img
             data-testid="totem-reveal-image"
-            src={revealedTotem.imageUrl}
-            alt={revealedTotem.name}
+            src={revealedIdentity.imageUrl}
+            alt={revealedIdentity.name}
             className="size-full object-cover"
           />
         </div>
         <CardHeader className="text-center">
-          <CardDescription>Votre animal totem est…</CardDescription>
-          <CardTitle className="font-heading text-3xl font-black capitalize">{revealedTotem.name}</CardTitle>
-          <Badge variant="secondary" className="mx-auto">{revealedTotem.teamName}</Badge>
+          <CardDescription>Identité confirmée</CardDescription>
+          <CardTitle className="font-heading text-3xl font-black capitalize">{revealedIdentity.name}</CardTitle>
+          <Badge variant="secondary" className="mx-auto">{revealedIdentity.teamName}</Badge>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-sm leading-relaxed text-muted-foreground">{revealedTotem.fact}</p>
+          <p className="text-center text-sm leading-relaxed text-muted-foreground">
+            Ton banc est formé. Retrouve tes partenaires dans la salle.
+          </p>
         </CardContent>
       </Card>
     )
   }
 
-  if (phase === "materializing" && revealedTotem) {
+  if (phase === "materializing" && revealedIdentity) {
     return (
       <Card className="totem-materializing-card mb-4 overflow-hidden">
         <div className="totem-materializer" data-testid="totem-materializer">
           <img
             data-testid="totem-materializing-image"
-            src={revealedTotem.imageUrl}
+            src={revealedIdentity.imageUrl}
             alt=""
             aria-hidden="true"
             className="totem-materializing-image"
           />
-          <TotemPixelation imageUrl={revealedTotem.imageUrl} />
+          <TotemPixelation imageUrl={revealedIdentity.imageUrl} />
           <div className="totem-pixel-grid" data-testid="totem-pixel-grid" aria-hidden="true" />
 
           <div
@@ -146,16 +153,16 @@ export function TotemScan({ totem, onClaim }: TotemScanProps) {
             <div className="totem-materializing-scanline" />
 
             <div className="totem-analysis-data totem-analysis-data-bottom">
-              <span>MATRICE TOTÉMIQUE</span>
-              <strong>MATÉRIALISATION…</strong>
-              <code>ADN · ÉCAILLES · BRANCHIES</code>
+              <span>MATRICE BIOMARINE</span>
+              <strong>IDENTIFICATION…</strong>
+              <code>VISAGE · PROFIL · BANC</code>
             </div>
 
             <div className="totem-materializing-progress"><span /></div>
           </div>
         </div>
         <p className="sr-only" role="status" aria-live="polite">
-          Totem détecté. Matérialisation en cours.
+          Identité détectée. Matérialisation en cours.
         </p>
       </Card>
     )
@@ -165,7 +172,7 @@ export function TotemScan({ totem, onClaim }: TotemScanProps) {
     <Card className="mb-4 overflow-hidden">
       <CardHeader className="text-center">
         <CardDescription>Attribution des équipes</CardDescription>
-        <CardTitle className="font-heading text-3xl font-black">Trouve ton animal totem</CardTitle>
+        <CardTitle className="font-heading text-3xl font-black">Découvre ton banc</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {phase === "scanning" ? (

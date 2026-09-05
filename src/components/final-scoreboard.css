@@ -285,6 +285,54 @@
   text-transform: uppercase;
 }
 
+.final-ranking-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.28rem;
+  margin-bottom: 0.75rem;
+  padding: 0.25rem;
+  border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+  border-radius: 0.85rem;
+  background: color-mix(in oklab, var(--muted) 88%, transparent);
+}
+
+.final-ranking-switch button {
+  display: inline-flex;
+  min-height: 2.45rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  border: 0;
+  border-radius: 0.62rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.final-ranking-switch button svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.final-ranking-switch button[aria-selected="true"] {
+  background: var(--card);
+  color: oklch(0.25 0.055 205);
+  box-shadow: 0 0.22rem 0.7rem oklch(0.12 0.04 215 / 15%);
+}
+
+.final-ranking-switch button:active {
+  transform: scale(0.98);
+}
+
+.final-ranking-switch button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 .final-ranking ol {
   display: flex;
   flex-direction: column;
@@ -317,6 +365,88 @@
   background:
     linear-gradient(100deg, oklch(0.96 0.105 95), oklch(0.99 0.035 93));
   box-shadow: inset 0.22rem 0 0 oklch(0.77 0.16 76);
+}
+
+.final-player-ranking-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem 2.25rem minmax(0, 1fr) auto;
+  min-height: 3.6rem;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.52rem 0.65rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--border) 74%, transparent);
+  border-radius: 0.7rem;
+  background: color-mix(in oklab, var(--muted) 88%, white);
+  content-visibility: auto;
+  animation: final-player-row-arrival 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.final-player-ranking-row[data-rank="1"] {
+  border-color: oklch(0.77 0.14 87 / 66%);
+  background:
+    radial-gradient(circle at 92% 0%, oklch(0.88 0.16 99 / 36%), transparent 45%),
+    linear-gradient(100deg, oklch(0.96 0.105 95), oklch(0.99 0.035 93));
+  box-shadow:
+    inset 0.22rem 0 0 oklch(0.77 0.16 76),
+    0 0.45rem 1.1rem oklch(0.51 0.11 84 / 14%);
+}
+
+.final-player-ranking-row[data-last="true"] {
+  background:
+    linear-gradient(100deg, oklch(0.9 0.055 67 / 42%), transparent 60%),
+    color-mix(in oklab, var(--muted) 88%, white);
+}
+
+.final-player-ranking-row[data-last="true"] .final-rank-number {
+  background: oklch(0.82 0.09 63 / 60%);
+}
+
+.final-last-place {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.final-player-avatar {
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  border: 2px solid var(--card);
+  box-shadow: 0 0.2rem 0.55rem oklch(0.13 0.04 215 / 20%);
+}
+
+.final-player-identity {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  text-align: left;
+}
+
+.final-player-identity strong,
+.final-player-identity small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.final-player-identity strong {
+  color: oklch(0.24 0.05 205);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.final-player-identity small {
+  margin-top: 0.08rem;
+  color: var(--muted-foreground);
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.final-player-ranking-row [data-slot="badge"] {
+  min-width: 3.35rem;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .final-rank-number {
@@ -389,6 +519,11 @@
   to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
+@keyframes final-player-row-arrival {
+  from { opacity: 0; transform: translate3d(-1rem, 0.25rem, 0) scale(0.98); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
 @keyframes final-confetti-fall {
   0% { opacity: 0; transform: translate3d(0, -2rem, 0) rotate(0deg); }
   8% { opacity: 0.95; }
@@ -428,6 +563,23 @@
   .final-team-avatars {
     display: none;
   }
+
+  .final-player-ranking-row {
+    grid-template-columns: 1.85rem 2.05rem minmax(0, 1fr) auto;
+    gap: 0.42rem;
+    padding-inline: 0.5rem;
+  }
+
+  .final-player-avatar {
+    width: 2.05rem !important;
+    height: 2.05rem !important;
+  }
+
+  .final-player-ranking-row [data-slot="badge"] {
+    min-width: 3rem;
+    padding-inline: 0.42rem;
+    font-size: 0.67rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -437,8 +589,13 @@
   .final-poseithon img,
   .final-divine-seal,
   .final-winner,
-  .final-ranking-row {
+  .final-ranking-row,
+  .final-player-ranking-row {
     animation: none;
+  }
+
+  .final-ranking-switch button {
+    transition: none;
   }
 
   .final-confetti-piece,

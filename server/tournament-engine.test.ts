@@ -51,6 +51,12 @@ const choiceChallenge: ChallengeDefinition = {
   }],
 }
 
+const salmonChallenge: ChallengeDefinition = {
+  ...choiceChallenge,
+  id: "whos-dat-salmon",
+  title: "Who's that salmon ?",
+}
+
 describe("tournament engine", () => {
   it("scores every numeric player while only each team's closest answer competes for team points", () => {
     const playerResults = scorePlayerRound(numericChallenge, 0, [
@@ -92,6 +98,20 @@ describe("tournament engine", () => {
       ])
   })
 
+  it("cumule dans le banc les points de chaque joueur correct pour Who's that salmon", () => {
+    const playerResults = scorePlayerRound(salmonChallenge, 0, [
+      { playerId: "a-1", playerName: "A One", teamId: "team-a", answer: "b" },
+      { playerId: "a-2", playerName: "A Two", teamId: "team-a", answer: "b" },
+      { playerId: "b-1", playerName: "B One", teamId: "team-b", answer: "a" },
+    ])
+
+    expect(aggregateTeamResults(salmonChallenge, 0, playerResults, ["team-a", "team-b"]))
+      .toEqual([
+        expect.objectContaining({ teamId: "team-a", points: 4, isCorrect: true }),
+        expect.objectContaining({ teamId: "team-b", points: 0, isCorrect: false }),
+      ])
+  })
+
   it("ranks numeric answers by relative error and gives no points to missing teams", () => {
     expect(scoreRound(numericChallenge, 0, [
       { teamId: "team-a", answer: "90" },
@@ -127,12 +147,15 @@ describe("tournament engine", () => {
   })
 
   it("hides the answer until reveal", () => {
+    Reflect.set(choiceChallenge.rounds[0], "revealImageUrl", "/reveal.png")
     expect(projectRound(choiceChallenge.rounds[0], false)).not.toHaveProperty("correctAnswer")
+    expect(projectRound(choiceChallenge.rounds[0], false).imageUrl).not.toBe("/reveal.png")
     expect(projectRound(choiceChallenge.rounds[0], false)).not.toHaveProperty("answerLabel")
     expect(projectRound(choiceChallenge.rounds[0], true)).toEqual(expect.objectContaining({
       correctAnswer: "b",
       answerLabel: "B",
       fact: "Un fait.",
+      imageUrl: "/reveal.png",
     }))
   })
 

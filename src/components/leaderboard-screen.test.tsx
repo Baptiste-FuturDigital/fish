@@ -8,6 +8,7 @@ const game = {
   id: "game-1",
   code: "FISH",
   name: "Aquarium test",
+  isDemo: false,
   status: "running",
   currentRound: 1,
   totalRounds: 3,

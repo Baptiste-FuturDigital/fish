@@ -52,6 +52,14 @@ export interface TeamFiftyFiftyJokerView {
   usedAt: string
 }
 
+export interface QuestionBuzzView {
+  playerId: string
+  playerName: string
+  teamId: string
+  teamName: string
+  points: number
+}
+
 export interface TournamentChallengeView {
   id: ChallengeId
   title: string
@@ -64,6 +72,7 @@ export interface TournamentChallengeView {
   introMusicEndSeconds?: number
   answeringMusicYoutubeId?: string
   timerEndSoundYoutubeId?: string
+  introImageUrl?: string
   presenterImageUrl?: string
   confirmationLabel?: string
 }
@@ -83,15 +92,33 @@ export interface TournamentView {
   bonus: PoseithonBonusView | null
   bonusAvailable: boolean
   fiftyFiftyJokers: TeamFiftyFiftyJokerView[]
+  buzz: QuestionBuzzView | null
+  blockedTeamId: string | null
+  pausedRemainingMs: number | null
 }
 
 export interface PlayerView {
   id: string
   name: string
+  identityId?: string
+  imageUrl?: string
   isHost: boolean
   score: number
   teamId: string | null
   totem: TotemView | null
+}
+
+export interface PlayerIdentityChoice {
+  id: string
+  displayName: string
+  imageUrl: string
+  anonymous: boolean
+  available: boolean
+}
+
+export interface JoinPlayerInput {
+  identityId: string
+  nickname?: string
 }
 
 export interface PromptView {
@@ -108,6 +135,7 @@ export interface GameView {
   id: string
   code: string
   name: string
+  isDemo: boolean
   status: GameStatus
   currentRound: number
   totalRounds: number

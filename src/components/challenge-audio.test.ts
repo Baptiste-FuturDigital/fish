@@ -27,6 +27,54 @@ describe("challenge audio", () => {
     expect(source.searchParams.get("end")).toBe("5")
   })
 
+  it("joue un fond en boucle et relance le jingle à chaque guess", async () => {
+    const audioControl = await import("./challenge-audio-control.js")
+    const buildSource = audioControl.buildChallengeAudioSource
+    const beginSession = Reflect.get(audioControl, "beginSalmonRoundAudioSession") as
+      | undefined
+      | ((options: {
+        cueDurationMs: number
+        sendBackgroundCommand: (command: { name: string; args: readonly unknown[] }) => void
+        sendCueCommand: (command: { name: string; args: readonly unknown[] }) => void
+        target: EventTarget
+      }) => { playCue: () => void; stop: () => void })
+
+    const source = new URL(buildSource({
+      videoId: "3pPR6IOV7Rg",
+      origin: "http://localhost:5179",
+      loop: true,
+    } as Parameters<typeof buildSource>[0] & { loop: boolean }))
+    expect(source.searchParams.get("loop")).toBe("1")
+    expect(source.searchParams.get("playlist")).toBe("3pPR6IOV7Rg")
+    expect(typeof beginSession).toBe("function")
+    if (!beginSession) return
+
+    vi.useFakeTimers()
+    const target = new EventTarget()
+    const ambientStates: boolean[] = []
+    const background: string[] = []
+    const cue: string[] = []
+    target.addEventListener("fish:set-ambient-suspended", (event) => {
+      ambientStates.push((event as CustomEvent<boolean>).detail)
+    })
+    const session = beginSession({
+      cueDurationMs: 5_000,
+      sendBackgroundCommand: ({ name }) => background.push(name),
+      sendCueCommand: ({ name }) => cue.push(name),
+      target,
+    })
+
+    expect(ambientStates).toEqual([true])
+    expect(background).toEqual(["unMute", "playVideo"])
+    session.playCue()
+    expect(cue).toEqual(["seekTo", "unMute", "playVideo"])
+    vi.advanceTimersByTime(5_000)
+    expect(cue.at(-1)).toBe("pauseVideo")
+    session.stop()
+    expect(background.at(-1)).toBe("pauseVideo")
+    expect(ambientStates).toEqual([true, false])
+  })
+
   it("attend le chargement du player avant d'envoyer les commandes", async () => {
     const { createChallengePlayerController } = await import("./challenge-audio-control.js")
     const commands: string[] = []

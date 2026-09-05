@@ -30,11 +30,11 @@ describe("game API", () => {
 
     const firstJoined = await request(app)
       .post(`/api/games/${code}/join`)
-      .send({ name: "Léa" })
+      .send({ identityId: "anonymous", nickname: "Léa" })
       .expect(201)
     const secondJoined = await request(app)
       .post(`/api/games/${code}/join`)
-      .send({ name: "Sam" })
+      .send({ identityId: "anonymous", nickname: "Sam" })
       .expect(201)
 
     await request(app)
@@ -75,6 +75,50 @@ describe("game API", () => {
     expect(finished.body.status).toBe("finished")
   })
 
+  it("exposes the host-only lobby player exclusion endpoint", async () => {
+    const created = await request(app)
+      .post("/api/games")
+      .send({ name: "Le grand aquarium", hostName: "Baptiste" })
+      .expect(201)
+    const joined = await request(app)
+      .post(`/api/games/${created.body.game.code}/join`)
+      .send({ identityId: "anonymous", nickname: "Léa" })
+      .expect(201)
+
+    const kicked = await request(app)
+      .post(`/api/games/${created.body.game.code}/players/${joined.body.session.playerId}/kick`)
+      .send({ hostToken: created.body.session.hostToken })
+      .expect(200)
+
+    expect(kicked.body.players).toEqual([])
+  })
+
+  it("serves the invitation picker and joins by selected identity", async () => {
+    const created = await request(app)
+      .post("/api/games")
+      .send({ name: "Le grand aquarium", hostName: "Baptiste" })
+      .expect(201)
+    const code = created.body.game.code as string
+
+    const before = await request(app).get(`/api/games/${code}/identities`).expect(200)
+    expect(before.body.find((identity: { id: string }) => identity.id === "agathe"))
+      .toEqual(expect.objectContaining({ displayName: "Agathe", available: true }))
+    expect(before.body.some((identity: { id: string }) => identity.id === "baptiste")).toBe(false)
+
+    const joined = await request(app)
+      .post(`/api/games/${code}/join`)
+      .send({ identityId: "agathe" })
+      .expect(201)
+    expect(joined.body.game.players[0]).toEqual(expect.objectContaining({
+      name: "Agathe",
+      identityId: "agathe",
+      imageUrl: "/players/agathe-poisson-globe.png",
+    }))
+
+    const after = await request(app).get(`/api/games/${code}/identities`).expect(200)
+    expect(after.body.find((identity: { id: string }) => identity.id === "agathe").available).toBe(false)
+  })
+
   it("returns actionable validation and authorization errors", async () => {
     const invalid = await request(app)
       .post("/api/games")
@@ -103,7 +147,7 @@ describe("game API", () => {
 
     const joined = await request(app)
       .post(`/api/games/${created.body.game.code}/join`)
-      .send({ name: "axel" })
+      .send({ identityId: "anonymous", nickname: "axel" })
       .expect(201)
     const claimed = await request(app)
       .post(`/api/games/${created.body.game.code}/totem`)
@@ -121,11 +165,11 @@ describe("game API", () => {
       .expect(201)
     const firstJoined = await request(app)
       .post(`/api/games/${created.body.game.code}/join`)
-      .send({ name: "Léa" })
+      .send({ identityId: "anonymous", nickname: "Léa" })
       .expect(201)
     const secondJoined = await request(app)
       .post(`/api/games/${created.body.game.code}/join`)
-      .send({ name: "Sam" })
+      .send({ identityId: "anonymous", nickname: "Sam" })
       .expect(201)
     const code = created.body.game.code
     const hostSession = created.body.session
@@ -160,7 +204,7 @@ describe("game API", () => {
     const answered = await request(app).post(`/api/games/${code}/answer`).send({
       playerId: firstJoined.body.session.playerId,
       playerToken: firstJoined.body.session.playerToken,
-      answer: "0.09",
+      answer: "0.0125",
       locked: true,
     }).expect(200)
     expect(answered.body.tournament.answers).toContainEqual({
@@ -174,7 +218,7 @@ describe("game API", () => {
     const reveal = await request(app).post(`/api/games/${code}/advance`)
       .send({ hostToken: hostSession.hostToken }).expect(200)
     expect(reveal.body.tournament.phase).toBe("reveal")
-    expect(reveal.body.tournament.round.correctAnswer).toBe(0.09)
+    expect(reveal.body.tournament.round.correctAnswer).toBe(0.0125)
   })
 
   it("creates a ready-to-play demo with simulated answers from all four teams", async () => {
@@ -200,6 +244,23 @@ describe("game API", () => {
     expect(reveal.body.tournament.answers.every((answer: { locked: boolean }) => answer.locked)).toBe(true)
     expect(reveal.body.tournament.results).toHaveLength(8)
     expect(reveal.body.tournament.teamResults).toHaveLength(4)
+  })
+
+  it("exposes a host-only demo shortcut to the next challenge", async () => {
+    const demo = await request(app).post("/api/demo").expect(201)
+
+    expect(demo.body.game.isDemo).toBe(true)
+
+    const skipped = await request(app)
+      .post(`/api/games/${demo.body.game.code}/skip-challenge`)
+      .send({ hostToken: demo.body.session.hostToken })
+      .expect(200)
+
+    expect(skipped.body.tournament).toEqual(expect.objectContaining({
+      challengeIndex: 1,
+      roundIndex: 0,
+      phase: "challenge-intro",
+    }))
   })
 
   it("exposes the host-only intermission bonus endpoint", async () => {
@@ -235,9 +296,9 @@ describe("game API", () => {
     const created = await request(app).post("/api/games")
       .send({ name: "Le grand aquarium", hostName: "Baptiste" }).expect(201)
     const first = await request(app).post(`/api/games/${created.body.game.code}/join`)
-      .send({ name: "Léa" }).expect(201)
+      .send({ identityId: "anonymous", nickname: "Léa" }).expect(201)
     const second = await request(app).post(`/api/games/${created.body.game.code}/join`)
-      .send({ name: "Sam" }).expect(201)
+      .send({ identityId: "anonymous", nickname: "Sam" }).expect(201)
     for (const joined of [first, second]) {
       await request(app).post(`/api/games/${created.body.game.code}/totem`)
         .send(joined.body.session).expect(200)
@@ -264,5 +325,41 @@ describe("game API", () => {
       .post(`/api/games/${created.body.game.code}/jokers/fifty-fifty`)
       .send({ playerId: first.body.session.playerId, playerToken: "intrus" })
       .expect(403)
+  })
+
+  it("exposes the player buzzer and host validation endpoints", async () => {
+    const created = await request(app).post("/api/games")
+      .send({ name: "Le grand aquarium", hostName: "Baptiste" }).expect(201)
+    const joined = await request(app).post(`/api/games/${created.body.game.code}/join`)
+      .send({ identityId: "anonymous", nickname: "Léa" }).expect(201)
+    const second = await request(app).post(`/api/games/${created.body.game.code}/join`)
+      .send({ identityId: "anonymous", nickname: "Sam" }).expect(201)
+    await request(app).post(`/api/games/${created.body.game.code}/totem`)
+      .send(joined.body.session).expect(200)
+    await request(app).post(`/api/games/${created.body.game.code}/totem`)
+      .send(second.body.session).expect(200)
+    await request(app).post(`/api/games/${created.body.game.code}/start`)
+      .send({ hostToken: created.body.session.hostToken }).expect(200)
+    database.prepare(
+      `UPDATE games SET challenge_index = 1, challenge_round = 0, current_round = 0,
+       phase = 'answering', phase_ends_at = ? WHERE code = ?`,
+    ).run(new Date(Date.now() + 40_000).toISOString(), created.body.game.code)
+
+    const buzzed = await request(app)
+      .post(`/api/games/${created.body.game.code}/buzz`)
+      .send(joined.body.session)
+      .expect(200)
+    expect(buzzed.body.tournament.buzz.playerName).toBe("Léa")
+    expect(buzzed.body.tournament.endsAt).toBeNull()
+
+    const revealed = await request(app)
+      .post(`/api/games/${created.body.game.code}/buzz/resolve`)
+      .send({ hostToken: created.body.session.hostToken, correct: true })
+      .expect(200)
+    expect(revealed.body.tournament.phase).toBe("reveal")
+    expect(revealed.body.tournament.results[0]).toEqual(expect.objectContaining({
+      playerName: "Léa",
+      points: 4,
+    }))
   })
 })
