@@ -500,7 +500,7 @@ function LoadingScreen() {
 }
 
 export default function App() {
-  const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, kickPlayer, submitAnswer, useFiftyFifty, buzz, resolveBuzz, applyBonus, skipChallenge } = useGame()
+  const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, kickPlayer, submitAnswer, useFiftyFifty, buzz, resolveBuzz, applyBonus, skipChallenge, canOpenDemoPlayer, openDemoPlayerView } = useGame()
   const isSalmonDemo = new URLSearchParams(window.location.search).get("salmon-demo") === "1"
   const audioEnabled = isSalmonDemo || (session ? isHostAudioEnabled(session) : false)
   const screen = useMemo(() => {
@@ -529,8 +529,10 @@ export default function App() {
             game.tournament &&
             game.tournament.challengeIndex < game.tournament.challengeCount - 1
           )}
+          canOpenDemoPlayer={canOpenDemoPlayer}
           onFinish={() => hostAction("finish")}
           onLeave={leave}
+          onOpenDemoPlayer={openDemoPlayerView}
           onSkipChallenge={skipChallenge}
         />
       ) : null}

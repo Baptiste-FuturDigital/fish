@@ -55,4 +55,34 @@ describe("HostSessionControls", () => {
     expect(eligibleMarkup).toContain("Épreuve suivante")
     expect(realGameMarkup).not.toContain("Épreuve suivante")
   })
+
+  it("affiche la vue joueur uniquement quand la démo possède une session de test", () => {
+    const demoMarkup = renderToStaticMarkup(
+      <HostSessionControls
+        status="running"
+        isDemo
+        canSkipChallenge
+        canOpenDemoPlayer
+        onFinish={vi.fn(async () => undefined)}
+        onLeave={vi.fn()}
+        onSkipChallenge={vi.fn(async () => undefined)}
+        onOpenDemoPlayer={vi.fn()}
+      />,
+    )
+    const unavailableMarkup = renderToStaticMarkup(
+      <HostSessionControls
+        status="running"
+        isDemo
+        canSkipChallenge
+        canOpenDemoPlayer={false}
+        onFinish={vi.fn(async () => undefined)}
+        onLeave={vi.fn()}
+        onSkipChallenge={vi.fn(async () => undefined)}
+        onOpenDemoPlayer={vi.fn()}
+      />,
+    )
+
+    expect(demoMarkup).toContain("Ouvrir la vue joueur")
+    expect(unavailableMarkup).not.toContain("Ouvrir la vue joueur")
+  })
 })

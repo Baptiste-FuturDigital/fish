@@ -1,28 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import type { GameView, PlayerSession, SessionResponse } from "@shared/game"
+import type { DemoSessionResponse, GameView, PlayerSession, SessionResponse } from "@shared/game"
 import { gameApi } from "@/api"
+import {
+  clearCurrentGameSession,
+  clearDemoPlayerLaunchSession,
+  isDemoPlayerView,
+  openDemoPlayerTab,
+  readDemoPlayerLaunchSession,
+  readGameSession,
+  writeDemoPlayerLaunchSession,
+  writeHostSession,
+} from "./game-session-storage.js"
 import { isPlayerSessionEjected, joinPathForGame } from "./player-session-membership.js"
 
-const STORAGE_KEY = "fish-tournament-session"
-
-function readSession(): PlayerSession | null {
-  try {
-    const query = new URLSearchParams(window.location.search)
-    if (query.get("salmon-demo") === "1") return null
-    if (query.get("demo") === "1") {
-      localStorage.removeItem(STORAGE_KEY)
-      return null
-    }
-    const value = localStorage.getItem(STORAGE_KEY)
-    return value ? (JSON.parse(value) as PlayerSession) : null
-  } catch {
-    return null
-  }
+function hasDemoPlayerSession(
+  response: SessionResponse | DemoSessionResponse,
+): response is DemoSessionResponse {
+  return "demoPlayerSession" in response
 }
 
 export function useGame() {
-  const [session, setSession] = useState<PlayerSession | null>(readSession)
+  const [session, setSession] = useState<PlayerSession | null>(readGameSession)
+  const [demoPlayerSession, setDemoPlayerSession] = useState<PlayerSession | null>(
+    readDemoPlayerLaunchSession,
+  )
   const [game, setGame] = useState<GameView | null>(null)
   const [loading, setLoading] = useState(Boolean(session))
   const [error, setError] = useState<string | null>(null)
@@ -35,7 +37,7 @@ export function useGame() {
     try {
       const nextGame = await gameApi.get(session.gameCode)
       if (isPlayerSessionEjected(session, nextGame)) {
-        localStorage.removeItem(STORAGE_KEY)
+        clearCurrentGameSession()
         window.history.replaceState(
           {},
           "",
@@ -63,8 +65,15 @@ export function useGame() {
     return () => window.clearInterval(interval)
   }, [game?.status, refresh, session])
 
-  const enter = useCallback((response: SessionResponse) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(response.session))
+  const enter = useCallback((response: SessionResponse | DemoSessionResponse) => {
+    writeHostSession(response.session)
+    if (hasDemoPlayerSession(response)) {
+      writeDemoPlayerLaunchSession(response.demoPlayerSession)
+      setDemoPlayerSession(response.demoPlayerSession)
+    } else {
+      clearDemoPlayerLaunchSession()
+      setDemoPlayerSession(null)
+    }
     setSession(response.session)
     setGame(response.game)
     setError(null)
@@ -72,12 +81,23 @@ export function useGame() {
   }, [])
 
   const leave = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY)
+    clearCurrentGameSession()
+    if (!isDemoPlayerView()) {
+      clearDemoPlayerLaunchSession()
+      setDemoPlayerSession(null)
+    }
     setSession(null)
     setGame(null)
     setError(null)
     window.history.replaceState({}, "", window.location.pathname)
   }, [])
+
+  const openDemoPlayerView = useCallback(() => {
+    if (!demoPlayerSession) throw new Error("Vue joueur de démonstration indisponible.")
+    if (!openDemoPlayerTab(demoPlayerSession)) {
+      throw new Error("Le navigateur a bloqué le nouvel onglet joueur.")
+    }
+  }, [demoPlayerSession])
 
   const hostAction = useCallback(
     async (action: "start" | "advance" | "finish") => {
@@ -180,5 +200,25 @@ export function useGame() {
     return nextGame
   }, [session])
 
-  return { session, game, loading, error, enter, leave, refresh, hostAction, claimTotem, renameTeam, kickPlayer, submitAnswer, useFiftyFifty, buzz, resolveBuzz, applyBonus, skipChallenge }
+  return {
+    session,
+    game,
+    loading,
+    error,
+    enter,
+    leave,
+    refresh,
+    hostAction,
+    claimTotem,
+    renameTeam,
+    kickPlayer,
+    submitAnswer,
+    useFiftyFifty,
+    buzz,
+    resolveBuzz,
+    applyBonus,
+    skipChallenge,
+    canOpenDemoPlayer: Boolean(demoPlayerSession),
+    openDemoPlayerView,
+  }
 }

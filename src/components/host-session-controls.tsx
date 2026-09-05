@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Home, LoaderCircle, SkipForward } from "lucide-react"
+import { Home, LoaderCircle, SkipForward, Smartphone } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "./ui/button.js"
@@ -12,13 +12,17 @@ export function HostSessionControls({
   status,
   isDemo,
   canSkipChallenge,
+  canOpenDemoPlayer = false,
   onFinish,
   onLeave,
   onSkipChallenge,
+  onOpenDemoPlayer = () => undefined,
 }: RunHostSessionActionOptions & {
   isDemo: boolean
   canSkipChallenge: boolean
+  canOpenDemoPlayer?: boolean
   onSkipChallenge: () => Promise<unknown>
+  onOpenDemoPlayer?: () => void
 }) {
   const [pending, setPending] = useState<"home" | "skip" | null>(null)
 
@@ -43,12 +47,26 @@ export function HostSessionControls({
     }
   }
 
+  function openDemoPlayer() {
+    try {
+      onOpenDemoPlayer()
+    } catch (caught) {
+      toast.error(caught instanceof Error ? caught.message : "Impossible d'ouvrir la vue joueur.")
+    }
+  }
+
   return (
     <nav className="host-session-controls" aria-label="Navigation du maître du jeu">
       <Button size="sm" variant="secondary" onClick={() => void returnHome()} disabled={Boolean(pending)}>
         {pending === "home" ? <LoaderCircle className="animate-spin" data-icon="inline-start" /> : <Home data-icon="inline-start" />}
         Accueil · nouvelle partie
       </Button>
+      {isDemo && canOpenDemoPlayer ? (
+        <Button size="sm" variant="secondary" onClick={openDemoPlayer} disabled={Boolean(pending)}>
+          <Smartphone data-icon="inline-start" />
+          Ouvrir la vue joueur
+        </Button>
+      ) : null}
       {isDemo && status === "running" && canSkipChallenge ? (
         <Button size="sm" onClick={() => void skipChallenge()} disabled={Boolean(pending)}>
           {pending === "skip" ? <LoaderCircle className="animate-spin" data-icon="inline-start" /> : <SkipForward data-icon="inline-start" />}
