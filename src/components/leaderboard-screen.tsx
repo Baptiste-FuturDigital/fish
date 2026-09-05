@@ -4,6 +4,7 @@ import { ArrowRight, Flag, LoaderCircle, Trophy, Waves } from "lucide-react"
 import type { GameView, PlayerSession } from "@shared/game"
 import { PlayerLeaderboard } from "./player-leaderboard.js"
 import { PoseithonBonus } from "./poseithon-bonus.js"
+import { SardineWheel } from "./sardine-wheel.js"
 import { Button } from "./ui/button.js"
 
 import "./leaderboard-screen.css"
@@ -14,9 +15,11 @@ export interface LeaderboardScreenProps {
   onAdvance: () => Promise<unknown> | unknown
   onFinish: () => Promise<unknown> | unknown
   onBonus: () => Promise<unknown> | unknown
+  onOfferWheel: () => Promise<unknown> | unknown
+  onSpinWheel: () => Promise<unknown> | unknown
 }
 
-type PendingAction = "advance" | "finish" | "bonus" | null
+type PendingAction = "advance" | "finish" | "bonus" | "offer-wheel" | "spin-wheel" | null
 
 export function LeaderboardScreen({
   game,
@@ -24,6 +27,8 @@ export function LeaderboardScreen({
   onAdvance,
   onFinish,
   onBonus,
+  onOfferWheel,
+  onSpinWheel,
 }: LeaderboardScreenProps) {
   const [pending, setPending] = useState<PendingAction>(null)
   const [error, setError] = useState<string | null>(null)
@@ -31,12 +36,23 @@ export function LeaderboardScreen({
   const challengeNumber = game.tournament
     ? game.tournament.challengeIndex + 1
     : Math.max(1, game.currentRound)
+  const tournament = game.tournament
+  const sardineIntermission = tournament?.challenge.id === "le-juste-poisson"
+  const wheel = tournament?.sardineWheel ?? null
+  const wheelBlocking = wheel?.status === "offered" || wheel?.status === "spinning"
+  const winner = wheel
+    ? game.players.find((player) => player.id === wheel.winnerPlayerId)
+    : undefined
 
   async function run(action: Exclude<PendingAction, null>) {
     setPending(action)
     setError(null)
     try {
-      await (action === "advance" ? onAdvance() : action === "finish" ? onFinish() : onBonus())
+      if (action === "advance") await onAdvance()
+      else if (action === "finish") await onFinish()
+      else if (action === "bonus") await onBonus()
+      else if (action === "offer-wheel") await onOfferWheel()
+      else await onSpinWheel()
     } catch {
       setError("La commande s’est perdue dans les profondeurs. Réessaie.")
     } finally {
@@ -66,14 +82,26 @@ export function LeaderboardScreen({
 
       <PlayerLeaderboard game={game} />
 
-      {game.tournament ? (
-        <PoseithonBonus
-          isHost={isHost}
-          available={game.tournament.bonusAvailable}
-          pending={pending === "bonus"}
-          bonus={game.tournament.bonus}
-          onApply={() => void run("bonus")}
-        />
+      {tournament ? (
+        sardineIntermission ? (
+          <SardineWheel
+            session={session}
+            wheel={wheel}
+            available={Boolean(tournament.sardineWheelAvailable)}
+            winnerImageUrl={winner?.imageUrl ?? winner?.totem?.imageUrl}
+            pending={pending === "offer-wheel" || pending === "spin-wheel"}
+            onOffer={() => void run("offer-wheel")}
+            onSpin={() => void run("spin-wheel")}
+          />
+        ) : (
+          <PoseithonBonus
+            isHost={isHost}
+            available={tournament.bonusAvailable}
+            pending={pending === "bonus"}
+            bonus={tournament.bonus}
+            onApply={() => void run("bonus")}
+          />
+        )
       ) : null}
 
       {error ? <p className="leaderboard-error" role="alert">{error}</p> : null}
@@ -84,7 +112,8 @@ export function LeaderboardScreen({
             className="leaderboard-primary-action"
             size="lg"
             onClick={() => void run("advance")}
-            disabled={pending !== null}
+            disabled={pending !== null || wheelBlocking}
+            data-wheel-blocking={wheelBlocking ? "true" : "false"}
           >
             {pending === "advance" ? <LoaderCircle className="animate-spin" /> : <ArrowRight />}
             Découvrir l'épreuve suivante

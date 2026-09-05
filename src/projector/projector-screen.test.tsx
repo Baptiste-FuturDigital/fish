@@ -36,6 +36,8 @@ const tournament = {
   buzz: null,
   blockedTeamId: null,
   pausedRemainingMs: null,
+  sardineWheel: null,
+  sardineWheelAvailable: false,
 } satisfies TvTournamentView
 
 const baseGame = {
@@ -151,6 +153,35 @@ describe("ProjectorScreen", () => {
     expect(markup).toContain("Classement individuel")
     expect(markup).toContain("40")
     expect(markup).toContain("Les Abyssaux")
+  })
+
+  it.each([
+    ["offered", "Léa doit déchaîner la roue"],
+    ["spinning", "La roue fend les courants"],
+    ["won", "Sardine légendaire remportée"],
+  ] as const)("priorise la scène roue dans l'état %s", async (status, expected) => {
+    const markup = await render({
+      ...baseGame,
+      status: "running",
+      tournament: {
+        ...tournament,
+        phase: "leaderboard",
+        sardineWheel: {
+          challengeIndex: 0,
+          winnerPlayerName: "Léa",
+          status,
+          offeredAt: "2026-09-05T20:00:00.000Z",
+          startedAt: status === "offered" ? null : "2026-09-05T20:00:01.000Z",
+          durationMs: 6_000,
+          completedAt: status === "won" ? "2026-09-05T20:00:07.000Z" : null,
+        },
+      },
+    })
+
+    expect(markup).toContain('class="projector-sardine-wheel"')
+    expect(markup).toContain("Léa")
+    expect(markup).toContain(expected)
+    expect(markup).not.toContain("winnerPlayerId")
   })
 
   it("termine par le classement des bancs et le vainqueur", async () => {

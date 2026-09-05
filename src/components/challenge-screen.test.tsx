@@ -55,6 +55,8 @@ function introGame(challengeIndex: number): GameView {
       buzz: null,
       blockedTeamId: null,
       pausedRemainingMs: null,
+      sardineWheel: null,
+      sardineWheelAvailable: false,
     },
   }
 }

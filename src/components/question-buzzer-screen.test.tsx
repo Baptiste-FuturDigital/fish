@@ -52,6 +52,8 @@ function tournament(overrides: Partial<TournamentView> = {}): TournamentView {
     buzz: null,
     blockedTeamId: null,
     pausedRemainingMs: null,
+    sardineWheel: null,
+    sardineWheelAvailable: false,
     ...overrides,
   }
 }

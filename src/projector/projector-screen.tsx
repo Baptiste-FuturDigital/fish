@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react"
 
 import type { TvGameView, TvPlayerView, TvTeamView, TvTournamentView } from "@shared/tv"
 import { PlayerPortraitLightbox } from "@/components/player-portrait-lightbox"
+import { SardineWheelAudio, SardineWheelDial } from "@/components/sardine-wheel"
 import { toDisplayPoints } from "@/components/score-display"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -14,6 +15,7 @@ import { projectorSceneKind } from "./projector-route.js"
 import "./projector-screen.css"
 
 const PROJECTOR_BUBBLES = Array.from({ length: 18 }, (_, index) => index)
+const PROJECTOR_WHEEL_CONFETTI = Array.from({ length: 28 }, (_, index) => index)
 const CHALLENGE_INTRO_LABELS = [
   "PREMIÈRE ÉPREUVE",
   "DEUXIÈME ÉPREUVE",
@@ -321,6 +323,64 @@ function PlayerRankingScene({ game, tournament }: { game: TvGameView; tournament
   )
 }
 
+function SardineWheelScene({ game, tournament }: { game: TvGameView; tournament: TvTournamentView }) {
+  const wheel = tournament.sardineWheel
+  if (!wheel) return <PlayerRankingScene game={game} tournament={tournament} />
+
+  const winner = game.players.find((player) => player.name === wheel.winnerPlayerName)
+  const won = wheel.status === "won"
+  const spinning = wheel.status === "spinning"
+  return (
+    <section className="projector-sardine-wheel" data-state={wheel.status} aria-labelledby="projector-wheel-title">
+      <SardineWheelAudio wheel={wheel} enabled={spinning} />
+      {won ? <div className="projector-wheel-flash" aria-hidden="true" /> : null}
+      {won ? (
+        <div className="projector-wheel-confetti" aria-hidden="true">
+          {PROJECTOR_WHEEL_CONFETTI.map((piece) => (
+            <i
+              style={{
+                "--confetti-index": piece,
+                "--confetti-left": `${(piece * 37 + 5) % 100}%`,
+                "--confetti-delay": `${(piece % 7) * 55}ms`,
+              } as React.CSSProperties}
+              key={piece}
+            />
+          ))}
+        </div>
+      ) : null}
+      <header className="projector-wheel-copy">
+        <Badge variant="secondary">LA ROUE DE POSÉITHON</Badge>
+        <p>{won ? "LA FAVEUR DES ABYSSES A PARLÉ" : "LE DESTIN EST ENTRE SES NAGEOIRES"}</p>
+        <h1 id="projector-wheel-title">
+          {won
+            ? "Sardine légendaire remportée"
+            : spinning
+              ? "La roue fend les courants…"
+              : `${wheel.winnerPlayerName} doit déchaîner la roue`}
+        </h1>
+        <div className="projector-wheel-winner">
+          {winner?.imageUrl ? <img src={winner.imageUrl} alt="" /> : <span aria-hidden="true">👑</span>}
+          <div><small>CHAMPION DE LA FAVEUR</small><strong>{wheel.winnerPlayerName}</strong></div>
+        </div>
+      </header>
+      <div className="projector-wheel-machine">
+        <SardineWheelDial
+          wheel={wheel}
+          label={spinning ? "Roue des poissons en rotation" : "Roue des poissons arrêtée sur la sardine"}
+        />
+        {won ? <div className="projector-wheel-prize" aria-hidden="true">🐟</div> : null}
+      </div>
+      <p className="projector-wheel-status" role="status" aria-live={won ? "assertive" : "polite"}>
+        {won
+          ? `${wheel.winnerPlayerName} remporte la sardine légendaire !`
+          : spinning
+            ? "Rotation synchronisée avec le téléphone gagnant"
+            : `En attente du geste de ${wheel.winnerPlayerName}`}
+      </p>
+    </section>
+  )
+}
+
 function FinalScene({ game }: { game: TvGameView }) {
   const ranking = [...game.teams].sort((left, right) => right.score - left.score || left.name.localeCompare(right.name, "fr"))
   const winner = ranking[0]
@@ -353,6 +413,7 @@ export function ProjectorScreen({ game, joinUrl }: { game: TvGameView; joinUrl: 
   if (scene === "lobby") content = <LobbyScene game={game} joinUrl={joinUrl} />
   else if (scene === "final") content = <FinalScene game={game} />
   else if (!tournament) content = <div className="projector-empty-state"><Waves /><h1>Poséithon prépare l’aquarium…</h1></div>
+  else if (scene === "sardine-wheel") content = <SardineWheelScene game={game} tournament={tournament} />
   else if (scene === "intro") content = <IntroScene game={game} tournament={tournament} />
   else if (scene === "gameplay") content = <AnsweringScene game={game} tournament={tournament} />
   else if (scene === "reveal") content = <RevealScene game={game} tournament={tournament} />

@@ -200,9 +200,34 @@ export function useGame() {
     return nextGame
   }, [session])
 
+  const offerSardineWheel = useCallback(async () => {
+    if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
+    const nextGame = await gameApi.offerSardineWheel(session.gameCode, session.hostToken)
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
+  const spinSardineWheel = useCallback(async () => {
+    if (!session) throw new Error("Session introuvable.")
+    const nextGame = await gameApi.spinSardineWheel(
+      session.gameCode,
+      session.playerId,
+      session.playerToken,
+    )
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
   const skipChallenge = useCallback(async () => {
     if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
     const nextGame = await gameApi.skipChallenge(session.gameCode, session.hostToken)
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
+  const skipRound = useCallback(async () => {
+    if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
+    const nextGame = await gameApi.skipRound(session.gameCode, session.hostToken)
     setGame(nextGame)
     return nextGame
   }, [session])
@@ -225,7 +250,10 @@ export function useGame() {
     toggleQuestionTimer,
     resolveBuzz,
     applyBonus,
+    offerSardineWheel,
+    spinSardineWheel,
     skipChallenge,
+    skipRound,
     canOpenDemoPlayer: Boolean(demoPlayerSession),
     openDemoPlayerView,
   }

@@ -6,6 +6,7 @@ export type ProjectorSceneKind =
   | "gameplay"
   | "reveal"
   | "leaderboard"
+  | "sardine-wheel"
   | "final"
 
 function normalizeGameCode(value: string | null | undefined) {
@@ -44,6 +45,7 @@ export function buildProjectorPath(code: string) {
 export function projectorSceneKind(game: TvGameView): ProjectorSceneKind {
   if (game.status === "lobby") return "lobby"
   if (game.status === "finished") return "final"
+  if (game.tournament?.sardineWheel) return "sardine-wheel"
   if (game.tournament?.phase === "challenge-intro") return "intro"
   if (game.tournament?.phase === "reveal") return "reveal"
   if (game.tournament?.phase === "leaderboard") return "leaderboard"

@@ -55,5 +55,13 @@ describe("projector route", () => {
       status: "running",
       tournament: { phase: "leaderboard" },
     } as TvGameView)).toBe("leaderboard")
+    expect(projectorSceneKind({
+      ...game,
+      status: "running",
+      tournament: {
+        phase: "leaderboard",
+        sardineWheel: { status: "offered" },
+      },
+    } as TvGameView)).toBe("sardine-wheel")
   })
 })

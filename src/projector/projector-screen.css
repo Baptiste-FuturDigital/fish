@@ -1283,6 +1283,192 @@
   font-weight: 800;
 }
 
+.projector-sardine-wheel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(22rem, 1.1fr);
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 4rem);
+  height: 100%;
+  min-height: 0;
+  padding: clamp(1.4rem, 3vw, 4rem);
+  overflow: hidden;
+  border: 1px solid rgb(81 248 220 / 22%);
+  border-radius: clamp(1.4rem, 2vw, 2.8rem);
+  background:
+    radial-gradient(circle at 16% 12%, rgb(67 244 215 / 20%), transparent 26%),
+    radial-gradient(circle at 83% 70%, rgb(255 75 137 / 18%), transparent 30%),
+    linear-gradient(140deg, rgb(3 39 53 / 92%), rgb(9 18 39 / 95%) 58%, rgb(30 10 57 / 92%));
+  box-shadow: inset 0 1px rgb(255 255 255 / 10%), 0 2rem 5rem rgb(0 11 22 / 30%);
+}
+
+.projector-sardine-wheel::before {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgb(255 255 255 / 16%) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(110deg, black, transparent 72%);
+  content: "";
+  pointer-events: none;
+}
+
+.projector-wheel-copy,
+.projector-wheel-machine,
+.projector-wheel-status {
+  position: relative;
+  z-index: 2;
+}
+
+.projector-wheel-copy {
+  align-self: center;
+}
+
+.projector-wheel-copy > p {
+  margin: clamp(1rem, 2vw, 2rem) 0 0.55rem;
+  color: var(--projector-lime);
+  font-size: clamp(0.8rem, 1.15vw, 1.4rem);
+  font-weight: 950;
+  letter-spacing: 0.14em;
+}
+
+.projector-wheel-copy h1 {
+  max-width: 13ch;
+  margin: 0;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(2.6rem, 5.2vw, 6.7rem);
+  font-weight: 950;
+  line-height: 0.92;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
+}
+
+.projector-wheel-winner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: fit-content;
+  margin-top: clamp(1rem, 2vw, 2rem);
+  padding: 0.65rem 1.1rem 0.65rem 0.7rem;
+  border: 1px solid rgb(255 227 98 / 34%);
+  border-radius: 999px;
+  background: rgb(4 33 44 / 68%);
+}
+
+.projector-wheel-winner > img,
+.projector-wheel-winner > span {
+  display: grid;
+  width: clamp(3.2rem, 4.5vw, 5.8rem);
+  aspect-ratio: 1;
+  place-items: center;
+  object-fit: cover;
+  border: 3px solid var(--projector-yellow);
+  border-radius: 50%;
+  background: rgb(36 112 116 / 70%);
+  font-size: clamp(1.6rem, 2.3vw, 3rem);
+}
+
+.projector-wheel-winner div {
+  display: grid;
+}
+
+.projector-wheel-winner small {
+  color: oklch(0.78 0.05 190);
+  font-size: clamp(0.55rem, 0.65vw, 0.8rem);
+  font-weight: 850;
+  letter-spacing: 0.11em;
+}
+
+.projector-wheel-winner strong {
+  color: var(--projector-paper);
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1.2rem, 1.7vw, 2.2rem);
+}
+
+.projector-wheel-machine {
+  display: grid;
+  place-items: center;
+}
+
+.projector-sardine-wheel .sardine-wheel-dial-shell {
+  width: min(34vw, 34rem);
+}
+
+.projector-sardine-wheel .sardine-wheel-fish {
+  font-size: clamp(1.6rem, 2.6vw, 3.1rem);
+  transform:
+    translate(-50%, -50%)
+    rotate(calc(var(--fish-index) * 45deg + 22.5deg))
+    translateY(clamp(-11.3rem, -11vw, -7rem))
+    rotate(calc(var(--fish-index) * -45deg - 22.5deg));
+}
+
+.projector-sardine-wheel .sardine-wheel-hub {
+  width: clamp(4.6rem, 7vw, 8.4rem);
+  font-size: clamp(2rem, 3vw, 3.8rem);
+}
+
+.projector-wheel-status {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: 0;
+  color: oklch(0.88 0.035 190);
+  font-size: clamp(0.8rem, 1.05vw, 1.25rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.projector-wheel-flash,
+.projector-wheel-confetti,
+.projector-wheel-prize {
+  pointer-events: none;
+}
+
+.projector-wheel-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  background: #fff5b0;
+  mix-blend-mode: screen;
+  animation: projector-wheel-flash 900ms ease-out both;
+}
+
+.projector-wheel-confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  overflow: hidden;
+}
+
+.projector-wheel-confetti i {
+  position: absolute;
+  top: -5%;
+  left: var(--confetti-left);
+  width: clamp(0.5rem, 0.7vw, 0.9rem);
+  height: clamp(1rem, 1.4vw, 1.8rem);
+  border-radius: 80% 20%;
+  background: var(--projector-yellow);
+  animation: projector-wheel-confetti 2.6s cubic-bezier(0.16, 0.7, 0.24, 1) both;
+  animation-delay: var(--confetti-delay);
+}
+
+.projector-wheel-confetti i:nth-child(3n) { background: var(--projector-coral); }
+.projector-wheel-confetti i:nth-child(3n + 1) { background: var(--projector-aqua); }
+
+.projector-wheel-prize {
+  position: absolute;
+  z-index: 9;
+  font-size: clamp(5rem, 10vw, 12rem);
+  filter: drop-shadow(0 1.2rem 1rem rgb(0 0 0 / 38%));
+  animation: projector-sardine-leap 1.3s cubic-bezier(0.14, 0.8, 0.2, 1.16) both;
+}
+
+.projector-sardine-wheel[data-state="won"] h1 {
+  color: #fff2a5;
+  text-shadow: 0 0 2rem rgb(255 221 79 / 48%);
+  animation: projector-wheel-title-pulse 850ms ease-in-out infinite alternate;
+}
+
 @keyframes projector-caustics-drift {
   to { transform: translate3d(5%, 3%, 0) rotate(5deg) scale(1.08); }
 }
@@ -1305,13 +1491,44 @@
   to { --projector-team-border-angle: 360deg; }
 }
 
+@keyframes projector-wheel-flash {
+  0% { opacity: 0; }
+  15% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+
+@keyframes projector-wheel-confetti {
+  0% { opacity: 0; transform: translateY(-2rem) rotate(0); }
+  10% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(95vh) rotate(900deg); }
+}
+
+@keyframes projector-sardine-leap {
+  0% { opacity: 0; transform: translateY(12rem) rotate(-24deg) scale(0.35); }
+  62% { opacity: 1; transform: translateY(-4rem) rotate(8deg) scale(1.22); }
+  100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+}
+
+@keyframes projector-wheel-title-pulse {
+  from { transform: scale(0.985); }
+  to { transform: scale(1.02); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .projector-caustics,
   .projector-bubbles i,
   .projector-live svg,
   .projector-connection-state > svg,
   .projector-confetti,
-  .projector-team-card-rainbow {
+  .projector-team-card-rainbow,
+  .projector-wheel-flash,
+  .projector-wheel-confetti i,
+  .projector-wheel-prize,
+  .projector-sardine-wheel[data-state="won"] h1 {
     animation: none;
+  }
+
+  .projector-sardine-wheel .sardine-wheel-dial[data-motion="spinning"] {
+    animation-duration: 180ms;
   }
 }

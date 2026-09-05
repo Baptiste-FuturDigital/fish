@@ -121,10 +121,28 @@ export const gameApi = {
       body: JSON.stringify({ hostToken }),
     })
   },
+  skipRound(code: string, hostToken: string) {
+    return request<GameView>(`/api/games/${code}/skip-round`, {
+      method: "POST",
+      body: JSON.stringify({ hostToken }),
+    })
+  },
   applyBonus(code: string, hostToken: string) {
     return request<GameView>(`/api/games/${code}/bonus`, {
       method: "POST",
       body: JSON.stringify({ hostToken }),
+    })
+  },
+  offerSardineWheel(code: string, hostToken: string) {
+    return request<GameView>(`/api/games/${code}/sardine-wheel/offer`, {
+      method: "POST",
+      body: JSON.stringify({ hostToken }),
+    })
+  },
+  spinSardineWheel(code: string, playerId: string, playerToken: string) {
+    return request<GameView>(`/api/games/${code}/sardine-wheel/spin`, {
+      method: "POST",
+      body: JSON.stringify({ playerId, playerToken }),
     })
   },
 }

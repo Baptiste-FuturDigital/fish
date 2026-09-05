@@ -36,9 +36,11 @@ describe("HostSessionControls", () => {
         status="running"
         isDemo
         canSkipChallenge
+        canSkipRound
         onFinish={vi.fn(async () => undefined)}
         onLeave={vi.fn()}
         onSkipChallenge={vi.fn(async () => undefined)}
+        onSkipRound={vi.fn(async () => undefined)}
       />,
     )
     const realGameMarkup = renderToStaticMarkup(
@@ -46,14 +48,36 @@ describe("HostSessionControls", () => {
         status="running"
         isDemo={false}
         canSkipChallenge
+        canSkipRound
         onFinish={vi.fn(async () => undefined)}
         onLeave={vi.fn()}
         onSkipChallenge={vi.fn(async () => undefined)}
+        onSkipRound={vi.fn(async () => undefined)}
       />,
     )
 
     expect(eligibleMarkup).toContain("Épreuve suivante")
+    expect(eligibleMarkup).toContain("Manche suivante")
     expect(realGameMarkup).not.toContain("Épreuve suivante")
+    expect(realGameMarkup).not.toContain("Manche suivante")
+  })
+
+  it("masque Manche suivante pendant la dernière manche de la démo", () => {
+    const markup = renderToStaticMarkup(
+      <HostSessionControls
+        status="running"
+        isDemo
+        canSkipChallenge
+        canSkipRound={false}
+        onFinish={vi.fn(async () => undefined)}
+        onLeave={vi.fn()}
+        onSkipChallenge={vi.fn(async () => undefined)}
+        onSkipRound={vi.fn(async () => undefined)}
+      />,
+    )
+
+    expect(markup).not.toContain("Manche suivante")
+    expect(markup).toContain("Épreuve suivante")
   })
 
   it("affiche la vue joueur uniquement quand la démo possède une session de test", () => {
@@ -62,10 +86,12 @@ describe("HostSessionControls", () => {
         status="running"
         isDemo
         canSkipChallenge
+        canSkipRound={false}
         canOpenDemoPlayer
         onFinish={vi.fn(async () => undefined)}
         onLeave={vi.fn()}
         onSkipChallenge={vi.fn(async () => undefined)}
+        onSkipRound={vi.fn(async () => undefined)}
         onOpenDemoPlayer={vi.fn()}
       />,
     )
@@ -74,10 +100,12 @@ describe("HostSessionControls", () => {
         status="running"
         isDemo
         canSkipChallenge
+        canSkipRound={false}
         canOpenDemoPlayer={false}
         onFinish={vi.fn(async () => undefined)}
         onLeave={vi.fn()}
         onSkipChallenge={vi.fn(async () => undefined)}
+        onSkipRound={vi.fn(async () => undefined)}
         onOpenDemoPlayer={vi.fn()}
       />,
     )

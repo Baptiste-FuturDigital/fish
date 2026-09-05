@@ -1,0 +1,279 @@
+.sardine-wheel {
+  --wheel-ink: #f6fffb;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+  overflow: hidden;
+  margin-top: 1rem;
+  padding: 1.4rem;
+  border: 1px solid color-mix(in oklch, #54f8dc 46%, transparent);
+  border-radius: 1.5rem;
+  color: var(--wheel-ink);
+  text-align: center;
+  background:
+    radial-gradient(circle at 18% 8%, rgb(83 247 214 / 22%), transparent 28%),
+    radial-gradient(circle at 90% 80%, rgb(255 77 137 / 20%), transparent 34%),
+    linear-gradient(145deg, #062e3b 0%, #071927 56%, #170d35 100%);
+  box-shadow: 0 1.3rem 3rem rgb(1 18 29 / 28%), inset 0 1px rgb(255 255 255 / 12%);
+}
+
+.sardine-wheel::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(circle, rgb(255 255 255 / 20%) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
+  content: "";
+}
+
+.sardine-wheel h3 {
+  max-width: 18ch;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(1.65rem, 8vw, 2.55rem);
+  font-weight: 950;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.sardine-wheel-kicker {
+  margin: 0;
+  color: #ffe362;
+  font-size: 0.73rem;
+  font-weight: 900;
+  letter-spacing: 0.17em;
+}
+
+.sardine-wheel-copy,
+.sardine-wheel-wait,
+.sardine-wheel-verdict {
+  max-width: 34rem;
+  margin: 0;
+  color: rgb(232 255 251 / 78%);
+  line-height: 1.5;
+}
+
+.sardine-wheel-orb {
+  display: grid;
+  width: 4rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgb(255 227 98 / 40%);
+  border-radius: 50%;
+  font-size: 2rem;
+  background: radial-gradient(circle, rgb(255 227 98 / 32%), rgb(7 25 39 / 40%) 70%);
+  box-shadow: 0 0 2rem rgb(255 227 98 / 24%);
+}
+
+.sardine-wheel-action {
+  width: min(100%, 23rem);
+  min-height: 3.2rem;
+  border-color: #ffe362;
+  color: #10232b;
+  font-weight: 950;
+  background: linear-gradient(100deg, #ffe362, #ff9d57);
+  box-shadow: 0 0.8rem 2rem rgb(255 167 68 / 24%);
+}
+
+.sardine-wheel-winner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: min(100%, 28rem);
+  text-align: left;
+}
+
+.sardine-wheel-winner > img,
+.sardine-wheel-winner > span {
+  width: 5.2rem;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  object-fit: cover;
+  border: 3px solid #ffe362;
+  border-radius: 50%;
+  background: #0a4554;
+  box-shadow: 0 0 0 6px rgb(255 227 98 / 13%), 0 0 2rem rgb(255 227 98 / 30%);
+}
+
+.sardine-wheel-winner > span {
+  display: grid;
+  place-items: center;
+}
+
+.sardine-wheel-winner svg { width: 2rem; }
+
+.sardine-wheel-dial-shell {
+  position: relative;
+  width: min(78vw, 19rem);
+  aspect-ratio: 1;
+  filter: drop-shadow(0 1.2rem 1.5rem rgb(0 0 0 / 32%));
+}
+
+.sardine-wheel-pointer {
+  position: absolute;
+  top: -0.65rem;
+  left: 50%;
+  z-index: 4;
+  translate: -50% 0;
+  color: #ffe362;
+  font-size: 2rem;
+  text-shadow: 0 4px 0 #693945, 0 0 1rem rgb(255 227 98 / 60%);
+}
+
+.sardine-wheel-dial {
+  position: absolute;
+  inset: 0;
+  border: 0.55rem solid #fce577;
+  border-radius: 50%;
+  background: conic-gradient(
+    #ffcf4d 0 12.5%,
+    #ff5c84 12.5% 25%,
+    #26d8c2 25% 37.5%,
+    #9368f7 37.5% 50%,
+    #ff8f50 50% 62.5%,
+    #2eb7e8 62.5% 75%,
+    #d4f052 75% 87.5%,
+    #ef6fd4 87.5% 100%
+  );
+  box-shadow: inset 0 0 0 5px rgb(8 35 45 / 26%), 0 0 0 4px #0c5561;
+  transform: rotate(var(--sardine-wheel-from));
+}
+
+.sardine-wheel-dial[data-motion="spinning"] {
+  animation: sardine-wheel-spin var(--sardine-wheel-duration) cubic-bezier(0.08, 0.66, 0.14, 1) forwards;
+}
+
+.sardine-wheel-fish {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 2.4rem;
+  aspect-ratio: 1;
+  place-items: center;
+  font-size: 1.55rem;
+  transform:
+    translate(-50%, -50%)
+    rotate(calc(var(--fish-index) * 45deg + 22.5deg))
+    translateY(-6.3rem)
+    rotate(calc(var(--fish-index) * -45deg - 22.5deg));
+  filter: drop-shadow(0 2px 0 rgb(0 0 0 / 22%));
+}
+
+.sardine-wheel-fish[data-sardine="true"] {
+  border-radius: 50%;
+  background: rgb(255 255 255 / 24%);
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 30%);
+}
+
+.sardine-wheel-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 4.2rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0.3rem solid #ffe362;
+  border-radius: 50%;
+  background: #063945;
+  box-shadow: 0 0 1.2rem rgb(0 0 0 / 35%);
+  transform: translate(-50%, -50%);
+  font-size: 1.8rem;
+}
+
+.sardine-wheel[data-state="won"] h3 {
+  color: #fff2a5;
+  text-shadow: 0 0 1.2rem rgb(255 217 71 / 55%);
+  animation: sardine-title-pulse 900ms ease-in-out infinite alternate;
+}
+
+.sardine-wheel-flash,
+.sardine-wheel-confetti,
+.sardine-wheel-prize {
+  pointer-events: none;
+}
+
+.sardine-wheel-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: white;
+  mix-blend-mode: screen;
+  animation: sardine-gold-flash 850ms ease-out both;
+}
+
+.sardine-wheel-confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.sardine-wheel-confetti i {
+  position: absolute;
+  top: -1rem;
+  left: var(--confetti-left);
+  width: 0.55rem;
+  height: 1rem;
+  border-radius: 70% 20%;
+  background: #ffe362;
+  animation: sardine-confetti-fall 2.1s cubic-bezier(0.22, 0.68, 0.35, 1) both;
+}
+
+.sardine-wheel-confetti i:nth-child(3n) { background: #54f8dc; animation-delay: 90ms; }
+.sardine-wheel-confetti i:nth-child(3n + 1) { background: #ff5c84; animation-delay: 180ms; }
+
+.sardine-wheel-prize {
+  z-index: 7;
+  margin-top: -4.8rem;
+  font-size: 4.4rem;
+  filter: drop-shadow(0 0.8rem 0.7rem rgb(0 0 0 / 30%));
+  animation: sardine-prize-leap 1.2s cubic-bezier(0.17, 0.8, 0.24, 1.18) both;
+}
+
+@keyframes sardine-wheel-spin {
+  from { transform: rotate(var(--sardine-wheel-from)); }
+  to { transform: rotate(var(--sardine-wheel-final)); }
+}
+
+@keyframes sardine-gold-flash {
+  0% { opacity: 0; }
+  18% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+@keyframes sardine-confetti-fall {
+  0% { opacity: 0; transform: translateY(-1rem) rotate(0deg); }
+  14% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(34rem) rotate(740deg); }
+}
+
+@keyframes sardine-prize-leap {
+  0% { opacity: 0; transform: translateY(4rem) rotate(-20deg) scale(0.35); }
+  62% { opacity: 1; transform: translateY(-2rem) rotate(8deg) scale(1.2); }
+  100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+}
+
+@keyframes sardine-title-pulse {
+  from { transform: scale(0.98); }
+  to { transform: scale(1.025); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sardine-wheel-dial[data-motion="spinning"] {
+    animation-duration: 180ms;
+  }
+
+  .sardine-wheel-flash,
+  .sardine-wheel-confetti i,
+  .sardine-wheel-prize,
+  .sardine-wheel[data-state="won"] h3 {
+    animation-duration: 1ms;
+    animation-iteration-count: 1;
+  }
+}
