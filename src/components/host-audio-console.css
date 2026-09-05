@@ -1,0 +1,98 @@
+.host-audio-console {
+  position: fixed;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  z-index: 90;
+  width: min(24rem, calc(100vw - 1.5rem));
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 32%, transparent);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--color-card) 96%, transparent);
+  box-shadow: 0 1.25rem 3rem rgb(0 24 48 / 35%);
+  backdrop-filter: blur(16px);
+}
+
+.host-audio-console > summary {
+  display: flex;
+  min-height: 3.5rem;
+  cursor: pointer;
+  list-style: none;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.8rem 1rem;
+  font-weight: 900;
+  touch-action: manipulation;
+}
+
+.host-audio-console > summary::-webkit-details-marker {
+  display: none;
+}
+
+.host-audio-console > summary svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--color-primary);
+}
+
+.host-audio-console > summary small {
+  margin-left: auto;
+  color: var(--color-muted-foreground);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.host-audio-console-panel {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0 0.75rem 0.75rem;
+}
+
+.host-audio-console-panel > p {
+  margin: 0;
+  color: var(--color-muted-foreground);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.host-audio-track-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.host-audio-track-list button {
+  min-height: 2.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent);
+  border-radius: 0.85rem;
+  background: var(--color-secondary);
+  color: var(--color-secondary-foreground);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 850;
+  line-height: 1.1;
+  padding: 0.55rem 0.65rem;
+  touch-action: manipulation;
+}
+
+.host-audio-track-list button[data-active="true"] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+
+.host-audio-console iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 0.9rem;
+  background: #001528;
+}
+
+@media (max-width: 420px) {
+  .host-audio-track-list {
+    grid-template-columns: 1fr;
+  }
+}

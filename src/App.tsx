@@ -17,8 +17,6 @@ import { useGame } from "@/hooks/use-game"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { BackgroundMusic } from "@/components/background-music"
-import { isHostAudioEnabled } from "@/components/challenge-audio-control"
 import { ChallengeScreen } from "@/components/challenge-screen"
 import { FinalReveal } from "@/components/final-reveal"
 import { HostSessionControls } from "@/components/host-session-controls"
@@ -26,8 +24,7 @@ import { HostLobbyTools } from "@/components/host-lobby-tools"
 import { LeaderboardScreen } from "@/components/leaderboard-screen"
 import { PlayerList } from "@/components/player-list"
 import { PlayerIdentityPicker } from "@/components/player-identity-picker"
-import { QuestionTimerAudio } from "@/components/question-timer-audio"
-import { SalmonRoundAudio } from "@/components/salmon-round-audio"
+import { HostAudioConsole } from "@/components/host-audio-console"
 import { SalmonDemoScreen } from "@/components/salmon-demo-screen"
 import { TeamBoard } from "@/components/team-board"
 import { TotemScan, type PlayerReveal } from "@/components/totem-scan"
@@ -433,31 +430,9 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam, onKic
 }
 
 function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty, onBuzz, onToggleQuestionTimer, onResolveBuzz, onBonus, onOfferWheel, onSpinWheel }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView>; onUseFiftyFifty: () => Promise<GameView>; onBuzz: () => Promise<GameView>; onToggleQuestionTimer: () => Promise<GameView>; onResolveBuzz: (correct: boolean) => Promise<GameView>; onBonus: () => Promise<GameView>; onOfferWheel: () => Promise<GameView>; onSpinWheel: () => Promise<GameView> }) {
-  const isSalmon = game.tournament?.challenge.id === "whos-dat-salmon"
-  const questionAudio = game.tournament && game.tournament.challenge.id !== "question-pour-un-poisson" && !isSalmon ? (
-    <QuestionTimerAudio
-      enabled={isHostAudioEnabled(session)}
-      phase={game.tournament.phase}
-      roundId={game.tournament.round.id}
-      endsAt={game.tournament.endsAt}
-      timerVideoId={game.tournament.challenge.answeringMusicYoutubeId}
-      endVideoId={game.tournament.challenge.timerEndSoundYoutubeId}
-    />
-  ) : null
-  const salmonAudio = game.tournament && isSalmon ? (
-    <SalmonRoundAudio
-      enabled={isHostAudioEnabled(session) && game.tournament.phase !== "challenge-intro"}
-      phase={game.tournament.phase}
-      roundId={game.tournament.round.id}
-      backgroundVideoId={game.tournament.challenge.answeringMusicYoutubeId}
-      cueVideoId={game.tournament.challenge.introMusicYoutubeId}
-    />
-  ) : null
   if (game.tournament?.phase === "leaderboard") {
     return (
       <>
-        {questionAudio}
-        {salmonAudio}
         <GameHeader game={game} />
         <LeaderboardScreen game={game} session={session} onAdvance={onAdvance} onFinish={onFinish} onBonus={onBonus} onOfferWheel={onOfferWheel} onSpinWheel={onSpinWheel} />
       </>
@@ -465,8 +440,6 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFi
   }
   return (
     <>
-      {questionAudio}
-      {salmonAudio}
       <GameHeader game={game} />
       <ChallengeScreen
         key={`${game.tournament?.challenge.id}-${game.tournament?.round.id}-${game.tournament?.phase}`}
@@ -485,7 +458,7 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFi
 }
 
 function EndScreen({ game, session, onLeave }: { game: GameView; session: PlayerSession; onLeave: () => void }) {
-  return <FinalReveal game={game} session={session} onLeave={onLeave} audioEnabled={isHostAudioEnabled(session)} />
+  return <FinalReveal game={game} session={session} onLeave={onLeave} />
 }
 
 function LoadingScreen() {
@@ -503,7 +476,6 @@ function LoadingScreen() {
 export default function App() {
   const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, kickPlayer, submitAnswer, useFiftyFifty, buzz, toggleQuestionTimer, resolveBuzz, applyBonus, offerSardineWheel, spinSardineWheel, skipChallenge, skipRound, canOpenDemoPlayer, openDemoPlayerView } = useGame()
   const isSalmonDemo = new URLSearchParams(window.location.search).get("salmon-demo") === "1"
-  const audioEnabled = isSalmonDemo || (session ? isHostAudioEnabled(session) : false)
   const screen = useMemo(() => {
     if (isSalmonDemo) return <SalmonDemoScreen />
     if (!session) return <HomeScreen onEnter={enter} />
@@ -515,7 +487,7 @@ export default function App() {
 
   return (
     <OceanShell>
-      {audioEnabled ? <BackgroundMusic /> : null}
+      {session?.hostToken && game ? <HostAudioConsole game={game} session={session} /> : null}
       {error && session && (
         <Alert variant="destructive" className="mb-4">
           <AlertTitle>Connexion perdue</AlertTitle>

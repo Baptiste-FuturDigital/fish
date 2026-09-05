@@ -16,8 +16,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { cn } from "@/lib/utils"
 import { AnimatedScore } from "@/components/animated-score"
 import { AnswerValidationSound, requestAnswerValidationSound } from "@/components/answer-validation-sound"
-import { ChallengeAudio } from "@/components/challenge-audio"
-import { isHostAudioEnabled } from "@/components/challenge-audio-control"
 import { MillionaireAnswerPanel } from "@/components/millionaire-answer-panel"
 import { SalmonAnswerProgress } from "@/components/salmon-answer-progress"
 import { ScoreRevealSound } from "@/components/score-reveal-sound"
@@ -138,7 +136,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
   const [answer, setAnswer] = useState("")
   const [busy, setBusy] = useState<"advance" | "answer" | "joker" | "finish" | null>(null)
   if (!tournament) return null
-  const isHost = isHostAudioEnabled(session)
+  const isHost = Boolean(session.hostToken)
   const isMillionaire = tournament.challenge.id === "qui-veut-gagner-des-poissons"
   const currentPlayer = game.players.find((player) => player.id === session.playerId)
   const teamId = currentPlayer?.teamId
@@ -239,14 +237,6 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
                 </li>
               ))}
             </ul>
-            {isHost ? (
-              <ChallengeAudio
-                videoId={tournament.challenge.introMusicYoutubeId}
-                title={tournament.challenge.title}
-                startSeconds={tournament.challenge.introMusicStartSeconds}
-                endSeconds={tournament.challenge.introMusicEndSeconds}
-              />
-            ) : null}
           </CardContent>
           <CardFooter className="justify-center">
             {isHost ? (
