@@ -78,4 +78,25 @@ describe("quiVeutGagnerDesPoissons", () => {
       points: [1, 2, 3, 5, 10],
     })
   })
+
+  it("consacre le quatrième palier aux épines de l’oursin comestible européen", () => {
+    const round = quiVeutGagnerDesPoissons.rounds[3]
+
+    expect(round).toEqual(expect.objectContaining({
+      id: "million-4-epines-oursin",
+      kicker: "Palier 4 · 50 poissons",
+      durationSeconds: 30,
+      question: "Chez l’oursin comestible européen, combien d’épines peut-on compter au minimum ?",
+      correctAnswer: "environ-3000",
+      answerLabel: "Environ 3 000",
+    }))
+    expect(round.choices).toEqual([
+      { id: "environ-3000", label: "Environ 3 000" },
+      { id: "environ-5000", label: "Environ 5 000" },
+      { id: "environ-8000", label: "Environ 8 000" },
+      { id: "environ-10000", label: "Environ 10 000" },
+    ])
+    expect(round.fact).toContain("varie selon l’espèce et la taille")
+    expect(round.fact).toContain("au moins 3 000 épines")
+  })
 })
