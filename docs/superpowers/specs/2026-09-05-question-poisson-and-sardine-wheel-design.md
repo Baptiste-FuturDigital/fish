@@ -34,6 +34,10 @@ Le serveur fournit une commande dédiée et autoritaire :
 
 Cette commande évite le comportement fragile consistant à envoyer plusieurs commandes `advance` depuis le navigateur.
 
+## Liste des invités
+
+L'identité invitée « Pauline » est remplacée par « Maude » dans le sélecteur des joueurs. Son identifiant devient `maude`. L'image existante `pauline-beluga.png` et tous les autres médias sont conservés sans renommage ni suppression ; seule l'identité présentée dans l'application change.
+
 ## Déclenchement de la Roue de Poséithon
 
 La roue est proposée uniquement sur le classement suivant la cinquième manche de « Le juste poisson ».
@@ -105,6 +109,7 @@ Chaque client calcule sa progression à partir de l'heure de départ reçue. Un 
 ## Validation
 
 - Tests de contenu pour l'ordre Hippocampe, Poulpe, Béluga, Crevette-mante, Kraken, les indices et l'image Kraken.
+- Test du catalogue d'identités : Maude est proposée, Pauline ne l'est plus et l'image béluga existante reste référencée.
 - Tests service et API du saut de manche en démo, avec refus hors démo et en dernière manche.
 - Tests service et API du déclenchement maître, du choix déterministe du gagnant, des autorisations joueur, de l'idempotence et du verrouillage de l'avance.
 - Tests de projection publique pour l'absence de secrets et la reprise après rechargement.
