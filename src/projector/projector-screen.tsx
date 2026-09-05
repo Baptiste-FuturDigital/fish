@@ -223,12 +223,13 @@ function AnsweringScene({ game, tournament }: { game: TvGameView; tournament: Tv
   const answeredCount = tournament.answerProgress.reduce((total, team) => total + team.lockedCount, 0)
   const seconds = remainingSeconds(tournament)
   const isBuzzer = tournament.round.kind === "buzzer"
+  const hidesRoundVisual = tournament.challenge.id === "question-pour-un-poisson"
 
   return (
     <section className="projector-gameplay" aria-labelledby="projector-question">
       <TournamentProgress tournament={tournament} />
-      <div className="projector-gameplay-grid">
-        <RoundVisual tournament={tournament} revealed={false} />
+      <div className={`projector-gameplay-grid${hidesRoundVisual ? " projector-gameplay-grid--full" : ""}`}>
+        {hidesRoundVisual ? null : <RoundVisual tournament={tournament} revealed={false} />}
         <div className="projector-question-panel">
           <p>{tournament.round.kicker}</p>
           <h1 id="projector-question">{tournament.round.question}</h1>
@@ -262,11 +263,12 @@ function AnsweringScene({ game, tournament }: { game: TvGameView; tournament: Tv
 
 function RevealScene({ game, tournament }: { game: TvGameView; tournament: TvTournamentView }) {
   const topResults = [...tournament.results].sort((left, right) => right.points - left.points || left.playerName.localeCompare(right.playerName, "fr")).slice(0, 8)
+  const hidesRoundVisual = tournament.challenge.id === "question-pour-un-poisson"
   return (
     <section className="projector-reveal" aria-labelledby="projector-answer">
       <TournamentProgress tournament={tournament} />
-      <div className="projector-reveal-grid">
-        <RoundVisual tournament={tournament} revealed />
+      <div className={`projector-reveal-grid${hidesRoundVisual ? " projector-reveal-grid--full" : ""}`}>
+        {hidesRoundVisual ? null : <RoundVisual tournament={tournament} revealed />}
         <div className="projector-reveal-copy">
           <p>LA RÉPONSE ÉTAIT…</p>
           <h1 id="projector-answer">{tournament.round.answerLabel}</h1>

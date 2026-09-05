@@ -652,6 +652,11 @@
   gap: 2.2%;
 }
 
+.projector-gameplay-grid--full,
+.projector-reveal-grid--full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .projector-round-image,
 .projector-round-placeholder {
   position: relative;

@@ -120,7 +120,35 @@ describe("ProjectorScreen", () => {
 
     expect(markup).toContain("Combien pèse cet hippocampe")
     expect(markup).toContain("1 / 1 poissons ont répondu")
+    expect(markup).toContain("/hippocampe.jpg")
+    expect(markup).toContain("projector-round-image")
     expect(markup).not.toContain("Bonne réponse")
+  })
+
+  it("masque entièrement le visuel animal de Question pour un poisson pendant la réponse", async () => {
+    const markup = await render({
+      ...baseGame,
+      status: "running",
+      tournament: {
+        ...tournament,
+        phase: "answering",
+        challenge: {
+          ...tournament.challenge,
+          id: "question-pour-un-poisson",
+        },
+        round: {
+          ...tournament.round,
+          kind: "buzzer",
+          imageUrl: "/teams/20-big-le-kraken.jpg",
+        },
+      },
+    })
+
+    expect(markup).toContain("Combien pèse cet hippocampe")
+    expect(markup).toContain("projector-gameplay-grid--full")
+    expect(markup).not.toContain("/teams/20-big-le-kraken.jpg")
+    expect(markup).not.toContain("projector-round-image")
+    expect(markup).not.toContain("projector-round-placeholder")
   })
 
   it("affiche la solution et le fait marin après révélation", async () => {
@@ -141,6 +169,36 @@ describe("ProjectorScreen", () => {
 
     expect(markup).toContain("Environ 12,5 grammes")
     expect(markup).toContain("Le mâle porte les petits")
+    expect(markup).toContain("/hippocampe.jpg")
+    expect(markup).toContain("projector-round-image")
+  })
+
+  it("masque entièrement le visuel animal de Question pour un poisson à la révélation", async () => {
+    const markup = await render({
+      ...baseGame,
+      status: "running",
+      tournament: {
+        ...tournament,
+        phase: "reveal",
+        challenge: {
+          ...tournament.challenge,
+          id: "question-pour-un-poisson",
+        },
+        round: {
+          ...tournament.round,
+          kind: "buzzer",
+          imageUrl: "/teams/20-big-le-kraken.jpg",
+          answerLabel: "Le requin blanc",
+          fact: "Il détecte les champs électriques.",
+        },
+      },
+    })
+
+    expect(markup).toContain("Le requin blanc")
+    expect(markup).toContain("projector-reveal-grid--full")
+    expect(markup).not.toContain("/teams/20-big-le-kraken.jpg")
+    expect(markup).not.toContain("projector-round-image")
+    expect(markup).not.toContain("projector-round-placeholder")
   })
 
   it("affiche le classement individuel entre les épreuves", async () => {
