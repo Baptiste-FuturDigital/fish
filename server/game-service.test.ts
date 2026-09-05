@@ -678,7 +678,9 @@ describe("GameService", () => {
     database.prepare(
       "UPDATE games SET challenge_round = 4, current_round = 4, phase = 'leaderboard', phase_ends_at = NULL WHERE id = ?",
     ).run(created.game.id)
-    const originalTeamScores = service.getGame(created.game.code).teams.map((team) => team.score)
+    const beforeOffer = service.getGame(created.game.code)
+    const originalTeamScores = beforeOffer.teams.map((team) => team.score)
+    expect(beforeOffer.tournament?.sardineWheelAvailable).toBe(true)
 
     const offered = service.offerSardineWheel(created.game.code, created.session.hostToken!)
     const repeated = service.offerSardineWheel(created.game.code, created.session.hostToken!)
@@ -693,6 +695,7 @@ describe("GameService", () => {
       completedAt: null,
     }))
     expect(repeated.tournament?.sardineWheel).toEqual(offered.tournament?.sardineWheel)
+    expect(offered.tournament?.sardineWheelAvailable).toBe(false)
     expect(offered.teams.map((team) => team.score)).toEqual(originalTeamScores)
     expect(offered.tournament?.sardineWheel?.winnerPlayerId).not.toBe(zoe.session.playerId)
     expect(() => service.applyPoseithonBonus(created.game.code, created.session.hostToken!))
@@ -752,6 +755,7 @@ describe("GameService", () => {
 
   it("rejects wheel offers outside the first leaderboard or without competitors", () => {
     const created = service.createGame("La roue", "Baptiste")
+    expect(service.getGame(created.game.code).tournament).toBeNull()
     expect(() => service.offerSardineWheel(created.game.code, created.session.hostToken!))
       .toThrowError(new GameError("La Roue de Poséithon attend la fin du Juste Poisson.", 409))
 
@@ -795,6 +799,7 @@ describe("GameService", () => {
       phase: "leaderboard",
       bonus: null,
       bonusAvailable: true,
+      sardineWheelAvailable: false,
     }))
     const originalPlayerScores = game.players.map((player) => player.score)
 

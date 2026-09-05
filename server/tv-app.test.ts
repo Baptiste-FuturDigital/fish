@@ -129,6 +129,12 @@ describe("TV spectator API", () => {
       `UPDATE games SET challenge_round = 4, current_round = 4,
        phase = 'leaderboard', phase_ends_at = NULL WHERE id = ?`,
     ).run(demo.game.id)
+
+    const available = await request(createApp(service))
+      .get(`/api/games/${demo.game.code}/tv`)
+      .expect(200)
+    expect(available.body.tournament.sardineWheelAvailable).toBe(true)
+
     service.offerSardineWheel(demo.game.code, demo.session.hostToken!)
 
     const offered = await request(createApp(service))
@@ -141,6 +147,7 @@ describe("TV spectator API", () => {
       durationMs: 6000,
     }))
     expect(offered.body.tournament.sardineWheel).not.toHaveProperty("winnerPlayerId")
+    expect(offered.body.tournament.sardineWheelAvailable).toBe(false)
     expect(JSON.stringify(offered.body)).not.toContain(demo.demoPlayerSession.playerId)
 
     service.spinSardineWheel(

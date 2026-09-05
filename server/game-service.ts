@@ -1152,6 +1152,10 @@ export class GameService {
       blockedTeamId: game.buzz_blocked_team_id,
       pausedRemainingMs: game.buzz_paused_ms,
       sardineWheel,
+      sardineWheelAvailable:
+        game.phase === "leaderboard" &&
+        challenge.id === "le-juste-poisson" &&
+        sardineWheel === null,
     }
   }
 

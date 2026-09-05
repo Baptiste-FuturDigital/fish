@@ -109,6 +109,7 @@ export interface TournamentView {
   blockedTeamId: string | null
   pausedRemainingMs: number | null
   sardineWheel: SardineWheelView | null
+  sardineWheelAvailable: boolean
 }
 
 export interface PlayerView {
