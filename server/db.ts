@@ -135,6 +135,23 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
       FOREIGN KEY(game_id, team_id) REFERENCES game_teams(game_id, team_id)
     );
 
+    CREATE TABLE IF NOT EXISTS sardine_wheels (
+      game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+      challenge_index INTEGER NOT NULL,
+      winner_player_id TEXT NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      status TEXT NOT NULL CHECK (status IN ('offered', 'spinning', 'won')),
+      offered_at TEXT NOT NULL,
+      started_at TEXT,
+      duration_ms INTEGER NOT NULL CHECK (duration_ms > 0),
+      completed_at TEXT,
+      PRIMARY KEY(game_id, challenge_index),
+      CHECK (
+        (status = 'offered' AND started_at IS NULL AND completed_at IS NULL) OR
+        (status = 'spinning' AND started_at IS NOT NULL AND completed_at IS NULL) OR
+        (status = 'won' AND started_at IS NOT NULL AND completed_at IS NOT NULL)
+      )
+    );
+
     CREATE TABLE IF NOT EXISTS prize_claims (
       id TEXT PRIMARY KEY,
       game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,
@@ -179,6 +196,9 @@ export function createDatabase(filename = "data/fish.db"): GameDatabase {
   if (!playerColumns.some((column) => column.name === "identity_id")) {
     database.exec("ALTER TABLE players ADD COLUMN identity_id TEXT")
   }
+  database.prepare(
+    "UPDATE players SET identity_id = 'maude', name = 'Maude' WHERE identity_id = 'pauline'",
+  ).run()
   const playerAnswerColumns = database.prepare("PRAGMA table_info(player_answers)").all() as Array<{ name: string }>
   if (!playerAnswerColumns.some((column) => column.name === "awarded_points")) {
     database.exec("ALTER TABLE player_answers ADD COLUMN awarded_points INTEGER")

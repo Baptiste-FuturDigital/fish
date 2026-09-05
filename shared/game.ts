@@ -60,6 +60,19 @@ export interface QuestionBuzzView {
   points: number
 }
 
+export type SardineWheelStatus = "offered" | "spinning" | "won"
+
+export interface SardineWheelView {
+  challengeIndex: number
+  winnerPlayerId: string
+  winnerPlayerName: string
+  status: SardineWheelStatus
+  offeredAt: string
+  startedAt: string | null
+  durationMs: number
+  completedAt: string | null
+}
+
 export interface TournamentChallengeView {
   id: ChallengeId
   title: string
@@ -95,6 +108,7 @@ export interface TournamentView {
   buzz: QuestionBuzzView | null
   blockedTeamId: string | null
   pausedRemainingMs: number | null
+  sardineWheel: SardineWheelView | null
 }
 
 export interface PlayerView {

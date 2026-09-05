@@ -16,6 +16,50 @@ describe("database migrations", () => {
     }
   })
 
+  it("persists one constrained sardine wheel per game intermission", () => {
+    const database = createDatabase(":memory:")
+
+    expect(database.prepare("PRAGMA table_info(sardine_wheels)").all())
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ name: "game_id" }),
+        expect.objectContaining({ name: "challenge_index" }),
+        expect.objectContaining({ name: "winner_player_id" }),
+        expect.objectContaining({ name: "status" }),
+        expect.objectContaining({ name: "offered_at" }),
+        expect.objectContaining({ name: "started_at" }),
+        expect.objectContaining({ name: "duration_ms" }),
+        expect.objectContaining({ name: "completed_at" }),
+      ]))
+
+    database.close()
+  })
+
+  it("migrates a persisted Pauline identity to Maude idempotently", () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "fish-roster-migration-"))
+    temporaryDirectories.push(directory)
+    const filename = path.join(directory, "fish.db")
+    const initial = createDatabase(filename)
+    initial.prepare(
+      `INSERT INTO games
+        (id, code, name, status, current_round, round_order, host_token_hash, created_at)
+       VALUES ('game-roster', 'MAUD', 'Invités', 'lobby', -1, '[]', 'host-hash', '2026-09-05T00:00:00.000Z')`,
+    ).run()
+    initial.prepare(
+      `INSERT INTO players
+        (id, game_id, name, identity_id, is_host, score, token_hash, created_at)
+       VALUES ('player-pauline', 'game-roster', 'Pauline', 'pauline', 0, 0, 'player-hash', '2026-09-05T00:00:00.000Z')`,
+    ).run()
+    initial.close()
+
+    createDatabase(filename).close()
+    const migrated = createDatabase(filename)
+
+    expect(migrated.prepare(
+      "SELECT name, identity_id FROM players WHERE id = 'player-pauline'",
+    ).get()).toEqual({ name: "Maude", identity_id: "maude" })
+    migrated.close()
+  })
+
   it("persists one claim per game, player and supported prize type", () => {
     const database = createDatabase(":memory:")
     database.prepare(
