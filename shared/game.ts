@@ -121,6 +121,20 @@ export interface JoinPlayerInput {
   nickname?: string
 }
 
+export type PrizeType = "best-player" | "worst-player" | "winning-team"
+
+export interface PrizeClaimRequest {
+  playerId: string
+  playerToken: string
+  email: string
+}
+
+export interface PrizeClaimResult {
+  prizeType: PrizeType
+  status: "sent"
+  alreadySent: boolean
+}
+
 export interface PromptView {
   id: string
   kind: PromptKind

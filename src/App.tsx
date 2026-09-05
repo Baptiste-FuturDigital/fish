@@ -477,7 +477,7 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFi
 }
 
 function EndScreen({ game, session, onLeave }: { game: GameView; session: PlayerSession; onLeave: () => void }) {
-  return <FinalReveal game={game} onLeave={onLeave} audioEnabled={isHostAudioEnabled(session)} />
+  return <FinalReveal game={game} session={session} onLeave={onLeave} audioEnabled={isHostAudioEnabled(session)} />
 }
 
 function LoadingScreen() {

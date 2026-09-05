@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 
-import type { GameView } from "@shared/game"
+import type { GameView, PlayerSession } from "@shared/game"
 import { FinalScoreboard } from "./final-scoreboard.js"
 
 import "./final-reveal.css"
@@ -112,10 +112,12 @@ export function beginFinalRevealTransition({
 
 export function FinalReveal({
   game,
+  session = null,
   onLeave,
   audioEnabled = false,
 }: {
   game: GameView
+  session?: PlayerSession | null
   onLeave: () => void
   audioEnabled?: boolean
 }) {
@@ -159,7 +161,7 @@ export function FinalReveal({
       ) : null}
 
       {isRevealed ? (
-        <FinalScoreboard game={game} onLeave={onLeave} />
+        <FinalScoreboard game={game} session={session} onLeave={onLeave} />
       ) : (
         <section
           className="final-suspense"

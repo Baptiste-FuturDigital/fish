@@ -64,6 +64,26 @@ describe("FinalScoreboard", () => {
     expect(markup).toContain('src="/references/poseithon.png"')
     expect(markup).toContain("Les Abysses")
   })
+
+  it("mounts prize claims only for the authenticated player session", () => {
+    const guestMarkup = renderToStaticMarkup(
+      <FinalScoreboard
+        game={game}
+        session={{ gameCode: "FISH", playerId: "alice", playerToken: "secret" }}
+        onLeave={() => undefined}
+      />,
+    )
+    const hostMarkup = renderToStaticMarkup(
+      <FinalScoreboard
+        game={game}
+        session={{ gameCode: "FISH", playerId: "host", playerToken: "secret", hostToken: "host" }}
+        onLeave={() => undefined}
+      />,
+    )
+
+    expect(guestMarkup).toContain("Réclame tes prix")
+    expect(hostMarkup).not.toContain("Réclame tes prix")
+  })
 })
 
 describe("FinalPlayerRanking", () => {

@@ -2,6 +2,8 @@ import type {
   GameView,
   JoinPlayerInput,
   PlayerIdentityChoice,
+  PrizeClaimResult,
+  PrizeType,
   SessionResponse,
 } from "@shared/game"
 
@@ -50,6 +52,18 @@ export const gameApi = {
     return request<GameView>(`/api/games/${code}/totem`, {
       method: "POST",
       body: JSON.stringify({ playerId, playerToken }),
+    })
+  },
+  claimPrize(
+    code: string,
+    prizeType: PrizeType,
+    playerId: string,
+    playerToken: string,
+    email: string,
+  ) {
+    return request<PrizeClaimResult>(`/api/games/${code}/prizes/${prizeType}/claim`, {
+      method: "POST",
+      body: JSON.stringify({ playerId, playerToken, email }),
     })
   },
   renameTeam(code: string, teamId: string, name: string, playerId: string, playerToken: string) {

@@ -27,6 +27,13 @@ La base SQLite persistante est créée automatiquement dans `data/fish.db`.
 
 ## Lancer avec Docker
 
+Pour activer l’envoi des récompenses, copier `.env.example` vers `.env`, puis renseigner :
+
+- `RESEND_API_KEY` : clé API Resend ;
+- `FISH_EMAIL_FROM` : expéditeur utilisant un domaine vérifié dans Resend, par exemple `Fish Tournament <prix@votre-domaine.fr>`.
+
+Sans ces variables, le jeu reste utilisable mais l’envoi des récompenses est indisponible. Le dossier `private/prizes` est inclus dans l’image Docker sans être servi par le serveur HTTP.
+
 ```bash
 docker compose up --build -d
 ```

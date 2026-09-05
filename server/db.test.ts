@@ -16,6 +16,54 @@ describe("database migrations", () => {
     }
   })
 
+  it("persists one claim per game, player and supported prize type", () => {
+    const database = createDatabase(":memory:")
+    database.prepare(
+      `INSERT INTO games
+        (id, code, name, status, current_round, round_order, host_token_hash, created_at)
+       VALUES ('game-prize', 'PRIZ', 'Prix marins', 'finished', 0, '[]', 'host-hash', '2026-09-05T00:00:00.000Z')`,
+    ).run()
+    database.prepare(
+      `INSERT INTO players
+        (id, game_id, name, is_host, score, token_hash, created_at)
+       VALUES ('player-prize', 'game-prize', 'Léa', 0, 42, 'player-hash', '2026-09-05T00:00:00.000Z')`,
+    ).run()
+
+    const insert = database.prepare(
+      `INSERT INTO prize_claims
+        (id, game_id, player_id, prize_type, email, status, created_at, updated_at)
+       VALUES (?, 'game-prize', 'player-prize', ?, ?, 'pending', ?, ?)`,
+    )
+    const now = "2026-09-05T00:01:00.000Z"
+    for (const prizeType of ["best-player", "worst-player", "winning-team"]) {
+      insert.run(`claim-${prizeType}`, prizeType, `${prizeType}@example.com`, now, now)
+    }
+
+    expect(database.prepare(
+      "SELECT prize_type, status FROM prize_claims ORDER BY prize_type",
+    ).all()).toEqual([
+      { prize_type: "best-player", status: "pending" },
+      { prize_type: "winning-team", status: "pending" },
+      { prize_type: "worst-player", status: "pending" },
+    ])
+    expect(() => insert.run(
+      "claim-duplicate",
+      "best-player",
+      "other@example.com",
+      now,
+      now,
+    )).toThrow(/UNIQUE constraint failed/)
+    expect(() => insert.run(
+      "claim-invalid",
+      "treasure-chest",
+      "invalid@example.com",
+      now,
+      now,
+    )).toThrow(/CHECK constraint failed/)
+
+    database.close()
+  })
+
   it("adds individual answer tables and preserves a legacy player's team answer", () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "fish-db-migration-"))
     temporaryDirectories.push(directory)

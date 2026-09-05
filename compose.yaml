@@ -10,6 +10,8 @@ services:
       NODE_ENV: production
       PORT: 8787
       FISH_DB: /app/data/fish.db
+      RESEND_API_KEY: "${RESEND_API_KEY:-}"
+      FISH_EMAIL_FROM: "${FISH_EMAIL_FROM:-}"
     volumes:
       - fish-data:/app/data
     restart: unless-stopped

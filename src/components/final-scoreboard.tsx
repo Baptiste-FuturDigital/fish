@@ -1,8 +1,9 @@
 import { useState, type CSSProperties } from "react"
 import { Crown, RotateCcw, Trophy, Users } from "lucide-react"
 
-import type { GameView } from "@shared/game"
+import type { GameView, PlayerSession } from "@shared/game"
 import { AnimatedScore } from "@/components/animated-score"
+import { PrizeClaims } from "@/components/prize-claims"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -152,9 +153,11 @@ export function FinalPlayerRanking({ game }: { game: GameView }) {
 
 export function FinalScoreboard({
   game,
+  session = null,
   onLeave,
 }: {
   game: GameView
+  session?: PlayerSession | null
   onLeave: () => void
 }) {
   const [rankingView, setRankingView] = useState<FinalRankingView>("teams")
@@ -264,6 +267,10 @@ export function FinalScoreboard({
             <FinalPlayerRanking game={game} />
           )}
         </div>
+      </CardContent>
+
+      <CardContent>
+        <PrizeClaims game={game} session={session} />
       </CardContent>
 
       <CardFooter className="final-footer">

@@ -4,6 +4,8 @@ import express, { type NextFunction, type Request, type Response } from "express
 import { z } from "zod"
 
 import { GameError, type GameService } from "./game-service.js"
+import { PrizeEmailUnavailableError, type PrizeType } from "./prize-email.js"
+import { PrizeClaimError, type PrizeService } from "./prize-service.js"
 import { toTvGameView } from "../shared/tv.js"
 
 const createSchema = z.object({
@@ -23,8 +25,14 @@ const answerSchema = playerSchema.extend({
   locked: z.boolean().default(true),
 })
 const buzzResolutionSchema = hostSchema.extend({ correct: z.boolean() })
+const prizeTypeSchema = z.enum(["best-player", "worst-player", "winning-team"])
+const prizeClaimSchema = playerSchema.extend({ email: z.email().max(254) })
 
-export function createApp(service: GameService, staticDir?: string) {
+export function createApp(
+  service: GameService,
+  staticDir?: string,
+  prizeService?: PrizeService,
+) {
   const app = express()
   app.disable("x-powered-by")
   app.use(express.json({ limit: "16kb" }))
@@ -145,8 +153,24 @@ export function createApp(service: GameService, staticDir?: string) {
     response.json(service.finishGame(request.params.code, body.hostToken))
   })
 
+  app.post("/api/games/:code/prizes/:prizeType/claim", async (request, response) => {
+    const prizeType = prizeTypeSchema.parse(request.params.prizeType) as PrizeType
+    const body = prizeClaimSchema.parse(request.body)
+    if (!prizeService) throw new PrizeEmailUnavailableError()
+    response.json(await prizeService.claim(
+      request.params.code,
+      prizeType,
+      body.playerId,
+      body.playerToken,
+      body.email,
+    ))
+  })
+
   if (staticDir) {
     const indexFile = path.join(staticDir, "index.html")
+    app.use(["/prize", "/private"], (_request, response) => {
+      response.status(404).json({ error: "Trésor introuvable." })
+    })
     app.use(express.static(staticDir))
     app.use((request, response, next) => {
       if (request.method !== "GET" || request.path.startsWith("/api/")) {
@@ -166,6 +190,14 @@ export function createApp(service: GameService, staticDir?: string) {
     ) => {
       if (error instanceof GameError) {
         response.status(error.statusCode).json({ error: error.message })
+        return
+      }
+      if (error instanceof PrizeClaimError) {
+        response.status(error.statusCode).json({ error: error.message })
+        return
+      }
+      if (error instanceof PrizeEmailUnavailableError) {
+        response.status(503).json({ error: error.message })
         return
       }
       if (error instanceof z.ZodError) {

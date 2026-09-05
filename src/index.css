@@ -49,6 +49,74 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+.prize-claims {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding-top: 0.5rem;
+}
+
+.prize-claims-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.prize-claims-heading > span {
+  display: grid;
+  width: 2.75rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--primary) 18%, transparent);
+  font-size: 1.35rem;
+}
+
+.prize-claims-heading p {
+  color: var(--muted-foreground);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.prize-claims-heading h2 {
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(1.35rem, 7vw, 1.8rem);
+  font-weight: 850;
+  line-height: 1;
+}
+
+.prize-claims-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.prize-claim-card {
+  position: relative;
+  border: 1px solid color-mix(in oklab, var(--primary) 28%, transparent);
+  background:
+    radial-gradient(circle at 95% 0%, color-mix(in oklab, var(--primary) 13%, transparent), transparent 42%),
+    var(--card);
+}
+
+.prize-claim-card[data-prize="best-player"] {
+  border-color: color-mix(in oklab, var(--chart-4) 52%, transparent);
+}
+
+.prize-claim-card[data-prize="worst-player"] {
+  border-color: color-mix(in oklab, var(--muted-foreground) 28%, transparent);
+}
+
+.prize-claim-success {
+  border-color: color-mix(in oklab, var(--primary) 32%, transparent);
+}
+
+@media (min-width: 40rem) {
+  .prize-claims-grid:has(> :nth-child(2)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 :root {
   --background: oklch(0.18 0.045 205);
   --foreground: oklch(0.96 0.025 96);
