@@ -4,7 +4,7 @@
 
 **Goal:** Keep the Millionaire answer grid visible after lock and animate the player's selected answer to its correct or wrong verdict.
 
-**Architecture:** `ChallengeScreen` derives the player-specific panel mode from authoritative tournament data. `MillionaireAnswerPanel` renders selection, locked, and reveal states while a small hook handles the client-only suspense delay.
+**Architecture:** `ChallengeScreen` derives the player-specific panel mode from authoritative tournament data. `MillionaireAnswerPanel` renders selection, locked, and reveal states while CSS keyframes handle the client-only suspense sequence.
 
 **Tech Stack:** React 19, TypeScript, CSS animations, Vitest, Playwright
 
@@ -47,36 +47,33 @@ Expected: PASS.
 ### Task 2: Route Millionaire reveal through the persistent panel
 
 **Files:**
-- Create: `src/hooks/use-millionaire-verdict.ts`
-- Create: `src/hooks/use-millionaire-verdict.test.ts`
 - Modify: `src/components/challenge-screen.tsx`
 - Modify: `src/components/challenge-screen.test.tsx`
 - Modify: `e2e/millionaire-joker.spec.ts`
 
 - [ ] **Step 1: Write failing state and integration tests**
 
-Test that `useMillionaireVerdict(roundId, revealing, isCorrect)` returns `pending` before the 1.2-second timer and the final verdict afterward. Render a revealed Millionaire game and assert that the question, choices and personal verdict exist while `LA RÉPONSE ÉTAIT` does not.
+Render a revealed Millionaire game and assert that the question, choices and personal verdict exist while `LA RÉPONSE ÉTAIT` does not. The panel test must verify the verdict data attribute that triggers the 1.2-second CSS sequence.
 
 - [ ] **Step 2: Run the tests and verify RED**
 
-Run: `npm test -- src/hooks/use-millionaire-verdict.test.ts src/components/challenge-screen.test.tsx`
+Run: `npm test -- src/components/millionaire-answer-panel.test.tsx src/components/challenge-screen.test.tsx`
 
-Expected: FAIL because the hook and dedicated reveal branch do not exist.
+Expected: FAIL because the dedicated reveal branch and verdict state do not exist.
 
 - [ ] **Step 3: Implement the dedicated branch**
 
-Find the current player's `tournament.results` entry. Use the server result's `isCorrect`; never infer correctness from the answer label. Render the existing Millionaire question shell and panel during answering-locked and reveal phases, passing the stored answer ID and verdict. Keep the generic reveal branch for every other challenge.
+Find the current player's `tournament.results` entry. Use the server result's `isCorrect`; never infer correctness from the answer label. Render the existing Millionaire question shell and panel during answering-locked and reveal phases, passing the stored answer ID and verdict. Use CSS keyframes to pulse orange before settling on green or red. Keep the generic reveal branch for every other challenge.
 
 - [ ] **Step 4: Run component tests and E2E**
 
-Run: `npm test -- src/hooks/use-millionaire-verdict.test.ts src/components/challenge-screen.test.tsx && npx playwright test e2e/millionaire-joker.spec.ts --project=mobile-chrome`
+Run: `npm test -- src/components/millionaire-answer-panel.test.tsx src/components/challenge-screen.test.tsx && npx playwright test e2e/millionaire-joker.spec.ts --project=mobile-chrome`
 
 Expected: PASS, including orange lock persistence and final green/red state.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/components/millionaire-answer-panel.tsx src/components/millionaire-answer-panel.css src/components/millionaire-answer-panel.test.tsx src/hooks/use-millionaire-verdict.ts src/hooks/use-millionaire-verdict.test.ts src/components/challenge-screen.tsx src/components/challenge-screen.test.tsx e2e/millionaire-joker.spec.ts
+git add src/components/millionaire-answer-panel.tsx src/components/millionaire-answer-panel.css src/components/millionaire-answer-panel.test.tsx src/components/challenge-screen.tsx src/components/challenge-screen.test.tsx e2e/millionaire-joker.spec.ts
 git commit -m "feat: animate locked millionaire answers"
 ```
-

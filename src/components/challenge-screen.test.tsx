@@ -162,6 +162,81 @@ describe("ChallengeScreen", () => {
     expect(markup).toContain("finish-tournament-button")
   })
 
+  it("garde les réponses Millionaire visibles au reveal et colore le choix personnel", () => {
+    const game = introGame(2)
+    game.players = [{
+      id: "player-1",
+      name: "Léa",
+      isHost: false,
+      score: 2,
+      teamId: "team-a",
+      totem: null,
+    }]
+    game.teams = [{ id: "team-a", name: "Les Saumons", score: 2, memberIds: ["player-1"] }]
+    game.tournament!.phase = "reveal"
+    game.tournament!.challenge = {
+      id: "qui-veut-gagner-des-poissons",
+      title: "Qui veut gagner des poissons ?",
+      shortTitle: "Qui veut gagner des poissons ?",
+      emoji: "🐡",
+      description: "Quatre réponses.",
+      rules: ["Choisis."],
+      introMusicYoutubeId: "video",
+      confirmationLabel: "C’est mon dernier mot",
+    }
+    game.tournament!.round = {
+      id: "million-1",
+      kind: "choice",
+      kicker: "Palier 1 · 10 poissons",
+      question: "Quel poisson ?",
+      durationSeconds: 30,
+      choices: [
+        { id: "a", label: "Anchois" },
+        { id: "b", label: "Baleine" },
+        { id: "c", label: "Calamar" },
+        { id: "d", label: "Dauphin" },
+      ],
+      correctAnswer: "b",
+      answerLabel: "Baleine",
+      fact: "Une explication marine.",
+    }
+    game.tournament!.answers = [{
+      playerId: "player-1",
+      playerName: "Léa",
+      teamId: "team-a",
+      answer: "b",
+      locked: true,
+    }]
+    game.tournament!.results = [{
+      playerId: "player-1",
+      playerName: "Léa",
+      teamId: "team-a",
+      answer: "Baleine",
+      points: 1,
+      isCorrect: true,
+      distance: null,
+    }]
+
+    const markup = renderToStaticMarkup(
+      <ChallengeScreen
+        game={game}
+        session={session}
+        onAdvance={vi.fn(async () => game)}
+        onFinish={vi.fn(async () => game)}
+        onSubmit={vi.fn(async () => game)}
+        onUseFiftyFifty={vi.fn(async () => game)}
+        onBuzz={vi.fn(async () => game)}
+        onToggleQuestionTimer={vi.fn(async () => game)}
+        onResolveBuzz={vi.fn(async () => game)}
+      />,
+    )
+
+    expect(markup).toContain("Quel poisson ?")
+    expect(markup.match(/data-choice-id=/g)).toHaveLength(4)
+    expect(markup).toContain('data-answer-state="correct"')
+    expect(markup).not.toContain("LA RÉPONSE ÉTAIT")
+  })
+
   it.each([
     [0, "PREMIÈRE ÉPREUVE"],
     [1, "DEUXIÈME ÉPREUVE"],

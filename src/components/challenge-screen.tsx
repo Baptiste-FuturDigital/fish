@@ -139,10 +139,15 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
   const [busy, setBusy] = useState<"advance" | "answer" | "joker" | "finish" | null>(null)
   if (!tournament) return null
   const isHost = isHostAudioEnabled(session)
+  const isMillionaire = tournament.challenge.id === "qui-veut-gagner-des-poissons"
   const currentPlayer = game.players.find((player) => player.id === session.playerId)
   const teamId = currentPlayer?.teamId
   const playerAnswer = tournament.answers.find((entry) => entry.playerId === session.playerId)
   const isLocked = Boolean(playerAnswer?.locked)
+  const playerResult = tournament.results.find((result) => result.playerId === session.playerId)
+  const millionaireAnswer = tournament.phase === "reveal"
+    ? String(playerAnswer?.answer ?? answer)
+    : answer
   const highestAward = Math.max(0, ...tournament.results.map((result) => result.points))
   const teamJoker = tournament.fiftyFiftyJokers.find((entry) => entry.teamId === teamId)
   const currentKeptChoiceIds = teamJoker?.roundIndex === tournament.roundIndex
@@ -325,7 +330,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
                   <AlertTitle>Maître du jeu · hors compétition</AlertTitle>
                   <AlertDescription>Cadre les réponses des poissons puis révèle la solution au bon moment.</AlertDescription>
                 </Alert>
-              ) : isLocked ? (
+              ) : isLocked && !isMillionaire ? (
                 <Alert>
                   <LockKeyhole />
                   <AlertTitle>Réponse verrouillée</AlertTitle>
@@ -343,9 +348,11 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
                     ) : tournament.challenge.id === "qui-veut-gagner-des-poissons" ? (
                       <MillionaireAnswerPanel
                         choices={tournament.round.choices ?? []}
-                        value={answer}
+                        value={millionaireAnswer}
                         confirmationLabel={tournament.challenge.confirmationLabel ?? "C’est mon dernier mot"}
                         busy={busy === "answer"}
+                        locked={isLocked}
+                        verdict={null}
                         joker={{
                           available: !teamJoker,
                           keptChoiceIds: currentKeptChoiceIds,
@@ -393,6 +400,28 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
             </CardContent>
           </Card>
         </>
+      ) : isMillionaire && teamId ? (
+        <Card className="millionaire-stage-card my-4">
+          <CardHeader className="millionaire-question-shell text-center">
+            <CardDescription>{tournament.round.kicker}</CardDescription>
+            <CardTitle className="font-heading text-3xl font-black">{tournament.round.question}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MillionaireAnswerPanel
+              choices={tournament.round.choices ?? []}
+              value={millionaireAnswer}
+              confirmationLabel={tournament.challenge.confirmationLabel ?? "C’est mon dernier mot"}
+              busy={false}
+              locked
+              verdict={playerResult ? (playerResult.isCorrect ? "correct" : "wrong") : null}
+              joker={{ available: !teamJoker, keptChoiceIds: currentKeptChoiceIds }}
+              jokerBusy={false}
+              onUseFiftyFifty={() => undefined}
+              onValueChange={() => undefined}
+            />
+            {tournament.round.fact ? <p className="mt-4 text-center leading-relaxed">{tournament.round.fact}</p> : null}
+          </CardContent>
+        </Card>
       ) : (
         <Card className="my-4 overflow-hidden">
           {tournament.round.imageUrl ? (
@@ -401,6 +430,9 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
                 imageUrl={tournament.round.imageUrl}
                 imageAlt={tournament.round.answerLabel ?? "L’hippocampe"}
                 revealed
+                playerResult={!isHost && playerResult
+                  ? { isCorrect: playerResult.isCorrect, points: playerResult.points }
+                  : undefined}
               />
             ) : (
               <div className="challenge-image-wrap"><img className="challenge-image" src={tournament.round.imageUrl} alt={tournament.round.answerLabel} /></div>

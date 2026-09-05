@@ -186,6 +186,99 @@
   color: white;
 }
 
+.millionaire-options .millionaire-option:disabled {
+  opacity: 1;
+}
+
+.millionaire-options .millionaire-option[data-answer-state="locked"] {
+  border-color: oklch(0.9 0.17 84);
+  background: linear-gradient(105deg, oklch(0.76 0.18 72), oklch(0.6 0.19 47));
+  color: white;
+  box-shadow: 0 0 0 2px oklch(0.92 0.13 91 / 24%), 0 0.75rem 1.6rem oklch(0.46 0.17 54 / 28%);
+}
+
+.millionaire-options .millionaire-option[data-answer-state="correct"] {
+  animation: millionaire-verdict-correct 1.2s ease-in-out both;
+}
+
+.millionaire-options .millionaire-option[data-answer-state="wrong"] {
+  animation: millionaire-verdict-wrong 1.2s ease-in-out both;
+}
+
+.millionaire-locked-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.1rem 0.55rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid oklch(0.86 0.16 91 / 48%);
+  border-radius: 999px;
+  background: oklch(0.14 0.055 230 / 88%);
+  color: oklch(0.97 0.025 95);
+}
+
+.millionaire-locked-status svg {
+  grid-row: 1 / 3;
+  width: 1.2rem;
+  height: 1.2rem;
+  color: oklch(0.88 0.16 89);
+}
+
+.millionaire-locked-status strong {
+  font-family: "Fraunces Variable", serif;
+  font-size: 1rem;
+}
+
+.millionaire-locked-status span {
+  color: oklch(0.75 0.04 210);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+@keyframes millionaire-verdict-correct {
+  0%, 18%, 36%, 54% {
+    border-color: white;
+    background: linear-gradient(105deg, oklch(0.82 0.2 84), oklch(0.64 0.2 51));
+    box-shadow: 0 0 1.8rem oklch(0.96 0.16 91 / 75%);
+    transform: scale(1.025);
+  }
+  9%, 27%, 45%, 63% {
+    border-color: oklch(0.86 0.16 91);
+    background: linear-gradient(105deg, oklch(0.56 0.17 67), oklch(0.45 0.16 45));
+    box-shadow: none;
+    transform: scale(0.99);
+  }
+  100% {
+    border-color: oklch(0.92 0.19 145);
+    background: linear-gradient(105deg, oklch(0.65 0.2 145), oklch(0.47 0.18 151));
+    color: white;
+    box-shadow: 0 0 0 2px oklch(0.85 0.17 145 / 24%), 0 0.8rem 1.8rem oklch(0.38 0.17 151 / 34%);
+    transform: scale(1);
+  }
+}
+
+@keyframes millionaire-verdict-wrong {
+  0%, 18%, 36%, 54% {
+    border-color: white;
+    background: linear-gradient(105deg, oklch(0.82 0.2 84), oklch(0.64 0.2 51));
+    box-shadow: 0 0 1.8rem oklch(0.96 0.16 91 / 75%);
+    transform: scale(1.025);
+  }
+  9%, 27%, 45%, 63% {
+    border-color: oklch(0.86 0.16 91);
+    background: linear-gradient(105deg, oklch(0.56 0.17 67), oklch(0.45 0.16 45));
+    box-shadow: none;
+    transform: scale(0.99);
+  }
+  100% {
+    border-color: oklch(0.9 0.2 24);
+    background: linear-gradient(105deg, oklch(0.67 0.24 27), oklch(0.48 0.2 23));
+    color: white;
+    box-shadow: 0 0 0 2px oklch(0.84 0.18 25 / 24%), 0 0.8rem 1.8rem oklch(0.4 0.2 22 / 38%);
+    transform: scale(1);
+  }
+}
+
 .millionaire-confirmation {
   display: grid;
   justify-items: center;
@@ -306,5 +399,15 @@
   .millionaire-options .millionaire-option::after {
     animation: none;
     transition: none;
+  }
+
+  .millionaire-options .millionaire-option[data-answer-state="correct"] {
+    border-color: oklch(0.92 0.19 145);
+    background: linear-gradient(105deg, oklch(0.65 0.2 145), oklch(0.47 0.18 151));
+  }
+
+  .millionaire-options .millionaire-option[data-answer-state="wrong"] {
+    border-color: oklch(0.9 0.2 24);
+    background: linear-gradient(105deg, oklch(0.67 0.24 27), oklch(0.48 0.2 23));
   }
 }

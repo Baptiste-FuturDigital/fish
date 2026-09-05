@@ -15,15 +15,16 @@ describe("player identity assets", () => {
     const referenced = playerIdentities
       .map((identity) => identity.imageUrl.replace(/^\/players\//, ""))
       .sort()
-    const selectable = readdirSync(playerAssetDirectory)
+    const assets = readdirSync(playerAssetDirectory)
       .filter((filename) => filename !== ".DS_Store")
       .filter((filename) => !filename.startsWith("baptiste-"))
       .sort()
 
-    expect(invitedPlayerIdentities).toHaveLength(17)
-    expect(playerIdentities).toHaveLength(18)
-    expect(referenced).toEqual(selectable)
+    expect(invitedPlayerIdentities).toHaveLength(16)
+    expect(playerIdentities).toHaveLength(17)
+    expect(assets).toContain("jeremy-phoque.png")
     referenced.forEach((filename) => {
+      expect(assets).toContain(filename)
       expect(existsSync(path.join(playerAssetDirectory, filename)), filename).toBe(true)
     })
   })

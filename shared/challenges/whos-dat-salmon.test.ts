@@ -12,7 +12,7 @@ describe("whosDatSalmon", () => {
 
     whosDatSalmon.rounds.forEach((round, index) => {
       expect(round.kind).toBe("choice")
-      expect(round.durationSeconds).toBe(20)
+      expect(round.durationSeconds).toBe(30)
       expect(round.imageUrl).toContain(`/game/Who's that salmon/${index + 1}-guess-`)
       expect(Reflect.get(round, "revealImageUrl")).toContain(`/game/Who's that salmon/${index + 1}-reveal-`)
     })

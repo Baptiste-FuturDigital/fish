@@ -50,4 +50,49 @@ describe("MillionaireAnswerPanel", () => {
     expect(html).not.toContain("Dauphin")
     expect(html.match(/data-choice-id=/g)).toHaveLength(2)
   })
+
+  it("keeps every choice visible and the selected answer orange after locking", () => {
+    const html = renderToStaticMarkup(
+      <MillionaireAnswerPanel
+        choices={choices}
+        value="b"
+        confirmationLabel="C’est mon dernier mot"
+        busy={false}
+        locked
+        verdict={null}
+        joker={{ available: true, keptChoiceIds: null }}
+        jokerBusy={false}
+        onUseFiftyFifty={vi.fn()}
+        onValueChange={vi.fn()}
+      />,
+    )
+
+    expect(html.match(/data-choice-id=/g)).toHaveLength(4)
+    expect(html).toContain('data-answer-state="locked"')
+    expect(html).toContain("Réponse verrouillée")
+    expect(html).not.toContain("Verrouiller cette réponse")
+  })
+
+  it.each([
+    ["correct", "Bonne réponse"],
+    ["wrong", "Mauvaise réponse"],
+  ] as const)("shows the %s verdict directly on the locked choice", (verdict, label) => {
+    const html = renderToStaticMarkup(
+      <MillionaireAnswerPanel
+        choices={choices}
+        value="b"
+        confirmationLabel="C’est mon dernier mot"
+        busy={false}
+        locked
+        verdict={verdict}
+        joker={{ available: true, keptChoiceIds: null }}
+        jokerBusy={false}
+        onUseFiftyFifty={vi.fn()}
+        onValueChange={vi.fn()}
+      />,
+    )
+
+    expect(html).toContain(`data-answer-state="${verdict}"`)
+    expect(html).toContain(label)
+  })
 })

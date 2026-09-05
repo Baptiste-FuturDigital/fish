@@ -25,7 +25,7 @@ export const whosDatSalmon = {
       kind: "choice",
       kicker: "Duel 1 · Foudre dans les abysses",
       question: "Qui se cache derrière cette silhouette ?",
-      durationSeconds: 20,
+      durationSeconds: 30,
       imageUrl: `${ASSET_ROOT}/1-guess-whale.png`,
       revealImageUrl: `${ASSET_ROOT}/1-reveal-whale.png`,
       choices: [
@@ -42,7 +42,7 @@ export const whosDatSalmon = {
       kind: "choice",
       kicker: "Duel 2 · Uppercut sous-marin",
       question: "Qui se cache derrière cette silhouette ?",
-      durationSeconds: 20,
+      durationSeconds: 30,
       imageUrl: `${ASSET_ROOT}/2-guess-mantis-shrimp.png`,
       revealImageUrl: `${ASSET_ROOT}/2-reveal-mantis-shrimp.png`,
       choices: [
@@ -59,7 +59,7 @@ export const whosDatSalmon = {
       kind: "choice",
       kicker: "Duel 3 · Retour aux sources",
       question: "Qui se cache derrière cette silhouette ?",
-      durationSeconds: 20,
+      durationSeconds: 30,
       imageUrl: `${ASSET_ROOT}/3-guess-salmon.png`,
       revealImageUrl: `${ASSET_ROOT}/3-reveal-salmon.png`,
       choices: [
@@ -76,7 +76,7 @@ export const whosDatSalmon = {
       kind: "choice",
       kicker: "Duel 4 · Carapace électrique",
       question: "Qui se cache derrière cette silhouette ?",
-      durationSeconds: 20,
+      durationSeconds: 30,
       imageUrl: `${ASSET_ROOT}/4-guess-pikachu.jpeg`,
       revealImageUrl: `${ASSET_ROOT}/4-reveal-pikachu.png`,
       choices: [

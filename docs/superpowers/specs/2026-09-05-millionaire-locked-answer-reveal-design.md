@@ -18,7 +18,7 @@ Conserver l'interface à quatre choix sur le téléphone du joueur après la val
 
 `MillionaireAnswerPanel` devient un composant de présentation piloté par un mode explicite : sélection, verrouillé ou verdict. `ChallengeScreen` dérive ce mode à partir de la phase serveur, de la réponse personnelle et du résultat personnel. Le serveur reste la seule source de vérité pour la réponse et sa correction ; l'animation intermédiaire reste purement locale et ne retarde aucune mutation serveur.
 
-Un petit état local de reveal bascule du pulse vers la couleur finale. Il est réinitialisé à chaque identifiant de manche. Un rechargement pendant le reveal rejoue l'animation, ce qui est acceptable pour cette expérience de soirée.
+Une animation CSS attachée au verdict serveur enchaîne le pulse orange et la couleur finale. Le changement de manche remonte naturellement le panneau ; un rechargement pendant le reveal rejoue l'animation, ce qui est acceptable pour cette expérience de soirée.
 
 ## Accessibilité et robustesse
 
@@ -32,4 +32,3 @@ Un petit état local de reveal bascule du pulse vers la couleur finale. Il est r
 - Tests du panneau pour les modes sélection, verrouillé, verdict correct et verdict faux.
 - Test de `ChallengeScreen` prouvant que le reveal Millionaire n'utilise plus la carte générique.
 - Test E2E mobile couvrant validation, choix orange persistant, reveal et couleur finale.
-

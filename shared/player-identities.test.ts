@@ -12,8 +12,10 @@ function filenameFromImageUrl(imageUrl: string): string {
 
 describe("player identity catalog", () => {
   it("exposes every invited player except the game master", () => {
-    expect(invitedPlayerIdentities).toHaveLength(17)
+    expect(invitedPlayerIdentities).toHaveLength(16)
     expect(invitedPlayerIdentities.map((identity) => identity.displayName)).not.toContain("Baptiste")
+    expect(invitedPlayerIdentities.map((identity) => identity.id)).not.toContain("jeremy")
+    expect(invitedPlayerIdentities.map((identity) => identity.id)).not.toContain("valentine")
     expect(invitedPlayerIdentities).toContainEqual(expect.objectContaining({
       id: "agathe",
       displayName: "Agathe",
@@ -55,8 +57,8 @@ describe("player identity catalog", () => {
       filenameFromImageUrl(identity.imageUrl),
     )
 
-    expect(invitedPlayerIdentities).toHaveLength(17)
-    expect(playerIdentities).toHaveLength(18)
+    expect(invitedPlayerIdentities).toHaveLength(16)
+    expect(playerIdentities).toHaveLength(17)
     expect(playerIdentities.filter((identity) => identity.anonymous)).toEqual([
       anonymousPlayerIdentity,
     ])

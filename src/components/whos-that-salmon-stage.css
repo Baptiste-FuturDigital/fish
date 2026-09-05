@@ -100,6 +100,47 @@
   animation: salmon-label-pop 800ms 300ms cubic-bezier(0.16, 1.4, 0.3, 1) both;
 }
 
+.whos-salmon-result-burst {
+  position: absolute;
+  z-index: 7;
+  left: 50%;
+  bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: max-content;
+  max-width: calc(100% - 7rem);
+  padding: 0.5rem 0.8rem;
+  border: 2px solid white;
+  border-radius: 999px;
+  color: white;
+  font-family: "Fraunces Variable", serif;
+  font-size: clamp(0.85rem, 4.4vw, 1.35rem);
+  font-weight: 950;
+  line-height: 1;
+  text-shadow: 0 0.1rem 0.35rem oklch(0.05 0.05 250 / 55%);
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.whos-salmon-result-burst svg {
+  width: 1.25em;
+  height: 1.25em;
+  flex: none;
+}
+
+.whos-salmon-result-burst[data-result="correct"] {
+  background: oklch(0.62 0.2 145 / 92%);
+  box-shadow: 0 0 2rem oklch(0.78 0.22 145 / 82%);
+  animation: salmon-success-burst 1.65s 480ms cubic-bezier(0.16, 1.35, 0.3, 1) both;
+}
+
+.whos-salmon-result-burst[data-result="wrong"] {
+  background: oklch(0.62 0.24 25 / 92%);
+  box-shadow: 0 0 2rem oklch(0.72 0.24 25 / 76%);
+  animation: salmon-wrong-burst 1.45s 480ms cubic-bezier(0.16, 1.2, 0.3, 1) both;
+}
+
 @keyframes salmon-guess-arrival {
   from { opacity: 0; filter: blur(18px) saturate(1.7); transform: scale(1.12); }
   to { opacity: 1; filter: blur(0) saturate(1); transform: scale(1); }
@@ -122,9 +163,9 @@
 }
 
 @keyframes salmon-reveal-frame {
-  0% { opacity: 0; filter: brightness(4) saturate(2); transform: scale(1.2) rotate(-1deg); }
-  38% { opacity: 1; filter: brightness(1.8) saturate(1.5); }
-  100% { filter: brightness(1) saturate(1.08); transform: scale(1); }
+  0% { opacity: 0; clip-path: inset(100% 0 0); transform: translateY(8%) scale(1.03); }
+  42% { opacity: 1; }
+  100% { opacity: 1; clip-path: inset(0 0 0); transform: translateY(0) scale(1); }
 }
 
 @keyframes salmon-reveal-shock {
@@ -137,12 +178,31 @@
   to { opacity: 1; transform: scale(1) rotate(-2deg); }
 }
 
+@keyframes salmon-success-burst {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.15) rotate(-9deg); }
+  24% { opacity: 1; transform: translateX(-50%) scale(1.24) rotate(3deg); }
+  43% { transform: translateX(-50%) scale(0.94) rotate(-1deg); }
+  62% { transform: translateX(-50%) scale(1.06); }
+  82% { opacity: 1; transform: translateX(-50%) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-2.5rem) scale(1.35); }
+}
+
+@keyframes salmon-wrong-burst {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.2); }
+  28% { opacity: 1; transform: translateX(calc(-50% - 0.45rem)) scale(1.12) rotate(-5deg); }
+  42% { transform: translateX(calc(-50% + 0.45rem)) scale(1.04) rotate(5deg); }
+  56% { transform: translateX(calc(-50% - 0.25rem)) scale(1.02) rotate(-2deg); }
+  78% { opacity: 1; transform: translateX(-50%) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-1.5rem) scale(0.8); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .whos-salmon-stage,
   .whos-salmon-frame,
   .whos-salmon-wipe,
   .whos-salmon-phase,
   .whos-salmon-ocean-burst span,
+  .whos-salmon-result-burst,
   .whos-salmon-stage::before {
     animation: none !important;
   }

@@ -112,6 +112,30 @@ describe("tournament engine", () => {
       ])
   })
 
+  it("normalise Who's that salmon pour donner le même maximum aux bancs de trois et quatre", () => {
+    const playerResults = scorePlayerRound(salmonChallenge, 0, [
+      { playerId: "a-1", playerName: "A One", teamId: "team-a", answer: "b" },
+      { playerId: "a-2", playerName: "A Two", teamId: "team-a", answer: "b" },
+      { playerId: "a-3", playerName: "A Three", teamId: "team-a", answer: "b" },
+      { playerId: "b-1", playerName: "B One", teamId: "team-b", answer: "b" },
+      { playerId: "b-2", playerName: "B Two", teamId: "team-b", answer: "b" },
+      { playerId: "b-3", playerName: "B Three", teamId: "team-b", answer: "b" },
+      { playerId: "b-4", playerName: "B Four", teamId: "team-b", answer: "b" },
+    ])
+
+    expect(playerResults.every((result) => result.points === 2)).toBe(true)
+    expect(aggregateTeamResults(
+      salmonChallenge,
+      0,
+      playerResults,
+      ["team-a", "team-b"],
+      new Map([["team-a", 3], ["team-b", 4]]),
+    )).toEqual([
+      expect.objectContaining({ teamId: "team-a", points: 8, isCorrect: true }),
+      expect.objectContaining({ teamId: "team-b", points: 8, isCorrect: true }),
+    ])
+  })
+
   it("ranks numeric answers by relative error and gives no points to missing teams", () => {
     expect(scoreRound(numericChallenge, 0, [
       { teamId: "team-a", answer: "90" },

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Volume2, VolumeX } from "lucide-react"
 
 import type { TournamentPhase } from "@shared/game"
 import {
@@ -6,6 +7,9 @@ import {
   buildChallengeAudioSource,
   type QuestionAudioCommand,
 } from "@/components/challenge-audio-control"
+import { Button } from "@/components/ui/button"
+
+import "./salmon-round-audio.css"
 
 const YOUTUBE_ORIGIN = "https://www.youtube-nocookie.com"
 const CUE_DURATION_MS = 5_000
@@ -46,6 +50,7 @@ export function SalmonRoundAudio({
   const lastCueRoundRef = useRef<string | null>(null)
   const backgroundControllerRef = useRef<ReturnType<typeof createQueuedController> | null>(null)
   const cueControllerRef = useRef<ReturnType<typeof createQueuedController> | null>(null)
+  const [musicMuted, setMusicMuted] = useState(false)
 
   if (!backgroundControllerRef.current) {
     backgroundControllerRef.current = createQueuedController((command) => {
@@ -105,6 +110,17 @@ export function SalmonRoundAudio({
 
   if (!enabled || !backgroundVideoId) return null
 
+  function toggleBackgroundMusic() {
+    if (musicMuted) {
+      audioSessionRef.current?.resumeBackground()
+      setMusicMuted(false)
+      return
+    }
+
+    audioSessionRef.current?.muteBackground()
+    setMusicMuted(true)
+  }
+
   return (
     <>
       <iframe
@@ -129,6 +145,18 @@ export function SalmonRoundAudio({
         tabIndex={-1}
         onLoad={() => cueControllerRef.current?.markLoaded()}
       />
+      <div className="salmon-music-control">
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          aria-pressed={musicMuted}
+          onClick={toggleBackgroundMusic}
+        >
+          {musicMuted ? <Volume2 data-icon="inline-start" /> : <VolumeX data-icon="inline-start" />}
+          {musicMuted ? "Relancer la musique Pokémon" : "Couper la musique Pokémon"}
+        </Button>
+      </div>
     </>
   )
 }

@@ -137,6 +137,7 @@ export function aggregateTeamResults(
   roundIndex: number,
   playerResults: readonly PlayerRoundScoreResult[],
   participatingTeamIds: readonly string[],
+  teamSizes?: ReadonlyMap<string, number>,
 ): RoundScoreResult[] {
   const round = challenge.rounds[roundIndex]
   if (!round) throw new Error("Manche introuvable.")
@@ -166,13 +167,20 @@ export function aggregateTeamResults(
   }
 
   if (challenge.id === "whos-dat-salmon") {
+    const largestTeamSize = teamSizes
+      ? Math.max(0, ...participatingTeamIds.map((teamId) => teamSizes.get(teamId) ?? 0))
+      : 0
     return participatingTeamIds.map((teamId) => {
       const teamPlayers = playerResults.filter((result) => result.teamId === teamId)
       const correctPlayers = teamPlayers.filter((result) => result.isCorrect)
+      const rawPoints = correctPlayers.reduce((total, result) => total + result.points, 0)
+      const teamSize = teamSizes?.get(teamId) ?? 0
       return {
         teamId,
         answer: correctPlayers[0]?.answer ?? teamPlayers[0]?.answer ?? null,
-        points: correctPlayers.reduce((total, result) => total + result.points, 0),
+        points: teamSizes && teamSize > 0 && largestTeamSize > 0
+          ? rawPoints * largestTeamSize / teamSize
+          : rawPoints,
         isCorrect: correctPlayers.length > 0,
         distance: null,
       }

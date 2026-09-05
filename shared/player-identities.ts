@@ -31,7 +31,6 @@ export const invitedPlayerIdentities: readonly PlayerIdentityDefinition[] = [
   invited("dimitri", "Dimitri", "dimitri-morse.png", "le morse", "Ses défenses sont deux canines géantes qui l’aident notamment à se hisser hors de l’eau."),
   invited("fabien", "Fabien", "fabien-axolotl.webp", "l’axolotl", "Il peut régénérer des membres entiers ainsi que des parties de son cœur et de sa moelle épinière."),
   invited("florian", "Florian", "florian-loutre.png", "la loutre de mer", "Elle utilise des pierres comme outils pour ouvrir les coquillages les plus résistants."),
-  invited("jeremy", "Jeremy", "jeremy-phoque.png", "le phoque", "Ses moustaches détectent les minuscules turbulences laissées dans l’eau par les poissons qui nagent."),
   invited("laura", "Laura", "laura-tortue.png", "la tortue marine", "Elle perçoit le champ magnétique terrestre et s’en sert comme d’une carte pour traverser les océans."),
   invited("margaux", "Margaux", "margaux-sirene.png", "la sirène", "Des marins auraient pris des lamantins aperçus de loin pour des sirènes : la fatigue fait des miracles."),
   invited("marie", "Marie", "marie-meduse.png", "la méduse", "Elle nage sans cerveau, sans cœur et sans os grâce à un simple réseau de cellules nerveuses."),

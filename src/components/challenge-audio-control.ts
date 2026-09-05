@@ -105,6 +105,15 @@ export function beginSalmonRoundAudioSession({
         cueTimer = undefined
       }, cueDurationMs)
     },
+    muteBackground() {
+      if (stopped) return
+      sendBackgroundCommand({ name: "mute", args: [] })
+    },
+    resumeBackground() {
+      if (stopped) return
+      sendBackgroundCommand({ name: "unMute", args: [] })
+      sendBackgroundCommand({ name: "playVideo", args: [] })
+    },
     stop() {
       if (stopped) return
       stopped = true

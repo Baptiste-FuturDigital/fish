@@ -37,7 +37,12 @@ describe("challenge audio", () => {
         sendBackgroundCommand: (command: { name: string; args: readonly unknown[] }) => void
         sendCueCommand: (command: { name: string; args: readonly unknown[] }) => void
         target: EventTarget
-      }) => { playCue: () => void; stop: () => void })
+      }) => {
+        playCue: () => void
+        muteBackground: () => void
+        resumeBackground: () => void
+        stop: () => void
+      })
 
     const source = new URL(buildSource({
       videoId: "3pPR6IOV7Rg",
@@ -70,6 +75,10 @@ describe("challenge audio", () => {
     expect(cue).toEqual(["seekTo", "unMute", "playVideo"])
     vi.advanceTimersByTime(5_000)
     expect(cue.at(-1)).toBe("pauseVideo")
+    session.muteBackground()
+    expect(background.at(-1)).toBe("mute")
+    session.resumeBackground()
+    expect(background.slice(-2)).toEqual(["unMute", "playVideo"])
     session.stop()
     expect(background.at(-1)).toBe("pauseVideo")
     expect(ambientStates).toEqual([true, false])

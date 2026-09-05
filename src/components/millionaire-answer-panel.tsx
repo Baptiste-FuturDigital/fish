@@ -21,6 +21,8 @@ interface MillionaireAnswerPanelProps {
   value: string
   confirmationLabel: string
   busy: boolean
+  locked?: boolean
+  verdict?: "correct" | "wrong" | null
   joker: {
     available: boolean
     keptChoiceIds: readonly string[] | null
@@ -35,6 +37,8 @@ export function MillionaireAnswerPanel({
   value,
   confirmationLabel,
   busy,
+  locked = false,
+  verdict = null,
   joker,
   jokerBusy,
   onUseFiftyFifty,
@@ -46,14 +50,15 @@ export function MillionaireAnswerPanel({
     createMillionaireAnswerState,
   )
   const selectedIndex = choices.findIndex(
-    (choice) => choice.id === state.selectedAnswer,
+    (choice) => choice.id === (locked ? value : state.selectedAnswer),
   )
   const selectedChoice = choices[selectedIndex]
+  const selectedAnswer = locked ? value : state.selectedAnswer
   const displayedChoices = joker.keptChoiceIds
     ? choices.filter((choice) => joker.keptChoiceIds?.includes(choice.id))
     : choices
 
-  if (state.phase === "confirming" && selectedChoice) {
+  if (!locked && state.phase === "confirming" && selectedChoice) {
     return (
       <section
         className="millionaire-confirmation"
@@ -94,7 +99,7 @@ export function MillionaireAnswerPanel({
           className="millionaire-joker"
           type="button"
           variant="outline"
-          disabled={!joker.available || Boolean(state.selectedAnswer) || busy || jokerBusy}
+          disabled={locked || !joker.available || Boolean(selectedAnswer) || busy || jokerBusy}
           onClick={onUseFiftyFifty}
         >
           {jokerBusy
@@ -109,8 +114,9 @@ export function MillionaireAnswerPanel({
         <ToggleGroup
           className="millionaire-options"
           variant="outline"
-          value={state.selectedAnswer ? [state.selectedAnswer] : []}
+          value={selectedAnswer ? [selectedAnswer] : []}
           onValueChange={(values) => {
+            if (locked) return
             const answer = (values as string[])[0] ?? ""
             dispatch({ type: "select", answer })
             onValueChange(answer)
@@ -124,6 +130,10 @@ export function MillionaireAnswerPanel({
               value={choice.id}
               key={choice.id}
               data-choice-id={choice.id}
+              data-answer-state={choice.id === selectedAnswer
+                ? verdict ?? (locked ? "locked" : undefined)
+                : undefined}
+              disabled={locked}
             >
               <strong>{String.fromCharCode(65 + originalIndex)}</strong>
               <span>{choice.label}</span>
@@ -132,14 +142,26 @@ export function MillionaireAnswerPanel({
           })}
         </ToggleGroup>
       </Field>
-      <Button
-        size="lg"
-        type="button"
-        disabled={!state.selectedAnswer || busy}
-        onClick={() => dispatch({ type: "request-confirmation" })}
-      >
-        <LockKeyhole data-icon="inline-start" /> Verrouiller cette réponse
-      </Button>
+      {locked ? (
+        <div className="millionaire-locked-status" role="status" aria-live="polite">
+          {verdict === "correct" ? <CheckCircle2 aria-hidden="true" /> : <LockKeyhole aria-hidden="true" />}
+          <strong>{verdict === "correct"
+            ? "Bonne réponse"
+            : verdict === "wrong"
+              ? "Mauvaise réponse"
+              : "Réponse verrouillée"}</strong>
+          <span>{verdict ? "Verdict de Poséithon" : "Ton dernier mot est enregistré"}</span>
+        </div>
+      ) : (
+        <Button
+          size="lg"
+          type="button"
+          disabled={!state.selectedAnswer || busy}
+          onClick={() => dispatch({ type: "request-confirmation" })}
+        >
+          <LockKeyhole data-icon="inline-start" /> Verrouiller cette réponse
+        </Button>
+      )}
     </div>
   )
 }

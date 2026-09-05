@@ -1061,11 +1061,16 @@ export class GameService {
         fresh.challenge_round,
         submittedAnswers,
       )
+      const teamSizes = new Map(teamRows.map((team) => [team.team_id, 0]))
+      for (const player of scoringPlayers) {
+        teamSizes.set(player.teamId, (teamSizes.get(player.teamId) ?? 0) + 1)
+      }
       const teamResults = aggregateTeamResults(
         challenge,
         fresh.challenge_round,
         playerResults,
         teamRows.map((team) => team.team_id),
+        teamSizes,
       )
       const insertPlayerResult = this.database.prepare(
         `INSERT OR IGNORE INTO player_round_results

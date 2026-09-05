@@ -107,10 +107,15 @@ test("a team uses its single 50/50 joker on the responsive millionaire stage", a
   await expect(page.getByRole("heading", { name: "Est-ce votre dernier mot ?" })).toBeVisible()
   await page.getByRole("button", { name: "C’est mon dernier mot" }).tap()
   await expect(page.getByText("Réponse verrouillée")).toBeVisible()
+  await expect(answerChoices).toHaveCount(2)
+  await expect(panel.locator('[data-answer-state="locked"]')).toHaveCount(1)
 
   await post(page.request, `/api/games/${code}/advance`, {
     hostToken: created.session.hostToken,
   })
+  await expect(answerChoices).toHaveCount(2)
+  await expect(panel.locator('[data-answer-state="correct"], [data-answer-state="wrong"]')).toHaveCount(1)
+  await expect(page.getByText("LA RÉPONSE ÉTAIT")).toHaveCount(0)
   await post(page.request, `/api/games/${code}/advance`, {
     hostToken: created.session.hostToken,
   })
