@@ -6,6 +6,7 @@ import { aggregateTeamResults, projectRound, scorePlayerRound } from "./tourname
 import { selectBalancedTotem } from "./totem-assignment.js"
 import { findTotem, prankTotem, teamDefinitions, teamIds, totems, type TotemCategory } from "./totems.js"
 import { challenges, findChallenge } from "../shared/challenges/catalog.js"
+import { comparePlayerRanking } from "../shared/player-ranking.js"
 import {
   anonymousPlayerIdentity,
   findPlayerIdentity,
@@ -30,6 +31,7 @@ import type {
   TeamView,
   TournamentView,
   PoseithonBonusView,
+  SardineWheelView,
   TeamFiftyFiftyJokerView,
 } from "../shared/game.js"
 
@@ -117,9 +119,21 @@ interface FiftyFiftyJokerRow {
   used_at: string
 }
 
+interface SardineWheelRow {
+  challenge_index: number
+  winner_player_id: string
+  winner_player_name: string
+  status: SardineWheelView["status"]
+  offered_at: string
+  started_at: string | null
+  duration_ms: number
+  completed_at: string | null
+}
+
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 const ROUND_COUNT = 8
 const POSEITHON_BONUS_POINTS = 2
+const SARDINE_WHEEL_DURATION_MS = 6_000
 
 export class GameError extends Error {
   constructor(
@@ -314,6 +328,7 @@ export class GameService {
   getGame(codeInput: string): GameView {
     let game = this.getGameRow(codeInput.trim().toUpperCase())
     game = this.synchronizeDeadline(game)
+    this.synchronizeSardineWheel(game)
     const players = this.database
       .prepare(
         `SELECT id, name, identity_id, is_host, score, totem_id
@@ -512,6 +527,34 @@ export class GameService {
     return this.getGame(game.code)
   }
 
+  skipDemoRound(codeInput: string, hostToken: string): GameView {
+    const code = codeInput.trim().toUpperCase()
+    this.database.transaction(() => {
+      const game = this.assertHost(code, hostToken)
+      if (!game.is_demo) {
+        throw new GameError("Ce raccourci est réservé à la démo.", 409)
+      }
+      if (game.status !== "running") {
+        throw new GameError("La démo n'est pas en cours.", 409)
+      }
+      const challenge = this.currentChallenge(game)
+      if (challenge.rounds.length < 2 || game.challenge_round >= challenge.rounds.length - 1) {
+        throw new GameError("La dernière manche est déjà atteinte.", 409)
+      }
+      const nextRound = game.challenge_round + 1
+      const endsAt = new Date(
+        Date.now() + challenge.rounds[nextRound].durationSeconds * 1_000,
+      ).toISOString()
+      this.database.prepare(
+        `UPDATE games SET challenge_round = ?, current_round = ?, phase = 'answering',
+         phase_ends_at = ?, buzz_player_id = NULL, buzz_team_id = NULL,
+         buzz_paused_ms = NULL, buzz_points = NULL, buzz_blocked_team_id = NULL
+         WHERE id = ?`,
+      ).run(nextRound, nextRound, endsAt, game.id)
+    })()
+    return this.getGame(code)
+  }
+
   advanceTournament(code: string, hostToken: string): GameView {
     const game = this.assertHost(code, hostToken)
     if (game.status !== "running") {
@@ -545,6 +588,14 @@ export class GameService {
         ).run(game.id)
       }
     } else if (game.phase === "leaderboard") {
+      this.synchronizeSardineWheel(game)
+      const activeWheel = this.database.prepare(
+        `SELECT status FROM sardine_wheels
+         WHERE game_id = ? AND challenge_index = ?`,
+      ).get(game.id, game.challenge_index) as { status: SardineWheelView["status"] } | undefined
+      if (activeWheel && activeWheel.status !== "won") {
+        throw new GameError("La sardine doit d’abord trouver son champion.", 409)
+      }
       this.database.prepare(
         `UPDATE games SET challenge_index = challenge_index + 1, challenge_round = 0,
          current_round = 0, phase = 'challenge-intro', phase_ends_at = NULL WHERE id = ?`,
@@ -808,12 +859,88 @@ export class GameService {
     return this.getGame(game.code)
   }
 
+  offerSardineWheel(codeInput: string, hostToken: string): GameView {
+    const code = codeInput.trim().toUpperCase()
+    this.database.transaction(() => {
+      const game = this.assertHost(code, hostToken)
+      if (
+        game.status !== "running" ||
+        game.phase !== "leaderboard" ||
+        this.currentChallenge(game).id !== "le-juste-poisson"
+      ) {
+        throw new GameError("La Roue de Poséithon attend la fin du Juste Poisson.", 409)
+      }
+      const existing = this.database.prepare(
+        `SELECT 1 FROM sardine_wheels
+         WHERE game_id = ? AND challenge_index = ?`,
+      ).get(game.id, game.challenge_index)
+      if (existing) return
+
+      const players = this.database.prepare(
+        `SELECT id, name, score FROM players
+         WHERE game_id = ? AND is_host = 0`,
+      ).all(game.id) as Array<{ id: string; name: string; score: number }>
+      const winner = players.sort(comparePlayerRanking)[0]
+      if (!winner) {
+        throw new GameError("Aucun poisson ne peut recevoir la faveur divine.", 409)
+      }
+      this.database.prepare(
+        `INSERT INTO sardine_wheels
+          (game_id, challenge_index, winner_player_id, status, offered_at, duration_ms)
+         VALUES (?, ?, ?, 'offered', ?, ?)`,
+      ).run(
+        game.id,
+        game.challenge_index,
+        winner.id,
+        new Date().toISOString(),
+        SARDINE_WHEEL_DURATION_MS,
+      )
+    })()
+    return this.getGame(code)
+  }
+
+  spinSardineWheel(codeInput: string, playerId: string, playerToken: string): GameView {
+    const code = codeInput.trim().toUpperCase()
+    this.database.transaction(() => {
+      const game = this.getGameRow(code)
+      if (
+        game.status !== "running" ||
+        game.phase !== "leaderboard" ||
+        this.currentChallenge(game).id !== "le-juste-poisson"
+      ) {
+        throw new GameError("La Roue de Poséithon n'est pas disponible.", 409)
+      }
+      const player = this.assertPlayer(game.id, playerId, playerToken)
+      const wheel = this.database.prepare(
+        `SELECT winner_player_id, status FROM sardine_wheels
+         WHERE game_id = ? AND challenge_index = ?`,
+      ).get(game.id, game.challenge_index) as {
+        winner_player_id: string
+        status: SardineWheelView["status"]
+      } | undefined
+      if (!wheel) throw new GameError("La roue n'a pas encore été offerte.", 409)
+      if (wheel.winner_player_id !== player.id) {
+        throw new GameError("Seul le champion désigné peut lancer la roue.", 403)
+      }
+      if (wheel.status === "offered") {
+        this.database.prepare(
+          `UPDATE sardine_wheels SET status = 'spinning', started_at = ?
+           WHERE game_id = ? AND challenge_index = ? AND status = 'offered'`,
+        ).run(new Date().toISOString(), game.id, game.challenge_index)
+      }
+    })()
+    return this.getGame(code)
+  }
+
   applyPoseithonBonus(codeInput: string, hostToken: string): GameView {
     const code = codeInput.trim().toUpperCase()
     this.database.transaction(() => {
       const game = this.assertHost(code, hostToken)
       if (game.status !== "running" || game.phase !== "leaderboard") {
         throw new GameError("La Marée de Poséithon ne peut surgir qu'entre deux épreuves.", 409)
+      }
+      if (this.currentChallenge(game).id === "le-juste-poisson") {
+        throw new GameError("La Roue de Poséithon remplace la Marée après cette épreuve.", 409)
       }
       const existing = this.database.prepare(
         `SELECT 1 FROM intermission_bonuses
@@ -964,6 +1091,25 @@ export class GameService {
           team_name: string
         } | undefined
       : undefined
+    const sardineWheelRow = this.database.prepare(
+      `SELECT sw.challenge_index, sw.winner_player_id, p.name AS winner_player_name,
+              sw.status, sw.offered_at, sw.started_at, sw.duration_ms, sw.completed_at
+       FROM sardine_wheels sw
+       JOIN players p ON p.id = sw.winner_player_id AND p.game_id = sw.game_id
+       WHERE sw.game_id = ? AND sw.challenge_index = ?`,
+    ).get(game.id, game.challenge_index) as SardineWheelRow | undefined
+    const sardineWheel: SardineWheelView | null = sardineWheelRow
+      ? {
+          challengeIndex: sardineWheelRow.challenge_index,
+          winnerPlayerId: sardineWheelRow.winner_player_id,
+          winnerPlayerName: sardineWheelRow.winner_player_name,
+          status: sardineWheelRow.status,
+          offeredAt: sardineWheelRow.offered_at,
+          startedAt: sardineWheelRow.started_at,
+          durationMs: sardineWheelRow.duration_ms,
+          completedAt: sardineWheelRow.completed_at,
+        }
+      : null
 
     return {
       challengeIndex: game.challenge_index,
@@ -993,7 +1139,8 @@ export class GameService {
       results,
       teamResults,
       bonus,
-      bonusAvailable: game.phase === "leaderboard" && bonus === null,
+      bonusAvailable:
+        game.phase === "leaderboard" && challenge.id !== "le-juste-poisson" && bonus === null,
       fiftyFiftyJokers,
       buzz: buzz ? {
         playerId: buzz.player_id,
@@ -1004,7 +1151,24 @@ export class GameService {
       } : null,
       blockedTeamId: game.buzz_blocked_team_id,
       pausedRemainingMs: game.buzz_paused_ms,
+      sardineWheel,
     }
+  }
+
+  private synchronizeSardineWheel(game: GameRow): void {
+    const spinning = this.database.prepare(
+      `SELECT started_at, duration_ms FROM sardine_wheels
+       WHERE game_id = ? AND challenge_index = ? AND status = 'spinning'`,
+    ).get(game.id, game.challenge_index) as {
+      started_at: string
+      duration_ms: number
+    } | undefined
+    if (!spinning || Date.parse(spinning.started_at) + spinning.duration_ms > Date.now()) return
+
+    this.database.prepare(
+      `UPDATE sardine_wheels SET status = 'won', completed_at = ?
+       WHERE game_id = ? AND challenge_index = ? AND status = 'spinning'`,
+    ).run(new Date().toISOString(), game.id, game.challenge_index)
   }
 
   private synchronizeDeadline(game: GameRow): GameRow {

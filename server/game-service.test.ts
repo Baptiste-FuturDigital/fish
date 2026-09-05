@@ -102,6 +102,39 @@ describe("GameService", () => {
     )).toThrowError(new GameError("Ce raccourci est réservé à la démo.", 409))
   })
 
+  it("skips directly to the next timed round and clears buzzer state in demos", () => {
+    const demo = service.createDemoGame()
+    database.prepare(
+      `UPDATE games SET buzz_player_id = 'stale-player', buzz_team_id = 'abyssaux',
+       buzz_paused_ms = 12000, buzz_points = 4, buzz_blocked_team_id = 'coralliens'
+       WHERE id = ?`,
+    ).run(demo.game.id)
+
+    const skipped = service.skipDemoRound(demo.game.code, demo.session.hostToken!)
+
+    expect(skipped.tournament).toEqual(expect.objectContaining({
+      roundIndex: 1,
+      phase: "answering",
+      endsAt: expect.any(String),
+      buzz: null,
+      blockedTeamId: null,
+      pausedRemainingMs: null,
+    }))
+  })
+
+  it("rejects round skipping outside demos and on the final round", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    expect(() => service.skipDemoRound(created.game.code, created.session.hostToken!))
+      .toThrowError(new GameError("Ce raccourci est réservé à la démo.", 409))
+
+    const demo = service.createDemoGame()
+    database.prepare(
+      "UPDATE games SET challenge_round = 4, current_round = 4 WHERE id = ?",
+    ).run(demo.game.id)
+    expect(() => service.skipDemoRound(demo.game.code, demo.session.hostToken!))
+      .toThrowError(new GameError("La dernière manche est déjà atteinte.", 409))
+  })
+
   it("adds a guest to the same lobby", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     const joined = service.joinGame(created.game.code, "Léa")
@@ -636,6 +669,100 @@ describe("GameService", () => {
     }))
   })
 
+  it("offers the sardine wheel to the deterministic leading player without changing scores", () => {
+    const created = service.createGame("La roue", "Baptiste")
+    const [zoe, alice] = joinAndClaimCompetitors(created.game.code, ["Zoé", "Alice"])
+    service.startGame(created.game.code, created.session.hostToken!)
+    database.prepare("UPDATE players SET score = 7 WHERE game_id = ? AND is_host = 0")
+      .run(created.game.id)
+    database.prepare(
+      "UPDATE games SET challenge_round = 4, current_round = 4, phase = 'leaderboard', phase_ends_at = NULL WHERE id = ?",
+    ).run(created.game.id)
+    const originalTeamScores = service.getGame(created.game.code).teams.map((team) => team.score)
+
+    const offered = service.offerSardineWheel(created.game.code, created.session.hostToken!)
+    const repeated = service.offerSardineWheel(created.game.code, created.session.hostToken!)
+
+    expect(offered.tournament?.sardineWheel).toEqual(expect.objectContaining({
+      challengeIndex: 0,
+      winnerPlayerId: alice.session.playerId,
+      winnerPlayerName: "Alice",
+      status: "offered",
+      startedAt: null,
+      durationMs: 6000,
+      completedAt: null,
+    }))
+    expect(repeated.tournament?.sardineWheel).toEqual(offered.tournament?.sardineWheel)
+    expect(offered.teams.map((team) => team.score)).toEqual(originalTeamScores)
+    expect(offered.tournament?.sardineWheel?.winnerPlayerId).not.toBe(zoe.session.playerId)
+    expect(() => service.applyPoseithonBonus(created.game.code, created.session.hostToken!))
+      .toThrowError(new GameError("La Roue de Poséithon remplace la Marée après cette épreuve.", 409))
+  })
+
+  it("lets only the selected winner spin once and persists completion from server time", () => {
+    const created = service.createGame("La roue", "Baptiste")
+    const [zoe, alice] = joinAndClaimCompetitors(created.game.code, ["Zoé", "Alice"])
+    service.startGame(created.game.code, created.session.hostToken!)
+    database.prepare("UPDATE players SET score = CASE name WHEN 'Alice' THEN 9 ELSE 2 END WHERE game_id = ? AND is_host = 0")
+      .run(created.game.id)
+    database.prepare(
+      "UPDATE games SET challenge_round = 4, current_round = 4, phase = 'leaderboard', phase_ends_at = NULL WHERE id = ?",
+    ).run(created.game.id)
+    service.offerSardineWheel(created.game.code, created.session.hostToken!)
+
+    expect(() => service.spinSardineWheel(
+      created.game.code,
+      zoe.session.playerId,
+      zoe.session.playerToken,
+    )).toThrowError(new GameError("Seul le champion désigné peut lancer la roue.", 403))
+    expect(() => service.spinSardineWheel(
+      created.game.code,
+      alice.session.playerId,
+      "intrus",
+    )).toThrowError(new GameError("Session de poisson invalide.", 403))
+
+    const spinning = service.spinSardineWheel(
+      created.game.code,
+      alice.session.playerId,
+      alice.session.playerToken,
+    )
+    const repeated = service.spinSardineWheel(
+      created.game.code,
+      alice.session.playerId,
+      alice.session.playerToken,
+    )
+    expect(spinning.tournament?.sardineWheel?.status).toBe("spinning")
+    expect(repeated.tournament?.sardineWheel?.startedAt)
+      .toBe(spinning.tournament?.sardineWheel?.startedAt)
+
+    expect(() => service.advanceTournament(created.game.code, created.session.hostToken!))
+      .toThrowError(new GameError("La sardine doit d’abord trouver son champion.", 409))
+    database.prepare(
+      "UPDATE sardine_wheels SET started_at = ? WHERE game_id = ?",
+    ).run(new Date(Date.now() - 7000).toISOString(), created.game.id)
+
+    const completed = service.getGame(created.game.code)
+    expect(completed.tournament?.sardineWheel).toEqual(expect.objectContaining({
+      status: "won",
+      completedAt: expect.any(String),
+    }))
+    expect(service.advanceTournament(created.game.code, created.session.hostToken!).tournament)
+      .toEqual(expect.objectContaining({ challengeIndex: 1, phase: "challenge-intro" }))
+  })
+
+  it("rejects wheel offers outside the first leaderboard or without competitors", () => {
+    const created = service.createGame("La roue", "Baptiste")
+    expect(() => service.offerSardineWheel(created.game.code, created.session.hostToken!))
+      .toThrowError(new GameError("La Roue de Poséithon attend la fin du Juste Poisson.", 409))
+
+    database.prepare(
+      `UPDATE games SET status = 'running', challenge_index = 0, challenge_round = 4,
+       current_round = 4, phase = 'leaderboard', phase_ends_at = NULL WHERE id = ?`,
+    ).run(created.game.id)
+    expect(() => service.offerSardineWheel(created.game.code, created.session.hostToken!))
+      .toThrowError(new GameError("Aucun poisson ne peut recevoir la faveur divine.", 409))
+  })
+
   it("lets only the host grant one comeback bonus to the deterministic last-place team", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     joinAndClaimCompetitors(created.game.code, ["Léa", "Sam", "Jo", "Mia"])
@@ -659,6 +786,10 @@ describe("GameService", () => {
     for (let step = 0; step < 20 && game.tournament?.phase !== "leaderboard"; step += 1) {
       game = service.advanceTournament(created.game.code, created.session.hostToken!)
     }
+    database.prepare(
+      "UPDATE games SET challenge_index = 1, challenge_round = 4, current_round = 4 WHERE id = ?",
+    ).run(created.game.id)
+    game = service.getGame(created.game.code)
 
     expect(game.tournament).toEqual(expect.objectContaining({
       phase: "leaderboard",
@@ -672,7 +803,7 @@ describe("GameService", () => {
     expect(rewarded.tournament).toEqual(expect.objectContaining({
       bonusAvailable: false,
       bonus: expect.objectContaining({
-        challengeIndex: 0,
+        challengeIndex: 1,
         teamId: "electriques",
         points: 2,
       }),
@@ -715,6 +846,9 @@ describe("GameService", () => {
     for (let step = 0; step < 20 && game.tournament?.phase !== "leaderboard"; step += 1) {
       game = service.advanceTournament(created.game.code, created.session.hostToken!)
     }
+    database.prepare(
+      "UPDATE games SET challenge_index = 1, challenge_round = 4, current_round = 4 WHERE id = ?",
+    ).run(created.game.id)
     const rewarded = service.applyPoseithonBonus(created.game.code, created.session.hostToken!)
 
     expect(rewarded.tournament?.bonus?.teamId).toBe(occupiedTeams[1].id)
