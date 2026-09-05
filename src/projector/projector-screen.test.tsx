@@ -45,7 +45,7 @@ const baseGame = {
   status: "lobby",
   currentRound: 0,
   totalRounds: 4,
-  players: [{ name: "Léa", score: 4, teamId: "abyssaux", imageUrl: "/raie.jpg" }],
+  players: [{ name: "Léa", score: 4, teamId: "abyssaux", imageUrl: "/raie.jpg", animalName: "la raie manta" }],
   teams: [{ id: "abyssaux", name: "Les Abyssaux", score: 4, memberCount: 1 }],
   tournament: null,
   createdAt: "2026-09-05T00:00:00.000Z",
@@ -65,7 +65,20 @@ describe("ProjectorScreen", () => {
     expect(markup).toContain("Scanne pour rejoindre")
     expect(markup).toContain("FISH")
     expect(markup).toContain("Léa")
-    expect(markup).not.toContain("<button")
+    expect(markup).toContain('aria-label="Agrandir la photo de Léa"')
+    expect(markup).not.toContain("Lancer la partie")
+  })
+
+  it("affiche un portrait sélectionné en grand dans un dialogue", async () => {
+    const { ProjectorPortraitLightbox } = await import("./projector-screen.js")
+    const markup = renderToStaticMarkup(
+      <ProjectorPortraitLightbox player={baseGame.players[0]} onClose={() => undefined} />,
+    )
+
+    expect(markup).toContain('role="dialog"')
+    expect(markup).toContain("Portrait de Léa")
+    expect(markup).toContain('/raie.jpg')
+    expect(markup).toContain("Fermer le portrait")
   })
 
   it.each([

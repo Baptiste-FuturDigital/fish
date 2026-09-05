@@ -318,8 +318,10 @@ export class GameService {
          FROM players WHERE game_id = ? AND is_host = 0 ORDER BY created_at, rowid`,
       )
       .all(game.id) as PlayerRow[]
-    const playerViews: PlayerView[] = players.map((player) => ({
-      ...(() => {
+    const playerViews: PlayerView[] = players.map((player) => {
+      const identity = findPlayerIdentity(player.identity_id ?? "anonymous") ?? anonymousPlayerIdentity
+      return {
+        ...(() => {
         const definition = findTotem(player.totem_id)
         const isPrankTarget = Boolean(
           definition &&
@@ -330,15 +332,17 @@ export class GameService {
           teamId: definition ? teamIds[definition.category] : null,
           totem: definition && isPrankTarget ? prankTotem(definition) : definition,
         }
-      })(),
-      id: player.id,
-      name: player.name,
-      identityId: player.identity_id ?? "anonymous",
-      imageUrl: findPlayerIdentity(player.identity_id ?? "anonymous")?.imageUrl
-        ?? anonymousPlayerIdentity.imageUrl,
-      isHost: Boolean(player.is_host),
-      score: player.score,
-    }))
+        })(),
+        id: player.id,
+        name: player.name,
+        identityId: player.identity_id ?? "anonymous",
+        imageUrl: identity.imageUrl,
+        animalName: identity.animalName,
+        animalFact: identity.animalFact,
+        isHost: Boolean(player.is_host),
+        score: player.score,
+      }
+    })
     const teamRows = this.database
       .prepare("SELECT team_id, category, name, score FROM game_teams WHERE game_id = ? ORDER BY rowid")
       .all(game.id) as TeamRow[]

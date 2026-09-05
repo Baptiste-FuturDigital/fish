@@ -1,7 +1,8 @@
-import { Crown, Radio, ScanLine, Trophy, Users, Waves } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Crown, Radio, ScanLine, Trophy, Users, Waves, X } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 
-import type { TvGameView, TvTeamView, TvTournamentView } from "@shared/tv"
+import type { TvGameView, TvPlayerView, TvTeamView, TvTournamentView } from "@shared/tv"
 import { toDisplayPoints } from "@/components/score-display"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -71,9 +72,46 @@ function TeamScoreRail({ game }: { game: TvGameView }) {
   )
 }
 
+export function ProjectorPortraitLightbox({ player, onClose }: { player: TvPlayerView; onClose: () => void }) {
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose()
+    }
+    document.addEventListener("keydown", closeOnEscape)
+    return () => document.removeEventListener("keydown", closeOnEscape)
+  }, [onClose])
+
+  return (
+    <div
+      className="projector-portrait-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Portrait de ${player.name}`}
+      onMouseDown={(event) => {
+        if (event.currentTarget === event.target) onClose()
+      }}
+    >
+      <button type="button" className="projector-portrait-close" onClick={onClose} aria-label="Fermer le portrait">
+        <X aria-hidden="true" />
+      </button>
+      <figure>
+        <div className="projector-portrait-frame">
+          <img src={player.imageUrl} alt={`Portrait de ${player.name}`} />
+        </div>
+        <figcaption>
+          <span>SPÉCIMEN IDENTIFIÉ</span>
+          <h2>{player.name}</h2>
+          <p>{player.animalName}</p>
+        </figcaption>
+      </figure>
+    </div>
+  )
+}
+
 function LobbyScene({ game, joinUrl }: { game: TvGameView; joinUrl: string }) {
   const players = game.players
   const waiting = players.filter((player) => !player.teamId)
+  const [selectedPlayer, setSelectedPlayer] = useState<TvPlayerView | null>(null)
 
   return (
     <section className="projector-lobby" aria-labelledby="projector-lobby-title">
@@ -113,13 +151,19 @@ function LobbyScene({ game, joinUrl }: { game: TvGameView; joinUrl: string }) {
               </CardHeader>
               <CardContent>
                 {teamPlayers.map((player) => (
-                    <div className="projector-roster-player" key={`${player.name}-${player.imageUrl}`}>
+                    <button
+                      type="button"
+                      className="projector-roster-player"
+                      key={`${player.name}-${player.imageUrl}`}
+                      aria-label={`Agrandir la photo de ${player.name}`}
+                      onClick={() => setSelectedPlayer(player)}
+                    >
                       <Avatar>
                         <AvatarImage src={player.imageUrl} alt="" />
                         <AvatarFallback>{playerInitials(player.name)}</AvatarFallback>
                       </Avatar>
                       <span>{player.name}</span>
-                    </div>
+                    </button>
                 ))}
                 {team.memberCount === 0 ? <p className="projector-empty-team">Banc en formation…</p> : null}
               </CardContent>
@@ -131,6 +175,9 @@ function LobbyScene({ game, joinUrl }: { game: TvGameView; joinUrl: string }) {
           <p className="projector-waiting">🫧 Attribution en cours : {waiting.map((player) => player.name).join(", ")}</p>
         ) : null}
       </div>
+      {selectedPlayer ? (
+        <ProjectorPortraitLightbox player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+      ) : null}
     </section>
   )
 }

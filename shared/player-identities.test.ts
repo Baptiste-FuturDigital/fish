@@ -18,12 +18,25 @@ describe("player identity catalog", () => {
       id: "agathe",
       displayName: "Agathe",
       imageUrl: "/players/agathe-poisson-globe.png",
+      animalName: "le poisson-globe",
     }))
     expect(invitedPlayerIdentities).toContainEqual(expect.objectContaining({
       id: "fabien",
       displayName: "Fabien",
       imageUrl: "/players/fabien-axolotl.webp",
+      animalName: "l’axolotl",
     }))
+  })
+
+  it("gives every player a deterministic animal and a useful fact", () => {
+    expect(playerIdentities.every((identity) => identity.animalName.length > 3)).toBe(true)
+    expect(playerIdentities.every((identity) => identity.animalFact.length > 30)).toBe(true)
+    expect(invitedPlayerIdentities.find((identity) => identity.id === "nixon")).toEqual(
+      expect.objectContaining({
+        animalName: "la baleine bleue",
+        animalFact: expect.stringContaining("langue"),
+      }),
+    )
   })
 
   it("keeps anonymous players on the shared clownfish portrait", () => {
@@ -32,6 +45,8 @@ describe("player identity catalog", () => {
       displayName: "Autre invité",
       imageUrl: "/players/anonyme-poisson-clown.png",
       anonymous: true,
+      animalName: "le poisson-clown",
+      animalFact: expect.stringContaining("change de sexe"),
     })
   })
 

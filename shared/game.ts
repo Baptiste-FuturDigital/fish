@@ -102,6 +102,8 @@ export interface PlayerView {
   name: string
   identityId?: string
   imageUrl?: string
+  animalName?: string
+  animalFact?: string
   isHost: boolean
   score: number
   teamId: string | null
@@ -113,6 +115,8 @@ export interface PlayerIdentityChoice {
   displayName: string
   imageUrl: string
   anonymous: boolean
+  animalName: string
+  animalFact: string
   available: boolean
 }
 

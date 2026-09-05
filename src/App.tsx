@@ -328,7 +328,13 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam, onKic
     if (!player?.totem || !player.teamId) return null
     const team = gameState.teams.find((candidate) => candidate.id === player.teamId)
     if (!team) return null
-    return { name: player.name, imageUrl: player.imageUrl ?? player.totem.imageUrl, teamName: team.name }
+    return {
+      name: player.name,
+      imageUrl: player.imageUrl ?? player.totem.imageUrl,
+      teamName: team.name,
+      animalName: player.animalName ?? "un poisson mystérieux",
+      animalFact: player.animalFact ?? "Les abysses gardent encore quelques secrets sur cette créature.",
+    }
   }
 
   async function claimCurrentTotem() {
@@ -370,7 +376,13 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam, onKic
       ) : (
         <TotemScan
           identity={currentPlayer?.totem && currentTeam
-            ? { name: currentPlayer.name, imageUrl: currentPlayer.imageUrl ?? currentPlayer.totem.imageUrl, teamName: currentTeam.name }
+            ? {
+                name: currentPlayer.name,
+                imageUrl: currentPlayer.imageUrl ?? currentPlayer.totem.imageUrl,
+                teamName: currentTeam.name,
+                animalName: currentPlayer.animalName ?? "un poisson mystérieux",
+                animalFact: currentPlayer.animalFact ?? "Les abysses gardent encore quelques secrets sur cette créature.",
+              }
             : null}
           onClaim={claimCurrentTotem}
         />

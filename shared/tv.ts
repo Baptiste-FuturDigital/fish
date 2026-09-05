@@ -16,6 +16,7 @@ export interface TvPlayerView {
   score: number
   teamId: string | null
   imageUrl: string
+  animalName: string
 }
 
 export interface TvAnswerProgressView {
@@ -64,6 +65,7 @@ export function toTvGameView(game: GameView): TvGameView {
     score: player.score,
     teamId: player.teamId,
     imageUrl: player.imageUrl ?? player.totem?.imageUrl ?? "/players/anonyme-poisson-clown.png",
+    animalName: player.animalName ?? "un poisson mystérieux",
   }))
   const teams = game.teams.map((team) => ({
     id: team.id,

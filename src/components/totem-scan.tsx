@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Camera, LoaderCircle, ScanFace, Sparkles } from "lucide-react"
 
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,6 +20,8 @@ export interface PlayerReveal {
   name: string
   imageUrl: string
   teamName: string
+  animalName: string
+  animalFact: string
 }
 
 const SCAN_DURATION_MS = 10_000
@@ -107,9 +109,18 @@ export function TotemScan({ identity, onClaim }: TotemScanProps) {
         <CardHeader className="text-center">
           <CardDescription>Identité confirmée</CardDescription>
           <CardTitle className="font-heading text-3xl font-black capitalize">{revealedIdentity.name}</CardTitle>
-          <Badge variant="secondary" className="mx-auto">{revealedIdentity.teamName}</Badge>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-3">
+          <Alert className="border-cyan-200/70 bg-cyan-50/80 py-3 text-left">
+            <Sparkles className="text-cyan-700" aria-hidden="true" />
+            <AlertTitle className="font-heading text-base font-bold text-cyan-950">
+              Ton animal totem est {revealedIdentity.animalName}.
+            </AlertTitle>
+            <AlertDescription className="leading-relaxed text-cyan-950/75">
+              {revealedIdentity.animalFact}
+            </AlertDescription>
+          </Alert>
+          <Badge variant="secondary" className="mx-auto">{revealedIdentity.teamName}</Badge>
           <p className="text-center text-sm leading-relaxed text-muted-foreground">
             Ton banc est formé. Retrouve tes partenaires dans la salle.
           </p>

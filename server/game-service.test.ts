@@ -117,6 +117,8 @@ describe("GameService", () => {
       name: "Agathe",
       identityId: "agathe",
       imageUrl: "/players/agathe-poisson-globe.png",
+      animalName: "le poisson-globe",
+      animalFact: expect.stringContaining("gonfler"),
     }))
     expect(() => joinWithIdentity(created.game.code, { identityId: "agathe" })).toThrowError(
       new GameError("Agathe a déjà rejoint cet aquarium.", 409),

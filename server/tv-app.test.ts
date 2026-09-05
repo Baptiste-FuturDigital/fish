@@ -56,6 +56,7 @@ describe("TV spectator API", () => {
         score: 0,
         teamId: expect.any(String),
         imageUrl: "/players/anonyme-poisson-clown.png",
+        animalName: "le poisson-clown",
       }),
     ]))
     expect(response.body.players.every((player: Record<string, unknown>) => {
