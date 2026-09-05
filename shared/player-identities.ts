@@ -36,7 +36,7 @@ export const invitedPlayerIdentities: readonly PlayerIdentityDefinition[] = [
   invited("marie", "Marie", "marie-meduse.png", "la méduse", "Elle nage sans cerveau, sans cœur et sans os grâce à un simple réseau de cellules nerveuses."),
   invited("nixon", "Nixon", "nixon-baleine.png", "la baleine bleue", "Sa langue peut peser autant qu’un éléphant, alors que son régime est composé presque uniquement de krill."),
   invited("olivia", "Olivia", "olivia-crevette.png", "la crevette", "Son cœur se trouve dans le céphalothorax, la partie du corps que l’on appelle souvent sa tête."),
-  invited("pauline", "Pauline", "pauline-beluga.png", "le béluga", "On le surnomme le canari des mers tant son répertoire de sifflements et de clics est varié."),
+  invited("maude", "Maude", "pauline-beluga.png", "le béluga", "On le surnomme le canari des mers tant son répertoire de sifflements et de clics est varié."),
   invited("thierry", "Thierry", "thierry-thon.png", "le thon", "Il peut maintenir certains muscles plus chauds que l’eau, un avantage précieux pour nager vite."),
   invited("vic", "Vic", "vic-raie-manta.png", "la raie manta", "Elle possède le plus grand cerveau proportionnellement au corps parmi tous les poissons connus."),
   invited("victoria", "Victoria", "victoria-hippocampe.png", "l’hippocampe", "Chez lui, c’est le mâle qui porte les embryons dans une poche et donne naissance aux petits."),

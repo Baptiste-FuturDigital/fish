@@ -30,6 +30,16 @@ describe("player identity catalog", () => {
     }))
   })
 
+  it("offers Maude instead of Pauline while keeping the existing beluga portrait", () => {
+    expect(invitedPlayerIdentities).toContainEqual(expect.objectContaining({
+      id: "maude",
+      displayName: "Maude",
+      imageUrl: "/players/pauline-beluga.png",
+    }))
+    expect(invitedPlayerIdentities.some(({ id }) => id === "pauline")).toBe(false)
+    expect(invitedPlayerIdentities.some(({ displayName }) => displayName === "Pauline")).toBe(false)
+  })
+
   it("gives every player a deterministic animal and a useful fact", () => {
     expect(playerIdentities.every((identity) => identity.animalName.length > 3)).toBe(true)
     expect(playerIdentities.every((identity) => identity.animalFact.length > 30)).toBe(true)
