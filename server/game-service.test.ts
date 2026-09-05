@@ -546,8 +546,8 @@ describe("GameService", () => {
     expect(challengeIntros).toEqual([
       "le-juste-poisson",
       "question-pour-un-poisson",
-      "whos-dat-salmon",
       "qui-veut-gagner-des-poissons",
+      "whos-dat-salmon",
     ])
     expect(answeringRounds.size).toBe(19)
     expect(game.status).toBe("finished")
@@ -725,7 +725,7 @@ describe("GameService", () => {
     )
   })
 
-  it("consumes one deterministic 50/50 joker per team for the whole final challenge", () => {
+  it("consumes one deterministic 50/50 joker per team for the whole millionaire challenge", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     const competitors = joinAndClaimCompetitors(
       created.game.code,
@@ -740,7 +740,7 @@ describe("GameService", () => {
 
     service.startGame(created.game.code, created.session.hostToken!)
     database.prepare(
-      `UPDATE games SET challenge_index = 3, challenge_round = 0, current_round = 0,
+      `UPDATE games SET challenge_index = 2, challenge_round = 0, current_round = 0,
        phase = 'answering', phase_ends_at = ? WHERE code = ?`,
     ).run(new Date(Date.now() + 30_000).toISOString(), created.game.code)
 
@@ -771,7 +771,7 @@ describe("GameService", () => {
     expect(opponentUse.tournament?.fiftyFiftyJokers).toHaveLength(2)
   })
 
-  it("rejects 50/50 outside the final challenge", () => {
+  it("rejects 50/50 outside the millionaire challenge", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     const [competitor] = joinAndClaimCompetitors(created.game.code)
     service.startGame(created.game.code, created.session.hostToken!)

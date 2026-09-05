@@ -38,7 +38,7 @@ export const questionPourUnPoisson = {
   introMusicYoutubeId: "Zcl98Bguq7k",
   scoring: { kind: "buzzer-countdown", points: [4, 3, 2, 1] },
   rounds: [
-    buzzerRound("buzzer-hippocampe", "Animal 1 · Grossesse renversée", "L’hippocampe", "hippocampe", "/poids-hippocampe.avif", [
+    buzzerRound("buzzer-hippocampe", "Animal 1 · Grossesse renversée", "L’hippocampe", "hippocampe", "/game/Le juste poisson/poids-hippocampe.avif", [
       "Mon genre appartient à une famille de poissons osseux dont la locomotion est peu performante et la posture inhabituelle.",
       "Je possède une armure de plaques dermiques, une petite nageoire dorsale et une queue capable de s’agripper.",
       "Chez moi, la femelle confie ses œufs au mâle, qui les incube dans une poche ventrale.",
@@ -62,7 +62,7 @@ export const questionPourUnPoisson = {
       "Mon coup peut briser une coquille dure, voire le verre fin d’un aquarium.",
       "Je ressemble à une crevette multicolore équipée de gants de boxe.",
     ], "La cavitation provoquée par son coup produit une seconde onde de choc quand la bulle implose.", "https://ocean.si.edu/ocean-life/invertebrates/mantis-shrimp"),
-    buzzerRound("buzzer-tortue-luth", "Animal 5 · Géante souple", "La tortue luth", "tortue-luth", "/poids-tortue-luth.jpg", [
+    buzzerRound("buzzer-tortue-luth", "Animal 5 · Géante souple", "La tortue luth", "tortue-luth", "/game/Le juste poisson/poids-tortue-luth.jpg", [
       "Je suis un reptile pélagique capable de migrations transocéaniques et de plongées dépassant parfois mille mètres.",
       "Mon corps maintient une température supérieure à celle de l’eau grâce à ma taille et à des adaptations circulatoires.",
       "Ma dossière souple porte sept crêtes longitudinales au lieu d’écailles cornées.",

@@ -15,7 +15,7 @@
 **Files:**
 - Create: `shared/challenges/assets.test.ts`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 const imageUrls = challenges.flatMap((challenge) => [
@@ -28,12 +28,12 @@ for (const imageUrl of imageUrls) {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify RED**
+- [x] **Step 2: Run the test to verify RED**
 
 Run: `npm test -- shared/challenges/assets.test.ts`
 Expected: FAIL for `/poids-*` and the deleted Salmon intro template.
 
-- [ ] **Step 3: Keep the test as the regression boundary**
+- [x] **Step 3: Keep the test as the regression boundary**
 
 The test remains independent from the production path constants so it detects stale catalog URLs after future file moves.
 
@@ -47,7 +47,7 @@ The test remains independent from the production path constants so it detects st
 - Modify: `shared/challenges/whos-dat-salmon.test.ts`
 - Modify: `shared/challenges/catalog.test.ts`
 
-- [ ] **Step 1: Update failing expectations to the real structure**
+- [x] **Step 1: Update failing expectations to the real structure**
 
 ```ts
 expect(leJustePoisson.rounds[0].imageUrl).toBe(
@@ -58,11 +58,11 @@ expect(whosDatSalmon.introImageUrl).toBe(
 )
 ```
 
-- [ ] **Step 2: Update the production definitions**
+- [x] **Step 2: Update the production definitions**
 
 Use `const ASSET_ROOT = "/game/Le juste poisson"` for all five weight images and reuse those URLs from Question pour un poisson. Point the Salmon introduction to its existing first guess image.
 
-- [ ] **Step 3: Run focused tests**
+- [x] **Step 3: Run focused tests**
 
 Run: `npm test -- shared/challenges/assets.test.ts shared/challenges/le-juste-poisson.test.ts shared/challenges/whos-dat-salmon.test.ts shared/challenges/catalog.test.ts`
 Expected: PASS.
@@ -74,7 +74,7 @@ Expected: PASS.
 - Modify: `shared/challenges/catalog.test.ts`
 - Modify: `server/game-service.test.ts`
 
-- [ ] **Step 1: Write the new order expectations**
+- [x] **Step 1: Write the new order expectations**
 
 ```ts
 expect(challenges.map((challenge) => challenge.id)).toEqual([
@@ -85,16 +85,16 @@ expect(challenges.map((challenge) => challenge.id)).toEqual([
 ])
 ```
 
-- [ ] **Step 2: Run tests to verify RED**
+- [x] **Step 2: Run tests to verify RED**
 
 Run: `npm test -- shared/challenges/catalog.test.ts server/game-service.test.ts`
 Expected: FAIL because Salmon and Millionnaire are reversed.
 
-- [ ] **Step 3: Reorder the catalog**
+- [x] **Step 3: Reorder the catalog**
 
 Place `quiVeutGagnerDesPoissons` before `whosDatSalmon`. The existing `startGame` normalization writes this canonical order into lobby games.
 
-- [ ] **Step 4: Re-run focused tests**
+- [x] **Step 4: Re-run focused tests**
 
 Run: `npm test -- shared/challenges/catalog.test.ts server/game-service.test.ts`
 Expected: PASS.
@@ -104,9 +104,9 @@ Expected: PASS.
 **Files:**
 - No production file changes expected.
 
-- [ ] Run `npm test` and require the complete suite to pass.
-- [ ] Run `npm run build` and require TypeScript/Vite to succeed.
-- [ ] Rebuild Docker and require `/api/health` to return healthy.
-- [ ] Request every challenge image from Docker and require an `image/*` content type, never the SPA HTML fallback.
-- [ ] Verify the four challenge introductions in order through a game-service integration test.
+- [x] Run `npm test` and require the complete suite to pass.
+- [x] Run `npm run build` and require TypeScript/Vite to succeed.
+- [x] Rebuild Docker and require `/api/health` to return healthy.
+- [x] Request every challenge image from Docker and require an `image/*` content type, never the SPA HTML fallback.
+- [x] Verify the four challenge introductions in order through a game-service integration test.
 - [ ] Commit and push feature files without staging the user-owned untracked `public/` directory.

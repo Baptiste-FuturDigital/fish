@@ -7,8 +7,8 @@ import type { ChallengeDefinition, ChallengeId } from "./types.js"
 export const challenges: readonly ChallengeDefinition[] = [
   leJustePoisson,
   questionPourUnPoisson,
-  whosDatSalmon,
   quiVeutGagnerDesPoissons,
+  whosDatSalmon,
 ]
 
 export function findChallenge(id: ChallengeId): ChallengeDefinition {

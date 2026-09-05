@@ -7,7 +7,7 @@ export const whosDatSalmon = {
   title: "Who's that salmon ?",
   shortTitle: "Who's that salmon ?",
   emoji: "🐟",
-  introImageUrl: `${ASSET_ROOT}/whos-that-salmon-template.png`,
+  introImageUrl: `${ASSET_ROOT}/1-guess-whale.png`,
   description: "Quatre silhouettes impossibles, deux réponses et aucune excuse pour couler.",
   rules: [
     "Chaque joueur choisit A ou B avant la révélation de Poséithon.",

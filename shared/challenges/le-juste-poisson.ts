@@ -1,5 +1,7 @@
 import type { ChallengeDefinition } from "./types.js"
 
+const ASSET_ROOT = "/game/Le juste poisson"
+
 export const leJustePoisson = {
   id: "le-juste-poisson",
   title: "Le juste poisson",
@@ -24,7 +26,7 @@ export const leJustePoisson = {
       kicker: "Manche 1 · Poids plume des abysses",
       question: "Combien pèse en moyenne un hippocampe ?",
       durationSeconds: 20,
-      imageUrl: "/poids-hippocampe.avif",
+      imageUrl: `${ASSET_ROOT}/poids-hippocampe.avif`,
       unit: "kg",
       estimateRange: { min: 0.001, max: 0.05, step: 0.0005, displayUnit: "g" },
       correctAnswer: 0.0125,
@@ -38,7 +40,7 @@ export const leJustePoisson = {
       kicker: "Manche 2 · Arachnophobie aquatique",
       question: "Quel poids maximal peut atteindre ce crabe-araignée japonais ?",
       durationSeconds: 20,
-      imageUrl: "/poids-crabe-araignee.jpg",
+      imageUrl: `${ASSET_ROOT}/poids-crabe-araignee.jpg`,
       unit: "kg",
       estimateRange: { min: 1, max: 30, step: 0.5, displayUnit: "kg" },
       correctAnswer: 20,
@@ -52,7 +54,7 @@ export const leJustePoisson = {
       kicker: "Manche 3 · Pleine lune sous-marine",
       question: "Combien pesait le poisson-lune le plus lourd jamais mesuré ?",
       durationSeconds: 20,
-      imageUrl: "/poids-moon-fish.jpg",
+      imageUrl: `${ASSET_ROOT}/poids-moon-fish.jpg`,
       unit: "kg",
       estimateRange: { min: 100, max: 3_000, step: 10, displayUnit: "kg" },
       correctAnswer: 2_744,
@@ -66,7 +68,7 @@ export const leJustePoisson = {
       kicker: "Manche 4 · Carapace catégorie poids lourd",
       question: "Quel poids maximal peut atteindre cette tortue luth ?",
       durationSeconds: 20,
-      imageUrl: "/poids-tortue-luth.jpg",
+      imageUrl: `${ASSET_ROOT}/poids-tortue-luth.jpg`,
       unit: "kg",
       estimateRange: { min: 100, max: 1_200, step: 10, displayUnit: "kg" },
       correctAnswer: 900,
@@ -80,7 +82,7 @@ export const leJustePoisson = {
       kicker: "Manche 5 · Boss final titanesque",
       question: "Quel poids maximal peut atteindre une baleine bleue ?",
       durationSeconds: 20,
-      imageUrl: "/poids-blue-whale.webp",
+      imageUrl: `${ASSET_ROOT}/poids-blue-whale.webp`,
       unit: "kg",
       estimateRange: { min: 50_000, max: 250_000, step: 5_000, displayUnit: "t" },
       correctAnswer: 150000,

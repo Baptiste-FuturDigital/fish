@@ -7,6 +7,7 @@ describe("whosDatSalmon", () => {
     expect(whosDatSalmon.id).toBe("whos-dat-salmon")
     expect(whosDatSalmon.title).toBe("Who's that salmon ?")
     expect(whosDatSalmon.shortTitle).toBe("Who's that salmon ?")
+    expect(whosDatSalmon.introImageUrl).toBe("/game/Who's that salmon/1-guess-whale.png")
     expect(whosDatSalmon.rounds).toHaveLength(4)
 
     whosDatSalmon.rounds.forEach((round, index) => {

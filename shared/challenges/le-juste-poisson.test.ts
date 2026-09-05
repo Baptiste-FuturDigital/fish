@@ -21,15 +21,15 @@ describe("leJustePoisson", () => {
 
     expect(new Set(roundIds).size).toBe(roundIds.length)
     expect(leJustePoisson.rounds.map((round) => round.imageUrl)).toEqual([
-      "/poids-hippocampe.avif",
-      "/poids-crabe-araignee.jpg",
-      "/poids-moon-fish.jpg",
-      "/poids-tortue-luth.jpg",
-      "/poids-blue-whale.webp",
+      "/game/Le juste poisson/poids-hippocampe.avif",
+      "/game/Le juste poisson/poids-crabe-araignee.jpg",
+      "/game/Le juste poisson/poids-moon-fish.jpg",
+      "/game/Le juste poisson/poids-tortue-luth.jpg",
+      "/game/Le juste poisson/poids-blue-whale.webp",
     ])
 
     for (const round of leJustePoisson.rounds) {
-      expect(round.imageUrl).toMatch(/^\/poids-/)
+      expect(round.imageUrl).toMatch(/^\/game\/Le juste poisson\/poids-/)
       expect(round.answerLabel.trim().length).toBeGreaterThan(0)
       expect(round.fact.trim().length).toBeGreaterThan(10)
       expect(round.sourceUrl).toMatch(/^https:\/\//)

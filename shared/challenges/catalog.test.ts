@@ -8,8 +8,8 @@ describe("challenge catalog", () => {
     expect(challenges.map(({ id, title, rounds }) => ({ id, title, roundCount: rounds.length }))).toEqual([
       { id: "le-juste-poisson", title: "Le juste poisson", roundCount: 5 },
       { id: "question-pour-un-poisson", title: "Question pour un poisson", roundCount: 5 },
-      { id: "whos-dat-salmon", title: "Who's that salmon ?", roundCount: 4 },
       { id: "qui-veut-gagner-des-poissons", title: "Qui veut gagner des poissons ?", roundCount: 5 },
+      { id: "whos-dat-salmon", title: "Who's that salmon ?", roundCount: 4 },
     ])
     expect(challenges.flatMap((challenge) => challenge.rounds)).toHaveLength(19)
   })
@@ -24,8 +24,8 @@ describe("challenge catalog", () => {
     expect(challenges.map((challenge) => challenge.introImageUrl)).toEqual([
       "/game/Le juste poisson/le-juste-poisson.png",
       "/game/Question pour un poisson/question-pour-un-poisson.png",
-      "/game/Who's that salmon/whos-that-salmon-template.png",
       "/game/Qui veut gagner des poissons/qui-veut-gagner-des-poissons.png",
+      "/game/Who's that salmon/1-guess-whale.png",
     ])
   })
 })

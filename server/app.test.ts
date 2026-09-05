@@ -306,7 +306,7 @@ describe("game API", () => {
     await request(app).post(`/api/games/${created.body.game.code}/start`)
       .send({ hostToken: created.body.session.hostToken }).expect(200)
     database.prepare(
-      `UPDATE games SET challenge_index = 3, challenge_round = 0, current_round = 0,
+      `UPDATE games SET challenge_index = 2, challenge_round = 0, current_round = 0,
        phase = 'answering', phase_ends_at = ? WHERE code = ?`,
     ).run(new Date(Date.now() + 30_000).toISOString(), created.body.game.code)
 
