@@ -148,6 +148,25 @@ export function createApp(
     response.json(service.skipDemoChallenge(request.params.code, body.hostToken))
   })
 
+  app.post("/api/games/:code/skip-round", (request, response) => {
+    const body = hostSchema.parse(request.body)
+    response.json(service.skipDemoRound(request.params.code, body.hostToken))
+  })
+
+  app.post("/api/games/:code/sardine-wheel/offer", (request, response) => {
+    const body = hostSchema.parse(request.body)
+    response.json(service.offerSardineWheel(request.params.code, body.hostToken))
+  })
+
+  app.post("/api/games/:code/sardine-wheel/spin", (request, response) => {
+    const body = playerSchema.parse(request.body)
+    response.json(service.spinSardineWheel(
+      request.params.code,
+      body.playerId,
+      body.playerToken,
+    ))
+  })
+
   app.post("/api/games/:code/bonus", (request, response) => {
     const body = hostSchema.parse(request.body)
     response.json(service.applyPoseithonBonus(request.params.code, body.hostToken))

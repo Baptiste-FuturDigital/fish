@@ -1,6 +1,7 @@
 import type {
   GameStatus,
   GameView,
+  SardineWheelView,
   TournamentView,
 } from "./game.js"
 
@@ -40,10 +41,16 @@ export interface TvPlayerResultView {
   distance: number | null
 }
 
-export type TvTournamentView = Omit<TournamentView, "answers" | "results" | "buzz"> & {
+export type TvSardineWheelView = Omit<SardineWheelView, "winnerPlayerId">
+
+export type TvTournamentView = Omit<
+  TournamentView,
+  "answers" | "results" | "buzz" | "sardineWheel"
+> & {
   answerProgress: TvAnswerProgressView[]
   results: TvPlayerResultView[]
   buzz: TvBuzzView | null
+  sardineWheel: TvSardineWheelView | null
 }
 
 export interface TvGameView {
@@ -89,7 +96,13 @@ export function toTvGameView(game: GameView): TvGameView {
     }
   }
 
-  const { answers, results: playerResults, buzz, ...publicTournament } = game.tournament
+  const {
+    answers,
+    results: playerResults,
+    buzz,
+    sardineWheel,
+    ...publicTournament
+  } = game.tournament
   const { hostClues: _hostClues, ...publicRound } = publicTournament.round
   const answerProgress = teams.map((team) => {
     const teamAnswers = answers.filter((answer) => answer.teamId === team.id)
@@ -128,6 +141,17 @@ export function toTvGameView(game: GameView): TvGameView {
             teamId: buzz.teamId,
             teamName: buzz.teamName,
             points: buzz.points,
+          }
+        : null,
+      sardineWheel: sardineWheel
+        ? {
+            challengeIndex: sardineWheel.challengeIndex,
+            winnerPlayerName: sardineWheel.winnerPlayerName,
+            status: sardineWheel.status,
+            offeredAt: sardineWheel.offeredAt,
+            startedAt: sardineWheel.startedAt,
+            durationMs: sardineWheel.durationMs,
+            completedAt: sardineWheel.completedAt,
           }
         : null,
     },

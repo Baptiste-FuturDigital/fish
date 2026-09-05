@@ -122,4 +122,41 @@ describe("TV spectator API", () => {
     expect(response.body.tournament.round.kind).toBe("buzzer")
     expect(response.body.tournament.round).not.toHaveProperty("hostClues")
   })
+
+  it("projects resumable sardine wheel state without the winner's technical id", async () => {
+    const demo = service.createDemoGame()
+    database.prepare(
+      `UPDATE games SET challenge_round = 4, current_round = 4,
+       phase = 'leaderboard', phase_ends_at = NULL WHERE id = ?`,
+    ).run(demo.game.id)
+    service.offerSardineWheel(demo.game.code, demo.session.hostToken!)
+
+    const offered = await request(createApp(service))
+      .get(`/api/games/${demo.game.code}/tv`)
+      .expect(200)
+
+    expect(offered.body.tournament.sardineWheel).toEqual(expect.objectContaining({
+      winnerPlayerName: "Ariel",
+      status: "offered",
+      durationMs: 6000,
+    }))
+    expect(offered.body.tournament.sardineWheel).not.toHaveProperty("winnerPlayerId")
+    expect(JSON.stringify(offered.body)).not.toContain(demo.demoPlayerSession.playerId)
+
+    service.spinSardineWheel(
+      demo.game.code,
+      demo.demoPlayerSession.playerId,
+      demo.demoPlayerSession.playerToken,
+    )
+    database.prepare("UPDATE sardine_wheels SET started_at = ? WHERE game_id = ?")
+      .run(new Date(Date.now() - 7000).toISOString(), demo.game.id)
+
+    const won = await request(createApp(service))
+      .get(`/api/games/${demo.game.code}/tv`)
+      .expect(200)
+    expect(won.body.tournament.sardineWheel).toEqual(expect.objectContaining({
+      status: "won",
+      completedAt: expect.any(String),
+    }))
+  })
 })

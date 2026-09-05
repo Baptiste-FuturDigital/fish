@@ -272,6 +272,63 @@ describe("game API", () => {
     }))
   })
 
+  it("exposes a host-only demo shortcut to the next round", async () => {
+    const demo = await request(app).post("/api/demo").expect(201)
+
+    await request(app)
+      .post(`/api/games/${demo.body.game.code}/skip-round`)
+      .send({ hostToken: "intrus" })
+      .expect(403)
+
+    const skipped = await request(app)
+      .post(`/api/games/${demo.body.game.code}/skip-round`)
+      .send({ hostToken: demo.body.session.hostToken })
+      .expect(200)
+
+    expect(skipped.body.tournament).toEqual(expect.objectContaining({
+      roundIndex: 1,
+      phase: "answering",
+      endsAt: expect.any(String),
+    }))
+  })
+
+  it("exposes host offer and winner-only spin commands for the sardine wheel", async () => {
+    const demo = await request(app).post("/api/demo").expect(201)
+    const { code, id } = demo.body.game
+    database.prepare(
+      `UPDATE games SET challenge_round = 4, current_round = 4,
+       phase = 'leaderboard', phase_ends_at = NULL WHERE id = ?`,
+    ).run(id)
+
+    await request(app)
+      .post(`/api/games/${code}/sardine-wheel/offer`)
+      .send({ hostToken: "intrus" })
+      .expect(403)
+
+    const offered = await request(app)
+      .post(`/api/games/${code}/sardine-wheel/offer`)
+      .send({ hostToken: demo.body.session.hostToken })
+      .expect(200)
+    expect(offered.body.tournament.sardineWheel).toEqual(expect.objectContaining({
+      winnerPlayerId: demo.body.demoPlayerSession.playerId,
+      status: "offered",
+    }))
+
+    await request(app)
+      .post(`/api/games/${code}/sardine-wheel/spin`)
+      .send({ ...demo.body.demoPlayerSession, playerToken: "intrus" })
+      .expect(403)
+
+    const spinning = await request(app)
+      .post(`/api/games/${code}/sardine-wheel/spin`)
+      .send(demo.body.demoPlayerSession)
+      .expect(200)
+    expect(spinning.body.tournament.sardineWheel).toEqual(expect.objectContaining({
+      status: "spinning",
+      startedAt: expect.any(String),
+    }))
+  })
+
   it("exposes the host-only intermission bonus endpoint", async () => {
     const demo = await request(app).post("/api/demo").expect(201)
     const { code } = demo.body.game
@@ -280,6 +337,9 @@ describe("game API", () => {
     for (let step = 0; step < 20 && game.tournament.phase !== "leaderboard"; step += 1) {
       game = service.advanceTournament(code, hostToken)
     }
+    database.prepare(
+      "UPDATE games SET challenge_index = 1, challenge_round = 4, current_round = 4 WHERE id = ?",
+    ).run(demo.body.game.id)
 
     await request(app)
       .post(`/api/games/${code}/bonus`)
