@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest"
 import { leJustePoisson } from "./le-juste-poisson.js"
 
 describe("leJustePoisson", () => {
-  it("propose exactement cinq manches numeriques de 20 secondes en kilogrammes", () => {
+  it("propose exactement cinq manches numeriques de 25 secondes en kilogrammes", () => {
     expect(leJustePoisson.rounds).toHaveLength(5)
 
     for (const round of leJustePoisson.rounds) {
       expect(round.kind).toBe("number")
-      expect(round.durationSeconds).toBe(20)
+      expect(round.durationSeconds).toBe(25)
 
       if (round.kind === "number") {
         expect(round.unit).toBe("kg")
@@ -68,7 +68,7 @@ describe("leJustePoisson", () => {
     expect(leJustePoisson.rules).toEqual([
       "Chaque joueur estime le juste poids du poisson ; le meilleur de chaque banc porte le score de son équipe.",
       "À chaque manche, les poissons et les quatre bancs peuvent gagner de 10 à 40 points selon leur classement.",
-      "20 secondes par manche",
+      "25 secondes par manche",
     ])
   })
 })
