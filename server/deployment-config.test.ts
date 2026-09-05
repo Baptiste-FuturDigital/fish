@@ -42,6 +42,7 @@ describe("Raspberry Pi deployment", () => {
     expect(deploy).toContain("fish-tournament:rollback")
     expect(backup).toContain("database.backup")
     expect(push).toContain("rsync -az --delete")
+    expect(push).toContain("--exclude='.superpowers/'")
     expect(push).toContain("scripts/pi/deploy.sh")
     expect(push.match(/ssh -t "\$\{target\}"/g)).toHaveLength(2)
     expect(restore).toContain("docker compose run")

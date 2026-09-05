@@ -20,6 +20,7 @@ ssh -t "${target}" \
 info "Transfert de la version courante..."
 rsync -az --delete \
   --exclude='.git/' \
+  --exclude='.superpowers/' \
   --exclude='.env' \
   --exclude='node_modules/' \
   --exclude='dist/' \
