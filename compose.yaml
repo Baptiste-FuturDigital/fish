@@ -2,9 +2,10 @@ services:
   app:
     build:
       context: .
+    image: fish-tournament:local
     container_name: fish-tournament
     ports:
-      - "127.0.0.1:8787:8787"
+      - "8787:8787"
     environment:
       NODE_ENV: production
       PORT: 8787

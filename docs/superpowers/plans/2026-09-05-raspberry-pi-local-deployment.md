@@ -115,7 +115,7 @@ Run `./scripts/pi/backup.sh`, restart the service, and verify the database remai
 
 - [ ] **Step 1: Verify the SSH target**
 
-Run `ssh <ssh-target> 'uname -m; sed -n "1,6p" /etc/os-release'`. Expect `aarch64` and Raspberry Pi OS/Debian.
+Set `PI_TARGET` to the username configured in Raspberry Pi Imager and the LAN address reported by the router, then run `ssh "$PI_TARGET" 'uname -m; sed -n "1,6p" /etc/os-release'`. Expect `aarch64` and Raspberry Pi OS/Debian.
 
 - [ ] **Step 2: Transfer the release**
 
@@ -123,7 +123,7 @@ Use `rsync -az --delete` to `/opt/fish-tournament/`, excluding `.git`, `node_mod
 
 - [ ] **Step 3: Deploy remotely**
 
-Run `ssh <ssh-target> 'cd /opt/fish-tournament && sudo ./scripts/pi/deploy.sh'`. Expect a healthy container and LAN URLs.
+Run `ssh "$PI_TARGET" 'cd /opt/fish-tournament && sudo ./scripts/pi/deploy.sh'`. Expect a healthy container and LAN URLs.
 
 - [ ] **Step 4: Execute the real smoke test**
 
@@ -132,4 +132,3 @@ From a phone on home Wi-Fi, open the root URL. On the TV, open `/tv`, create a g
 - [ ] **Step 5: Verify reboot recovery**
 
 Reboot once and run `sudo ./scripts/pi/verify.sh`. Expect automatic container recovery and healthy status.
-

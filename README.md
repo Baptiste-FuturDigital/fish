@@ -40,6 +40,18 @@ docker compose down
 
 `docker compose down` arrête l'application sans supprimer les parties. Ajouter `--volumes` uniquement pour supprimer volontairement la base persistante.
 
+## Déployer sur Raspberry Pi (réseau local)
+
+Pour une soirée, déployer l'application sans domaine ni HTTPS sur un Raspberry Pi 5 relié au réseau domestique :
+
+```bash
+./scripts/pi/push.sh <UTILISATEUR>@<IP_DU_PI>
+```
+
+Ouvrir ensuite `http://<IP_DU_PI>:8787/`. La TV doit utiliser `http://<IP_DU_PI>:8787/tv` — et non `localhost` — afin que le QR code pointe vers une adresse accessible aux téléphones connectés au même Wi-Fi. Garder toute redirection de port du routeur désactivée.
+
+Installation du Pi, transfert `rsync`, vérification, logs, sauvegarde, restauration et arrêt : [guide de déploiement Raspberry Pi](docs/raspberry-pi-runbook.md).
+
 ## Vérification
 
 ```bash
