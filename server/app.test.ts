@@ -233,6 +233,15 @@ describe("game API", () => {
     expect(demo.body.game.teams.map((team: { memberIds: string[] }) => team.memberIds.length).sort())
       .toEqual([2, 2, 2, 2])
     expect(demo.body.session.hostToken).toBeTypeOf("string")
+    expect(demo.body.demoPlayerSession).toEqual(expect.objectContaining({
+      gameCode: demo.body.game.code,
+      playerId: expect.any(String),
+      playerToken: expect.any(String),
+    }))
+    expect(demo.body.demoPlayerSession.hostToken).toBeUndefined()
+    expect(demo.body.game.players.some(
+      (player: { id: string }) => player.id === demo.body.demoPlayerSession.playerId,
+    )).toBe(true)
 
     const code = demo.body.game.code
     const hostToken = demo.body.session.hostToken

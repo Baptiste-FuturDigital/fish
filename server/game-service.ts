@@ -18,6 +18,7 @@ import type {
   SubmittedPlayerAnswer,
 } from "../shared/challenges/types.js"
 import type {
+  DemoSessionResponse,
   GameStatus,
   GameView,
   JoinPlayerInput,
@@ -220,7 +221,7 @@ export class GameService {
     }
   }
 
-  createDemoGame(): SessionResponse {
+  createDemoGame(): DemoSessionResponse {
     const created = this.createGame("Démo de Poséithon", "Poséithon")
     const sessions = ["Ariel", "Nemo", "Dory", "Sebastien", "Marin", "Poulpy", "Moby", "Corail"]
       .map((name) => this.joinGame(created.game.code, name).session)
@@ -236,6 +237,7 @@ export class GameService {
     return {
       game: this.startGame(created.game.code, created.session.hostToken!),
       session: created.session,
+      demoPlayerSession: sessions[0],
     }
   }
 

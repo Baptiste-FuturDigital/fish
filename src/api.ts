@@ -1,4 +1,5 @@
 import type {
+  DemoSessionResponse,
   GameView,
   JoinPlayerInput,
   PlayerIdentityChoice,
@@ -28,7 +29,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const gameApi = {
   demo() {
-    return request<SessionResponse>("/api/demo", { method: "POST" })
+    return request<DemoSessionResponse>("/api/demo", { method: "POST" })
   },
   create(name: string, hostName: string, prankPlayerName?: string) {
     return request<SessionResponse>("/api/games", {

@@ -176,6 +176,10 @@ export interface SessionResponse {
   session: PlayerSession
 }
 
+export interface DemoSessionResponse extends SessionResponse {
+  demoPlayerSession: PlayerSession
+}
+
 export interface ApiError {
   error: string
 }

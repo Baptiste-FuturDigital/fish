@@ -74,6 +74,12 @@ describe("GameService", () => {
     const demo = service.createDemoGame()
 
     expect(demo.game.isDemo).toBe(true)
+    expect(demo.demoPlayerSession.hostToken).toBeUndefined()
+    expect(demo.demoPlayerSession.gameCode).toBe(demo.game.code)
+    expect(demo.demoPlayerSession.playerToken).toHaveLength(48)
+    expect(demo.game.players.some(
+      (player) => player.id === demo.demoPlayerSession.playerId,
+    )).toBe(true)
 
     const skipped = service.skipDemoChallenge(
       demo.game.code,
