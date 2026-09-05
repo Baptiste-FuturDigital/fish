@@ -10,6 +10,8 @@ services:
       NODE_ENV: production
       PORT: 8787
       FISH_DB: /app/data/fish.db
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_APP_PASSWORD: "${SMTP_APP_PASSWORD:-}"
       RESEND_API_KEY: "${RESEND_API_KEY:-}"
       FISH_EMAIL_FROM: "${FISH_EMAIL_FROM:-}"
     volumes:
