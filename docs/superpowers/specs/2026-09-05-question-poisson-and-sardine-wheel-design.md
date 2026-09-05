@@ -36,7 +36,7 @@ Cette commande évite le comportement fragile consistant à envoyer plusieurs co
 
 ## Liste des invités
 
-L'identité invitée « Pauline » est remplacée par « Maude » dans le sélecteur des joueurs. Son identifiant devient `maude`. L'image existante `pauline-beluga.png` et tous les autres médias sont conservés sans renommage ni suppression ; seule l'identité présentée dans l'application change.
+L'identité invitée « Pauline » est remplacée par « Maude » dans le sélecteur des joueurs. Son identifiant devient `maude`. L'image existante `pauline-beluga.png` et tous les autres médias sont conservés sans renommage ni suppression ; seule l'identité présentée dans l'application change. Une migration SQLite idempotente convertit également les éventuelles lignes existantes `identity_id='pauline'` vers `maude` et leur nom vers `Maude`, afin qu'une base conservée pendant le déploiement ne transforme pas cette identité en invitée anonyme.
 
 ## Déclenchement de la Roue de Poséithon
 
