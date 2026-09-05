@@ -1,13 +1,22 @@
-import { useState, type CSSProperties } from "react"
-import { Crown, RotateCcw, Trophy, Users } from "lucide-react"
+import { useEffect, useState, type CSSProperties } from "react"
+import { Crown, Gift, RotateCcw, Trophy, Users } from "lucide-react"
 
-import type { GameView, PlayerSession } from "@shared/game"
+import type { GameView, PlayerSession, PlayerView } from "@shared/game"
 import { AnimatedScore } from "@/components/animated-score"
-import { PrizeClaims } from "@/components/prize-claims"
+import { PlayerPortraitLightbox, type PortraitPlayer } from "@/components/player-portrait-lightbox"
+import { PrizeClaims, eligiblePrizeTypes } from "@/components/prize-claims"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { rankPlayerLeaderboard } from "./player-leaderboard.js"
 
 import "./final-scoreboard.css"
@@ -95,29 +104,51 @@ function FinalCelebration() {
   )
 }
 
-export function FinalPlayerRanking({ game }: { game: GameView }) {
+function playerPortrait(player: PlayerView): PortraitPlayer | null {
+  const imageUrl = player.imageUrl ?? player.totem?.imageUrl
+  if (!imageUrl) return null
+  return {
+    name: player.name,
+    imageUrl,
+    animalName: player.animalName ?? player.totem?.name ?? "Poisson mystérieux",
+  }
+}
+
+export function FinalPlayerRanking({
+  game,
+  onSelectPlayer,
+}: {
+  game: GameView
+  onSelectPlayer?: (player: PortraitPlayer) => void
+}) {
   const ranking = rankPlayerLeaderboard(game.players)
   const teamNames = new Map(game.teams.map((team) => [team.id, team.name]))
 
   return (
     <ol
       className="final-player-ranking"
-      aria-label={`Classement final des joueurs — ${ranking.length} joueurs`}
+      aria-label={`Classement final des poissons — ${ranking.length} poissons`}
     >
       {ranking.map(({ player, rank }, index) => {
         const isLast = ranking.length > 1 && index === ranking.length - 1
+        const portrait = playerPortrait(player)
         const teamName = player.teamId
           ? teamNames.get(player.teamId) ?? "Banc inconnu"
           : "Sans banc"
 
         return (
-          <li
-            className="final-player-ranking-row"
-            data-rank={rank}
-            data-last={isLast || undefined}
-            key={player.id}
-            style={{ animationDelay: `${Math.min(index, 14) * 60}ms` }}
-          >
+          <li key={player.id}>
+            <button
+              type="button"
+              className="final-player-ranking-row"
+              data-rank={rank}
+              data-last={isLast || undefined}
+              aria-label={`Agrandir la photo de ${player.name}`}
+              style={{ animationDelay: `${Math.min(index, 14) * 60}ms` }}
+              onClick={() => {
+                if (portrait) onSelectPlayer?.(portrait)
+              }}
+            >
             <span className="final-rank-number" aria-label={`Rang ${rank}`}>
               {rank === 1 ? (
                 <Crown aria-label="Champion individuel" />
@@ -127,10 +158,10 @@ export function FinalPlayerRanking({ game }: { game: GameView }) {
             </span>
 
             <Avatar size="default" className="final-player-avatar">
-              {player.totem ? (
+              {portrait ? (
                 <AvatarImage
-                  src={player.totem.imageUrl}
-                  alt={`${player.name} — ${player.totem.name}`}
+                  src={portrait.imageUrl}
+                  alt={`${player.name} — ${portrait.animalName}`}
                 />
               ) : null}
               <AvatarFallback>🐟</AvatarFallback>
@@ -144,6 +175,7 @@ export function FinalPlayerRanking({ game }: { game: GameView }) {
             <Badge variant={rank === 1 ? "default" : "secondary"}>
               <AnimatedScore points={player.score} /> pts
             </Badge>
+            </button>
           </li>
         )
       })}
@@ -161,6 +193,16 @@ export function FinalScoreboard({
   onLeave: () => void
 }) {
   const [rankingView, setRankingView] = useState<FinalRankingView>("teams")
+  const prizeTypes = session && !session.hostToken
+    ? eligiblePrizeTypes(game, session.playerId)
+    : []
+  const hasPrizeClaims = prizeTypes.length > 0
+  const [prizeDialogOpen, setPrizeDialogOpen] = useState(hasPrizeClaims)
+  const [selectedPlayer, setSelectedPlayer] = useState<PortraitPlayer | null>(null)
+
+  useEffect(() => {
+    if (hasPrizeClaims) setPrizeDialogOpen(true)
+  }, [game.id, hasPrizeClaims, session?.playerId])
   const ranking = [...game.teams].sort(
     (left, right) =>
       right.score - left.score || left.name.localeCompare(right.name),
@@ -200,7 +242,7 @@ export function FinalScoreboard({
           <span>
             {rankingView === "teams"
               ? `${ranking.length} bancs`
-              : `${game.players.filter((player) => !player.isHost).length} joueurs`}
+              : `${game.players.filter((player) => !player.isHost).length} poissons`}
           </span>
         </div>
 
@@ -221,7 +263,7 @@ export function FinalScoreboard({
             aria-selected={rankingView === "players"}
             onClick={() => setRankingView("players")}
           >
-            <Users aria-hidden="true" /> Joueurs
+            <Users aria-hidden="true" /> Poissons
           </button>
         </div>
 
@@ -245,10 +287,10 @@ export function FinalScoreboard({
 
                       return (
                         <Avatar size="sm" key={memberId}>
-                          {player?.totem ? (
+                          {player?.imageUrl || player?.totem ? (
                             <AvatarImage
-                              src={player.totem.imageUrl}
-                              alt={player.totem.name}
+                              src={player.imageUrl ?? player.totem?.imageUrl}
+                              alt={player.animalName ?? player.totem?.name ?? player.name}
                             />
                           ) : null}
                           <AvatarFallback>🐟</AvatarFallback>
@@ -264,20 +306,41 @@ export function FinalScoreboard({
               ))}
             </ol>
           ) : (
-            <FinalPlayerRanking game={game} />
+            <FinalPlayerRanking game={game} onSelectPlayer={setSelectedPlayer} />
           )}
         </div>
       </CardContent>
 
-      <CardContent>
-        <PrizeClaims game={game} session={session} />
-      </CardContent>
+      {hasPrizeClaims ? (
+        <CardContent
+          className="final-prize-action"
+          data-prize-dialog-auto-open="true"
+        >
+          <Dialog open={prizeDialogOpen} onOpenChange={setPrizeDialogOpen}>
+            <DialogTrigger render={<Button size="lg" variant="secondary" />}>
+              <Gift data-icon="inline-start" /> Réclamer mes prix
+            </DialogTrigger>
+            <DialogContent className="final-prize-dialog">
+              <DialogHeader>
+                <DialogTitle>Poséithon a un trésor pour toi</DialogTitle>
+                <DialogDescription>
+                  Entre ton email pour recevoir {prizeTypes.length > 1 ? "tes récompenses" : "ta récompense"}.
+                </DialogDescription>
+              </DialogHeader>
+              <PrizeClaims game={game} session={session} />
+            </DialogContent>
+          </Dialog>
+        </CardContent>
+      ) : null}
 
       <CardFooter className="final-footer">
         <Button size="lg" onClick={onLeave}>
           <RotateCcw data-icon="inline-start" /> Nouvelle partie
         </Button>
       </CardFooter>
+      {selectedPlayer ? (
+        <PlayerPortraitLightbox player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+      ) : null}
     </Card>
   )
 }

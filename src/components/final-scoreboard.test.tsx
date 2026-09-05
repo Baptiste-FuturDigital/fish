@@ -53,19 +53,20 @@ const game: GameView = {
 }
 
 describe("FinalScoreboard", () => {
-  it("propose les vues Bancs et Joueurs sans altérer le verdict final", () => {
+  it("propose les vues Bancs et Poissons sans altérer le verdict final", () => {
     const markup = renderToStaticMarkup(<FinalScoreboard game={game} onLeave={() => undefined} />)
 
     expect(markup).toContain('role="tablist"')
     expect(markup).toContain("Bancs")
-    expect(markup).toContain("Joueurs")
+    expect(markup).toContain("Poissons")
+    expect(markup).not.toContain(">Joueurs<")
     expect(markup).toContain('aria-selected="true"')
     expect(markup).toContain('data-testid="final-confetti"')
     expect(markup).toContain('src="/references/poseithon.png"')
     expect(markup).toContain("Les Abysses")
   })
 
-  it("mounts prize claims only for the authenticated player session", () => {
+  it("propose la pop-up de prix uniquement au poisson authentifié et primé", () => {
     const guestMarkup = renderToStaticMarkup(
       <FinalScoreboard
         game={game}
@@ -81,8 +82,10 @@ describe("FinalScoreboard", () => {
       />,
     )
 
-    expect(guestMarkup).toContain("Réclame tes prix")
-    expect(hostMarkup).not.toContain("Réclame tes prix")
+    expect(guestMarkup).toContain("Réclamer mes prix")
+    expect(guestMarkup).toContain('data-prize-dialog-auto-open="true"')
+    expect(hostMarkup).not.toContain("Réclamer mes prix")
+    expect(hostMarkup).not.toContain('data-prize-dialog-auto-open="true"')
   })
 })
 
@@ -99,6 +102,8 @@ describe("FinalPlayerRanking", () => {
     expect(markup).toContain("💩")
     expect(markup).toContain('aria-label="90 points"')
     expect(markup).toContain("Les Coraux")
-    expect(markup).toContain("4 joueurs")
+    expect(markup).toContain("4 poissons")
+    expect(markup).toContain('aria-label="Agrandir la photo de Alice"')
+    expect(markup).toContain('aria-label="Agrandir la photo de Bruno"')
   })
 })
