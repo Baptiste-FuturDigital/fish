@@ -928,6 +928,8 @@
   top: 0;
   z-index: 30;
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
   justify-content: flex-end;
   margin: -0.25rem -0.25rem 0.75rem;
   padding: 0.5rem 0.25rem;
