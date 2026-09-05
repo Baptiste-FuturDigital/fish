@@ -99,4 +99,25 @@ describe("quiVeutGagnerDesPoissons", () => {
     expect(round.fact).toContain("varie selon l’espèce et la taille")
     expect(round.fact).toContain("au moins 3 000 épines")
   })
+
+  it("consacre le cinquième palier au poids de la langue d’une baleine bleue", () => {
+    const round = quiVeutGagnerDesPoissons.rounds[4]
+
+    expect(round).toEqual(expect.objectContaining({
+      id: "million-5-langue-baleine-bleue",
+      kicker: "Palier 5 · 100 poissons",
+      durationSeconds: 30,
+      question: "Combien pèse environ la langue d’une baleine bleue ?",
+      correctAnswer: "2-7-tonnes",
+      answerLabel: "2,7 tonnes",
+      sourceUrl: "https://nammco.no/blue-whale/",
+    }))
+    expect(round.choices).toEqual([
+      { id: "12-kg", label: "12 kg" },
+      { id: "51-kg", label: "51 kg" },
+      { id: "120-kg", label: "120 kg" },
+      { id: "2-7-tonnes", label: "2,7 tonnes" },
+    ])
+    expect(round.fact).toContain("environ 2,7 tonnes")
+  })
 })
