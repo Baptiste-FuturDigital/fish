@@ -160,6 +160,8 @@ test("four players form teams, answer individually and start the tournament", as
   await expect(host.getByRole("list", { name: /Classement final des poissons/ })).toBeVisible()
   await expect(host.getByLabel("Champion individuel")).toBeVisible()
   await expect(host.getByLabel("Dernier du classement")).toBeVisible()
+  await expect(guests[0].getByRole("dialog", { name: "Poséithon a un trésor pour toi" })).toBeVisible({ timeout: 12_000 })
+  await guests[0].getByRole("button", { name: "Fermer" }).click()
   await expect(guests[0].getByRole("heading", { name: "Classement final" })).toBeVisible({ timeout: 12_000 })
 
   await hostContext.close()
@@ -172,13 +174,35 @@ test("demo launches a populated tournament directly", async ({ page }) => {
   await expect(page.getByTestId("game-context-title")).toHaveText("Le juste poisson")
   await expect(page.getByText("Démo de Poséithon")).toHaveCount(0)
 
-  const gameCode = await page.evaluate(() => {
+  const playerPopupPromise = page.waitForEvent("popup")
+  await page.getByRole("button", { name: "Ouvrir la vue joueur" }).click()
+  const player = await playerPopupPromise
+  await expect(player.getByText("Aquarium actif")).toBeVisible()
+  await expect(player.getByTestId("game-context-title")).toHaveText("Le juste poisson")
+
+  const hostSession = await page.evaluate(() => {
     const session = JSON.parse(localStorage.getItem("fish-tournament-session") ?? "null") as { gameCode?: string } | null
-    return session?.gameCode
+    return session
   })
+  const playerSession = await player.evaluate(() => {
+    const session = JSON.parse(sessionStorage.getItem("fish-tournament-session") ?? "null") as { gameCode?: string; hostToken?: string } | null
+    return session
+  })
+  const gameCode = hostSession?.gameCode
   expect(gameCode).toMatch(/^[A-Z2-9]{4}$/)
+  expect(playerSession?.gameCode).toBe(gameCode)
+  expect(playerSession?.hostToken).toBeUndefined()
+
+  await page.getByRole("button", { name: "Lancer l'épreuve" }).click()
+  const playerAnswer = player.getByRole("slider", { name: "Estimation du poids" })
+  await expect(playerAnswer).toBeVisible()
+  await playerAnswer.press("End")
+  await player.getByRole("button", { name: "Valider la réponse" }).click()
+  await expect(player.getByText("Réponse verrouillée")).toBeVisible()
+  await expect(page.getByRole("button", { name: "Révéler maintenant" })).toBeVisible()
 
   await expect(page.getByRole("button", { name: "Terminer le tournoi", exact: true }).first()).toBeVisible()
+  await player.close()
   await page.getByRole("button", { name: "Accueil · nouvelle partie", exact: true }).click()
   await expect(page.getByRole("heading", { name: "Quels poissons seront dignes de Poséithon ? 🔱" })).toBeVisible()
 
