@@ -17,7 +17,7 @@
 - Move to Trash: `public/footer.png`
 - Preserve ignored: `public/.DS_Store`
 
-- [ ] **Step 1: Verify the duplicate before removal**
+- [x] **Step 1: Verify the duplicate before removal**
 
 Run:
 
@@ -28,7 +28,7 @@ git ls-files assets/prank/footer.png public/footer.png
 
 Expected: identical hashes; only `assets/prank/footer.png` is tracked.
 
-- [ ] **Step 2: Move only the duplicate to macOS Trash**
+- [x] **Step 2: Move only the duplicate to macOS Trash**
 
 ```bash
 mv public/footer.png /Users/bessard/.Trash/fish-footer-duplicate-20260905.png
@@ -45,7 +45,7 @@ Expected: `git status --short` contains no `public/footer.png`; the versioned or
 - Modify: `server/app.test.ts`
 - Modify: `src/api.ts`
 
-- [ ] **Step 1: Write failing service and API tests**
+- [x] **Step 1: Write failing service and API tests**
 
 Add assertions equivalent to:
 
@@ -64,7 +64,7 @@ npm test -- server/game-service.test.ts server/app.test.ts
 
 Expected: FAIL because `demoPlayerSession` does not exist.
 
-- [ ] **Step 2: Add the shared response contract**
+- [x] **Step 2: Add the shared response contract**
 
 ```ts
 export interface DemoSessionResponse extends SessionResponse {
@@ -72,7 +72,7 @@ export interface DemoSessionResponse extends SessionResponse {
 }
 ```
 
-- [ ] **Step 3: Return the first pre-populated player session**
+- [x] **Step 3: Return the first pre-populated player session**
 
 Change `createDemoGame()` to return `DemoSessionResponse`, keep the existing player creation and totem assignment, and return:
 
@@ -86,7 +86,7 @@ return {
 
 Type `gameApi.demo()` as `DemoSessionResponse` and rerun the focused tests. Expected: PASS.
 
-- [ ] **Step 4: Commit the server contract**
+- [x] **Step 4: Commit the server contract**
 
 ```bash
 git add shared/game.ts server/game-service.ts server/game-service.test.ts server/app.test.ts src/api.ts
@@ -103,7 +103,7 @@ git commit -m "feat: expose a player session for demos"
 - Modify: `src/components/host-session-controls.test.tsx`
 - Modify: `src/App.tsx`
 
-- [ ] **Step 1: Write failing storage and component tests**
+- [x] **Step 1: Write failing storage and component tests**
 
 Cover these invariants:
 
@@ -128,7 +128,7 @@ npm test -- src/hooks/game-session-storage.test.ts src/components/host-session-c
 
 Expected: FAIL before the helper and new props exist.
 
-- [ ] **Step 2: Implement storage ownership**
+- [x] **Step 2: Implement storage ownership**
 
 The helper must export:
 
@@ -147,7 +147,7 @@ export function openDemoPlayerTab(session: PlayerSession): boolean
 
 `openDemoPlayerTab` must synchronously create a same-origin blank tab, write `GAME_SESSION_KEY` into that tab's `sessionStorage`, and navigate to `/?demo-player=1`. It must return `false` without changing current-tab storage when popups are blocked.
 
-- [ ] **Step 3: Wire the hook and host controls**
+- [x] **Step 3: Wire the hook and host controls**
 
 `useGame.enter()` persists `response.session` and, when the response is a `DemoSessionResponse`, retains `response.demoPlayerSession`. Expose `canOpenDemoPlayer` and `openDemoPlayerView`; throw a user-safe error when the capability or popup is unavailable.
 
@@ -163,7 +163,7 @@ Add the demo-only button:
 
 Pass the hook state through `App` to `HostSessionControls`. Rerun the focused tests. Expected: PASS.
 
-- [ ] **Step 4: Commit the browser integration**
+- [x] **Step 4: Commit the browser integration**
 
 ```bash
 git add src/hooks/game-session-storage.ts src/hooks/game-session-storage.test.ts src/hooks/use-game.ts src/components/host-session-controls.tsx src/components/host-session-controls.test.tsx src/App.tsx
@@ -175,7 +175,7 @@ git commit -m "feat: open an isolated demo player view"
 **Files:**
 - Modify: `e2e/game.spec.ts`
 
-- [ ] **Step 1: Write the failing browser test**
+- [x] **Step 1: Write the failing browser test**
 
 Extend the demo test to wait for the popup, assert that the host and player sessions share a game code, assert that the child session has no host token, launch the first round from the host, and confirm the player slider is usable. Run:
 
@@ -185,7 +185,7 @@ npx playwright test e2e/game.spec.ts --grep "demo launches"
 
 Expected: FAIL before the button/browser integration is complete, then PASS after wiring.
 
-- [ ] **Step 2: Run the full validation**
+- [x] **Step 2: Run the full validation**
 
 ```bash
 npm test
@@ -196,7 +196,7 @@ git diff --check
 
 Expected: all tests and build pass with no whitespace errors.
 
-- [ ] **Step 3: Commit and push `main`**
+- [x] **Step 3: Commit and push `main`**
 
 ```bash
 git add e2e/game.spec.ts docs/superpowers/plans/2026-09-05-demo-player-view.md
@@ -206,7 +206,7 @@ git push origin main
 
 Expected: local and `origin/main` have zero ahead/behind commits.
 
-- [ ] **Step 4: Deploy to the Raspberry Pi**
+- [x] **Step 4: Deploy to the Raspberry Pi**
 
 ```bash
 scripts/pi/push.sh baptiste@192.168.1.15
@@ -214,7 +214,6 @@ scripts/pi/push.sh baptiste@192.168.1.15
 
 Expected: image build, SQLite backup, service replacement, and `/api/health` success.
 
-- [ ] **Step 5: Public smoke test**
+- [x] **Step 5: Public smoke test**
 
 Verify the Cloudflare URL serves the new asset hash, then run a real host/player popup flow and confirm the `Poissons` portrait rows open. Do not declare completion until the public URL, QR target, API health, and both browser roles pass.
-
