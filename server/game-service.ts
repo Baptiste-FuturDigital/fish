@@ -615,6 +615,40 @@ export class GameService {
     return this.getGame(game.code)
   }
 
+  toggleQuestionTimer(codeInput: string, hostToken: string): GameView {
+    return this.database.transaction(() => {
+      let game = this.assertHost(codeInput, hostToken)
+      game = this.synchronizeDeadline(game)
+      const challenge = this.currentChallenge(game)
+      const round = challenge.rounds[game.challenge_round]
+      if (
+        game.status !== "running" || game.phase !== "answering" ||
+        challenge.id !== "question-pour-un-poisson" || round.kind !== "buzzer"
+      ) {
+        throw new GameError("Le chronomètre ne peut être contrôlé que pendant Question pour un poisson.", 409)
+      }
+      if (game.buzz_player_id) {
+        throw new GameError("Valide d'abord la réponse du banc qui a buzzé.", 409)
+      }
+
+      if (game.phase_ends_at) {
+        const remainingMs = Math.max(1, Date.parse(game.phase_ends_at) - Date.now())
+        this.database.prepare(
+          "UPDATE games SET phase_ends_at = NULL, buzz_paused_ms = ? WHERE id = ?",
+        ).run(remainingMs, game.id)
+      } else if (game.buzz_paused_ms !== null && game.buzz_paused_ms > 0) {
+        const resumesAt = new Date(Date.now() + game.buzz_paused_ms).toISOString()
+        this.database.prepare(
+          "UPDATE games SET phase_ends_at = ?, buzz_paused_ms = NULL WHERE id = ?",
+        ).run(resumesAt, game.id)
+      } else {
+        throw new GameError("Le chronomètre n'est pas disponible.", 409)
+      }
+
+      return this.getGame(game.code)
+    })()
+  }
+
   buzzQuestion(codeInput: string, playerId: string, playerToken: string): GameView {
     const code = codeInput.trim().toUpperCase()
     let game = this.synchronizeDeadline(this.getGameRow(code))
@@ -627,6 +661,9 @@ export class GameService {
       throw new GameError("Le buzzer n'est pas disponible pendant cette épreuve.", 409)
     }
     if (game.buzz_player_id) throw new GameError("Un autre banc a déjà buzzé.", 409)
+    if (!game.phase_ends_at && game.buzz_paused_ms !== null) {
+      throw new GameError("Le chronomètre est en pause.", 409)
+    }
     const player = this.assertPlayer(game.id, playerId, playerToken)
     const totem = findTotem(player.totem_id)
     if (!totem) throw new GameError("Révèle d'abord ton animal totem.", 409)

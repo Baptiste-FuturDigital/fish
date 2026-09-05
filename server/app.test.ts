@@ -354,6 +354,20 @@ describe("game API", () => {
        phase = 'answering', phase_ends_at = ? WHERE code = ?`,
     ).run(new Date(Date.now() + 40_000).toISOString(), created.body.game.code)
 
+    const paused = await request(app)
+      .post(`/api/games/${created.body.game.code}/buzz/timer`)
+      .send({ hostToken: created.body.session.hostToken })
+      .expect(200)
+    expect(paused.body.tournament.endsAt).toBeNull()
+    expect(paused.body.tournament.pausedRemainingMs).toBeGreaterThan(0)
+
+    const resumed = await request(app)
+      .post(`/api/games/${created.body.game.code}/buzz/timer`)
+      .send({ hostToken: created.body.session.hostToken })
+      .expect(200)
+    expect(resumed.body.tournament.endsAt).not.toBeNull()
+    expect(resumed.body.tournament.pausedRemainingMs).toBeNull()
+
     const buzzed = await request(app)
       .post(`/api/games/${created.body.game.code}/buzz`)
       .send(joined.body.session)

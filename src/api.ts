@@ -91,6 +91,12 @@ export const gameApi = {
       body: JSON.stringify({ playerId, playerToken }),
     })
   },
+  toggleQuestionTimer(code: string, hostToken: string) {
+    return request<GameView>(`/api/games/${code}/buzz/timer`, {
+      method: "POST",
+      body: JSON.stringify({ hostToken }),
+    })
+  },
   resolveBuzz(code: string, hostToken: string, correct: boolean) {
     return request<GameView>(`/api/games/${code}/buzz/resolve`, {
       method: "POST",

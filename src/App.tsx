@@ -432,7 +432,7 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam, onKic
   )
 }
 
-function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty, onBuzz, onResolveBuzz, onBonus }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView>; onUseFiftyFifty: () => Promise<GameView>; onBuzz: () => Promise<GameView>; onResolveBuzz: (correct: boolean) => Promise<GameView>; onBonus: () => Promise<GameView> }) {
+function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty, onBuzz, onToggleQuestionTimer, onResolveBuzz, onBonus }: { game: GameView; session: PlayerSession; onAdvance: () => Promise<GameView>; onFinish: () => Promise<GameView>; onSubmit: (answer: string, locked: boolean) => Promise<GameView>; onUseFiftyFifty: () => Promise<GameView>; onBuzz: () => Promise<GameView>; onToggleQuestionTimer: () => Promise<GameView>; onResolveBuzz: (correct: boolean) => Promise<GameView>; onBonus: () => Promise<GameView> }) {
   const isSalmon = game.tournament?.challenge.id === "whos-dat-salmon"
   const questionAudio = game.tournament && game.tournament.challenge.id !== "question-pour-un-poisson" && !isSalmon ? (
     <QuestionTimerAudio
@@ -477,6 +477,7 @@ function GameScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFi
         onSubmit={onSubmit}
         onUseFiftyFifty={onUseFiftyFifty}
         onBuzz={onBuzz}
+        onToggleQuestionTimer={onToggleQuestionTimer}
         onResolveBuzz={onResolveBuzz}
       />
     </>
@@ -500,7 +501,7 @@ function LoadingScreen() {
 }
 
 export default function App() {
-  const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, kickPlayer, submitAnswer, useFiftyFifty, buzz, resolveBuzz, applyBonus, skipChallenge, canOpenDemoPlayer, openDemoPlayerView } = useGame()
+  const { session, game, loading, error, enter, leave, hostAction, claimTotem, renameTeam, kickPlayer, submitAnswer, useFiftyFifty, buzz, toggleQuestionTimer, resolveBuzz, applyBonus, skipChallenge, canOpenDemoPlayer, openDemoPlayerView } = useGame()
   const isSalmonDemo = new URLSearchParams(window.location.search).get("salmon-demo") === "1"
   const audioEnabled = isSalmonDemo || (session ? isHostAudioEnabled(session) : false)
   const screen = useMemo(() => {
@@ -508,9 +509,9 @@ export default function App() {
     if (!session) return <HomeScreen onEnter={enter} />
     if (loading || !game) return <LoadingScreen />
     if (game.status === "lobby") return <LobbyScreen game={game} session={session} onStart={() => hostAction("start").then(() => undefined)} onClaimTotem={claimTotem} onRenameTeam={renameTeam} onKickPlayer={kickPlayer} />
-    if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} onUseFiftyFifty={useFiftyFifty} onBuzz={buzz} onResolveBuzz={resolveBuzz} onBonus={applyBonus} />
+    if (game.status === "running") return <GameScreen game={game} session={session} onAdvance={() => hostAction("advance")} onFinish={() => hostAction("finish")} onSubmit={submitAnswer} onUseFiftyFifty={useFiftyFifty} onBuzz={buzz} onToggleQuestionTimer={toggleQuestionTimer} onResolveBuzz={resolveBuzz} onBonus={applyBonus} />
     return <EndScreen game={game} session={session} onLeave={leave} />
-  }, [applyBonus, buzz, claimTotem, enter, game, hostAction, isSalmonDemo, kickPlayer, leave, loading, renameTeam, resolveBuzz, session, submitAnswer, useFiftyFifty])
+  }, [applyBonus, buzz, claimTotem, enter, game, hostAction, isSalmonDemo, kickPlayer, leave, loading, renameTeam, resolveBuzz, session, submitAnswer, toggleQuestionTimer, useFiftyFifty])
 
   return (
     <OceanShell>

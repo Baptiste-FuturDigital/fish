@@ -105,6 +105,7 @@ describe("ChallengeScreen", () => {
         onSubmit={vi.fn(async () => game)}
         onUseFiftyFifty={vi.fn(async () => game)}
         onBuzz={vi.fn(async () => game)}
+        onToggleQuestionTimer={vi.fn(async () => game)}
         onResolveBuzz={vi.fn(async () => game)}
       />,
     )
@@ -131,6 +132,7 @@ describe("ChallengeScreen", () => {
         onSubmit={vi.fn(async () => game)}
         onUseFiftyFifty={vi.fn(async () => game)}
         onBuzz={vi.fn(async () => game)}
+        onToggleQuestionTimer={vi.fn(async () => game)}
         onResolveBuzz={vi.fn(async () => game)}
       />,
     )
@@ -152,6 +154,7 @@ describe("ChallengeScreen", () => {
         onSubmit={vi.fn(async () => game)}
         onUseFiftyFifty={vi.fn(async () => game)}
         onBuzz={vi.fn(async () => game)}
+        onToggleQuestionTimer={vi.fn(async () => game)}
         onResolveBuzz={vi.fn(async () => game)}
       />,
     )
@@ -175,6 +178,7 @@ describe("ChallengeScreen", () => {
         onSubmit={vi.fn(async () => game)}
         onUseFiftyFifty={vi.fn(async () => game)}
         onBuzz={vi.fn(async () => game)}
+        onToggleQuestionTimer={vi.fn(async () => game)}
         onResolveBuzz={vi.fn(async () => game)}
       />,
     )
@@ -205,6 +209,7 @@ describe("ChallengeScreen", () => {
         onSubmit={vi.fn(async () => game)}
         onUseFiftyFifty={vi.fn(async () => game)}
         onBuzz={vi.fn(async () => game)}
+        onToggleQuestionTimer={vi.fn(async () => game)}
         onResolveBuzz={vi.fn(async () => game)}
       />,
     )

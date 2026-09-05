@@ -43,6 +43,14 @@ test("Question pour un poisson freezes on buzz and applies the temporary team lo
   await expect(firstPage.locator(".buzzer-team")).toHaveCount(4)
   await expect(host.getByTestId("question-timer-music-player")).toHaveCount(0)
   await expect(host.getByTestId("background-music-player")).toHaveAttribute("data-suspended", "true")
+
+  await host.getByRole("button", { name: "Mettre le chronomètre en pause" }).click()
+  await expect(host.getByRole("button", { name: "Reprendre le chronomètre" })).toBeVisible()
+  await expect(firstPage.getByRole("button", { name: /APPUIE POUR BUZZER/ })).toBeDisabled()
+  await host.getByRole("button", { name: "Reprendre le chronomètre" }).click()
+  await expect(host.getByRole("button", { name: "Mettre le chronomètre en pause" })).toBeVisible()
+  await expect(firstPage.getByRole("button", { name: /APPUIE POUR BUZZER/ })).toBeEnabled()
+
   await host.screenshot({ path: "tmp/question-buzzer-host.png", fullPage: true })
   await firstPage.screenshot({ path: "tmp/question-buzzer-player.png", fullPage: true })
 

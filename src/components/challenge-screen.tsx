@@ -33,6 +33,7 @@ interface ChallengeScreenProps {
   onSubmit: (answer: string, locked: boolean) => Promise<GameView>
   onUseFiftyFifty: () => Promise<GameView>
   onBuzz: () => Promise<GameView>
+  onToggleQuestionTimer: () => Promise<GameView>
   onResolveBuzz: (correct: boolean) => Promise<GameView>
 }
 
@@ -132,7 +133,7 @@ function WeightEstimateField({
   )
 }
 
-export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty, onBuzz, onResolveBuzz }: ChallengeScreenProps) {
+export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, onUseFiftyFifty, onBuzz, onToggleQuestionTimer, onResolveBuzz }: ChallengeScreenProps) {
   const tournament = game.tournament
   const [answer, setAnswer] = useState("")
   const [busy, setBusy] = useState<"advance" | "answer" | "joker" | "finish" | null>(null)
@@ -266,6 +267,7 @@ export function ChallengeScreen({ game, session, onAdvance, onFinish, onSubmit, 
           session={session}
           isHost={isHost}
           onBuzz={onBuzz}
+          onToggleTimer={onToggleQuestionTimer}
           onResolve={onResolveBuzz}
         />
         {isHost ? <Button className="finish-tournament-button mt-3" variant="ghost" onClick={() => void act("finish")}>Terminer le tournoi</Button> : null}

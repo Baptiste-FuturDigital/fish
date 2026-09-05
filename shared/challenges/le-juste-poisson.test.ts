@@ -43,6 +43,16 @@ describe("leJustePoisson", () => {
     })
   })
 
+  it("utilise les plages de poids jouables demandees", () => {
+    expect(Object.fromEntries(leJustePoisson.rounds.map((round) => [round.id, round.estimateRange]))).toEqual({
+      hippocampe: { min: 0.001, max: 1, step: 0.0005, displayUnit: "g" },
+      "crabe-araignee-japonais": { min: 0.5, max: 100, step: 0.5, displayUnit: "kg" },
+      "poisson-lune-mole": { min: 10, max: 3_000, step: 10, displayUnit: "kg" },
+      "tortue-luth": { min: 10, max: 1_200, step: 10, displayUnit: "kg" },
+      "baleine-bleue": { min: 1, max: 150_000, step: 1_000, displayUnit: "kg" },
+    })
+  })
+
   it("identifie correctement le poisson-lune de la troisième manche", () => {
     const round = leJustePoisson.rounds[2]
 

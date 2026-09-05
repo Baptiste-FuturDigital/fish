@@ -71,16 +71,19 @@ export function QuestionBuzzerScreen({
   isHost,
   onBuzz,
   onResolve,
+  onToggleTimer,
 }: {
   game: GameView
   session: PlayerSession
   isHost: boolean
   onBuzz: () => Promise<GameView>
   onResolve: (correct: boolean) => Promise<GameView>
+  onToggleTimer: () => Promise<GameView>
 }) {
   const tournament = game.tournament!
-  const [busy, setBusy] = useState<"buzz" | "correct" | "wrong" | null>(null)
+  const [busy, setBusy] = useState<"buzz" | "correct" | "wrong" | "timer" | null>(null)
   const seconds = useHostBuzzerSound(isHost, tournament)
+  const isManualPause = !tournament.endsAt && !tournament.buzz && tournament.pausedRemainingMs !== null
   const currentPlayer = game.players.find((player) => player.id === session.playerId)
   const playerTeamId = currentPlayer?.teamId ?? null
   const teamImages = useMemo(() => new Map(game.teams.map((team) => {
@@ -112,6 +115,29 @@ export function QuestionBuzzerScreen({
     }
   }
 
+  async function toggleTimer() {
+    setBusy("timer")
+    try {
+      await onToggleTimer()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Chronomètre inaccessible.")
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const clockContent = (
+    <>
+      <span>{tournament.buzz || isManualPause ? "PAUSE" : "CHRONO"}</span>
+      <strong>{seconds}</strong>
+      <small>
+        {tournament.buzz
+          ? `${tournament.buzz.points * 10} points en jeu`
+          : isManualPause ? "CHRONO EN PAUSE" : "secondes"}
+      </small>
+    </>
+  )
+
   return (
     <section className="question-buzzer-stage" aria-label="Question pour un poisson">
       {isHost ? (
@@ -138,7 +164,7 @@ export function QuestionBuzzerScreen({
           const isOwn = team.id === playerTeamId
           const isActive = tournament.buzz?.teamId === team.id
           const isBlocked = tournament.blockedTeamId === team.id
-          const canBuzz = !isHost && isOwn && !tournament.buzz && !isBlocked && seconds > 0
+          const canBuzz = !isHost && isOwn && Boolean(tournament.endsAt) && !tournament.buzz && !isBlocked && seconds > 0
           return (
             <button
               type="button"
@@ -157,11 +183,21 @@ export function QuestionBuzzerScreen({
             </button>
           )
         })}
-        <div className={cn("buzzer-clock", tournament.buzz && "is-paused")}>
-          <span>{tournament.buzz ? "PAUSE" : "CHRONO"}</span>
-          <strong>{seconds}</strong>
-          <small>{tournament.buzz ? `${tournament.buzz.points * 10} points en jeu` : "secondes"}</small>
-        </div>
+        {isHost && !tournament.buzz ? (
+          <button
+            type="button"
+            className={cn("buzzer-clock", "is-interactive", isManualPause && "is-paused")}
+            aria-label={isManualPause ? "Reprendre le chronomètre" : "Mettre le chronomètre en pause"}
+            disabled={busy === "timer"}
+            onClick={() => void toggleTimer()}
+          >
+            {clockContent}
+          </button>
+        ) : (
+          <div className={cn("buzzer-clock", (tournament.buzz || isManualPause) && "is-paused")}>
+            {clockContent}
+          </div>
+        )}
       </div>
 
       {isHost && tournament.buzz ? (

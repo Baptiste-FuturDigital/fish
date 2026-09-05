@@ -506,6 +506,51 @@ describe("GameService", () => {
     expect(nextQuestion.tournament?.round.correctAnswer).toBeUndefined()
   })
 
+  it("lets the host pause and resume the Question pour un poisson timer", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const [first] = joinAndClaimCompetitors(created.game.code)
+    service.startGame(created.game.code, created.session.hostToken!)
+    database.prepare(
+      `UPDATE games SET challenge_index = 1, challenge_round = 0, current_round = 0,
+       phase = 'answering', phase_ends_at = ? WHERE code = ?`,
+    ).run(new Date(Date.now() + 40_000).toISOString(), created.game.code)
+
+    const paused = service.toggleQuestionTimer(created.game.code, created.session.hostToken!)
+    expect(paused.tournament?.endsAt).toBeNull()
+    expect(paused.tournament?.pausedRemainingMs).toBeGreaterThan(39_000)
+    expect(paused.tournament?.pausedRemainingMs).toBeLessThanOrEqual(40_000)
+    expect(() => service.buzzQuestion(
+      created.game.code,
+      first.session.playerId,
+      first.session.playerToken,
+    )).toThrowError(new GameError("Le chronomètre est en pause.", 409))
+
+    const resumed = service.toggleQuestionTimer(created.game.code, created.session.hostToken!)
+    expect(resumed.tournament?.endsAt).not.toBeNull()
+    expect(resumed.tournament?.pausedRemainingMs).toBeNull()
+    expect(Date.parse(resumed.tournament!.endsAt!) - Date.now()).toBeGreaterThan(39_000)
+  })
+
+  it("protects the Question pour un poisson timer control", () => {
+    const created = service.createGame("La marée bizarre", "Baptiste")
+    const [first] = joinAndClaimCompetitors(created.game.code)
+    service.startGame(created.game.code, created.session.hostToken!)
+
+    expect(() => service.toggleQuestionTimer(created.game.code, "intrus"))
+      .toThrowError(new GameError("Seul le capitaine peut toucher à ça.", 403))
+    expect(() => service.toggleQuestionTimer(created.game.code, created.session.hostToken!))
+      .toThrowError(new GameError("Le chronomètre ne peut être contrôlé que pendant Question pour un poisson.", 409))
+
+    database.prepare(
+      `UPDATE games SET challenge_index = 1, challenge_round = 0, current_round = 0,
+       phase = 'answering', phase_ends_at = ? WHERE code = ?`,
+    ).run(new Date(Date.now() + 40_000).toISOString(), created.game.code)
+    service.buzzQuestion(created.game.code, first.session.playerId, first.session.playerToken)
+
+    expect(() => service.toggleQuestionTimer(created.game.code, created.session.hostToken!))
+      .toThrowError(new GameError("Valide d'abord la réponse du banc qui a buzzé.", 409))
+  })
+
   it("blocks a wrong buzzer only until another team attempts", () => {
     const created = service.createGame("La marée bizarre", "Baptiste")
     const [first, second] = joinAndClaimCompetitors(created.game.code)

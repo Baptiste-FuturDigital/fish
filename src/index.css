@@ -1104,6 +1104,14 @@
 }
 
 .buzzer-clock.is-paused { border-color: oklch(0.72 0.2 24); }
+.buzzer-clock.is-interactive { cursor: pointer; }
+.buzzer-clock.is-interactive:hover:not(:disabled) { filter: brightness(1.16); }
+.buzzer-clock.is-interactive:focus-visible {
+  outline: 0.25rem solid oklch(0.94 0.13 91 / 70%);
+  outline-offset: 0.25rem;
+}
+.buzzer-clock.is-interactive:active:not(:disabled) { transform: translate(-50%, -50%) scale(0.96); }
+.buzzer-clock.is-interactive:disabled { cursor: wait; opacity: 0.78; }
 .buzzer-clock span, .buzzer-clock small { font-size: 0.58rem; font-weight: 900; letter-spacing: 0.12em; }
 .buzzer-clock strong { font-family: var(--font-heading); font-size: 3.2rem; line-height: 0.9; }
 

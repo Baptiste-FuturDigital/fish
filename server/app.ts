@@ -109,6 +109,11 @@ export function createApp(
     response.json(service.buzzQuestion(request.params.code, body.playerId, body.playerToken))
   })
 
+  app.post("/api/games/:code/buzz/timer", (request, response) => {
+    const body = hostSchema.parse(request.body)
+    response.json(service.toggleQuestionTimer(request.params.code, body.hostToken))
+  })
+
   app.post("/api/games/:code/buzz/resolve", (request, response) => {
     const body = buzzResolutionSchema.parse(request.body)
     response.json(service.resolveQuestionBuzz(request.params.code, body.hostToken, body.correct))

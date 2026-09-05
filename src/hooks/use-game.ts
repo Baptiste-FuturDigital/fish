@@ -186,6 +186,13 @@ export function useGame() {
     return nextGame
   }, [session])
 
+  const toggleQuestionTimer = useCallback(async () => {
+    if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
+    const nextGame = await gameApi.toggleQuestionTimer(session.gameCode, session.hostToken)
+    setGame(nextGame)
+    return nextGame
+  }, [session])
+
   const applyBonus = useCallback(async () => {
     if (!session?.hostToken) throw new Error("Tu n'es pas le capitaine.")
     const nextGame = await gameApi.applyBonus(session.gameCode, session.hostToken)
@@ -215,6 +222,7 @@ export function useGame() {
     submitAnswer,
     useFiftyFifty,
     buzz,
+    toggleQuestionTimer,
     resolveBuzz,
     applyBonus,
     skipChallenge,
