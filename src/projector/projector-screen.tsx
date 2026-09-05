@@ -144,7 +144,7 @@ function LobbyScene({ game, joinUrl }: { game: TvGameView; joinUrl: string }) {
           {game.teams.map((team) => {
             const teamPlayers = players.filter((player) => player.teamId === team.id)
             return (
-            <Card className="projector-team-card" key={team.id}>
+            <Card className="projector-team-card projector-team-card-rainbow" key={team.id}>
               <CardHeader>
                 <CardTitle>{team.name}</CardTitle>
                 <span>{team.memberCount}</span>

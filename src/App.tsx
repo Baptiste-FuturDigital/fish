@@ -22,6 +22,7 @@ import { isHostAudioEnabled } from "@/components/challenge-audio-control"
 import { ChallengeScreen } from "@/components/challenge-screen"
 import { FinalReveal } from "@/components/final-reveal"
 import { HostSessionControls } from "@/components/host-session-controls"
+import { HostLobbyTools } from "@/components/host-lobby-tools"
 import { LeaderboardScreen } from "@/components/leaderboard-screen"
 import { PlayerList } from "@/components/player-list"
 import { PlayerIdentityPicker } from "@/components/player-identity-picker"
@@ -30,7 +31,6 @@ import { SalmonRoundAudio } from "@/components/salmon-round-audio"
 import { SalmonDemoScreen } from "@/components/salmon-demo-screen"
 import { TeamBoard } from "@/components/team-board"
 import { TotemScan, type PlayerReveal } from "@/components/totem-scan"
-import { ProjectorLaunchButton } from "@/projector/projector-launch-button"
 import {
   Card,
   CardAction,
@@ -368,11 +368,7 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam, onKic
     <>
       <GameHeader game={game} />
       {isHost ? (
-        <Alert className="host-orchestrator-card mb-4">
-          <Anchor />
-          <AlertTitle>Maître du jeu · hors compétition</AlertTitle>
-          <AlertDescription>Tu gardes le rythme et les commandes ; seuls les invités rejoignent les bancs.</AlertDescription>
-        </Alert>
+        <HostLobbyTools code={game.code} />
       ) : (
         <TotemScan
           identity={currentPlayer?.totem && currentTeam
@@ -400,7 +396,6 @@ function LobbyScreen({ game, session, onStart, onClaimTotem, onRenameTeam, onKic
             <Button variant="secondary" onClick={copyCode}>
               <Copy data-icon="inline-start" /> Copier le code
             </Button>
-            {isHost ? <ProjectorLaunchButton code={game.code} /> : null}
           </div>
         </CardContent>
       </Card>

@@ -46,7 +46,12 @@ const baseGame = {
   currentRound: 0,
   totalRounds: 4,
   players: [{ name: "Léa", score: 4, teamId: "abyssaux", imageUrl: "/raie.jpg", animalName: "la raie manta" }],
-  teams: [{ id: "abyssaux", name: "Les Abyssaux", score: 4, memberCount: 1 }],
+  teams: [
+    { id: "abyssaux", name: "Les Abyssaux", score: 4, memberCount: 1 },
+    { id: "coralliens", name: "Les Coralliens", score: 0, memberCount: 0 },
+    { id: "electriques", name: "Les Électriques", score: 0, memberCount: 0 },
+    { id: "colosses", name: "Les Colosses", score: 0, memberCount: 0 },
+  ],
   tournament: null,
   createdAt: "2026-09-05T00:00:00.000Z",
 } satisfies TvGameView
@@ -66,6 +71,7 @@ describe("ProjectorScreen", () => {
     expect(markup).toContain("FISH")
     expect(markup).toContain("Léa")
     expect(markup).toContain('aria-label="Agrandir la photo de Léa"')
+    expect(markup.match(/projector-team-card-rainbow/g)).toHaveLength(4)
     expect(markup).not.toContain("Lancer la partie")
   })
 

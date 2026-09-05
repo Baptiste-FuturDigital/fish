@@ -1,3 +1,9 @@
+@property --projector-team-border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 .projector-viewport {
   --projector-ink: oklch(0.16 0.045 220);
   --projector-cream: oklch(0.97 0.022 96);
@@ -305,6 +311,31 @@
   background: oklch(0.97 0.022 96 / 94%);
   color: var(--projector-ink);
 }
+
+.projector-team-card-rainbow {
+  --projector-team-border-angle: 0deg;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(oklch(0.97 0.022 96 / 96%), oklch(0.97 0.022 96 / 96%)) padding-box,
+    conic-gradient(
+      from var(--projector-team-border-angle),
+      oklch(0.72 0.2 25),
+      oklch(0.86 0.18 90),
+      oklch(0.79 0.19 145),
+      oklch(0.76 0.15 205),
+      oklch(0.69 0.18 275),
+      oklch(0.76 0.2 330),
+      oklch(0.72 0.2 25)
+    ) border-box;
+  box-shadow:
+    0 0 0 1px oklch(0.98 0.02 96 / 20%),
+    0 0 1rem oklch(0.75 0.16 210 / 12%);
+  animation: projector-team-border-spin 5.5s linear infinite;
+}
+
+.projector-team-grid > :nth-child(2) { animation-delay: -1.375s; }
+.projector-team-grid > :nth-child(3) { animation-delay: -2.75s; }
+.projector-team-grid > :nth-child(4) { animation-delay: -4.125s; }
 
 .projector-team-card [data-slot="card-header"] {
   display: flex;
@@ -1420,12 +1451,17 @@
   to { transform: translateY(0.8rem) rotate(1deg); }
 }
 
+@keyframes projector-team-border-spin {
+  to { --projector-team-border-angle: 360deg; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .projector-caustics,
   .projector-bubbles i,
   .projector-live svg,
   .projector-connection-state > svg,
-  .projector-confetti {
+  .projector-confetti,
+  .projector-team-card-rainbow {
     animation: none;
   }
 }
